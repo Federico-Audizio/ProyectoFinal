@@ -141,3 +141,55 @@ Editar
 docker compose build
 docker compose up
 Los cambios en el código se actualizan automáticamente (Hot Reload).
+
+/////////////////////////////////////////////////Appy y maquina virtual /////////////////////////////////////////////////////////////////
+
+Crear ven para el proyecto 
+✅ Solución paso a paso
+🔁 1. Crear un entorno virtual con Python 3.10
+
+Necesitás instalar Python 3.10.x. Aquí está el proceso completo:
+🧩 PASO A PASO CORRECTO
+① ✅ Instalar Python 3.10
+
+Descargá desde la web oficial:
+👉 https://www.python.org/downloads/release/python-3100/
+
+Durante la instalación:
+✅ Tildá “Add Python to PATH”
+✅ Elegí instalación personalizada y seleccioná "Install for all users"
+
+② Crear nuevo entorno virtual con Python 3.10
+Verificá que tenés Python 3.10 activo:
+py -3.10 --version
+
+Creá el entorno virtual en la carpeta backend/:
+cd backend
+py -3.10 -m venv venv
+
+Activá el entorno virtual:
+venv\Scripts\activate
+③ Instalar dependencias
+
+Ejecutá:
+pip install --upgrade pip
+pip install -r requirements.txt
+
+Eso instalará:
+tensorflow==2.19.0
+keras==3.5.0
+flask
+opencv-python, etc.
+
+✅ Si todo va bien, no deberían aparecer errores de versiones.
+
+④ Probar ejecución del backend
+python app.py
+Y deberías ver algo como:
+
+ * Running on http://127.0.0.1:5000 (Press CTRL+C to quit)
+
+Appy strat:
+cd C:\Users\Lenovo\OneDrive\Desktop\ProyectoFinal\backend
+.\venvemociones\Scripts\activate
+python app.py
