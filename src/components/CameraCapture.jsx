@@ -38,15 +38,25 @@ const CameraCapture = () => {
   const sendImageToBackend = async (blob) => {
     const formData = new FormData();
     formData.append("image", blob, "capture.jpg");
-
+    //frame_count = 0
+    //frame_skip=10
     try {
-      const response = await fetch("http://localhost:5000/predict", {
+      const response = await fetch("http://localhost:5000/predict",{
         method: "POST",
         body: formData,
       });
 
       const data = await response.json();
-      alert(`Emoción detectada: ${data.emotion}`);
+      console.log("Respuesta backend:", data);
+      if (data.emotion) {
+        alert(`Emoción detectada: ${data.emotion}`);
+      }else if (data.error) {
+        alert(`Error del servidor: ${data.error}`);
+      }
+      else {
+        alert("Respuesta inesperada del servidor");
+      }
+      //alert(`Emoción detectada: ${data.emotion}`);
     } catch (error) {
       console.error("Error enviando imagen al backend:", error);
     }
@@ -60,7 +70,20 @@ const CameraCapture = () => {
 
     const ctx = canvas.getContext("2d");
     ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    //cap = Canvas.video()
+    //frame_count = 0
+    
+    //try{
+    //  while (True)
+    //    ret, frame = cap.read()
+     //       ret, frame = cap.read()
 
+            //Solo enviamos 1 de cada N frames para no saturar la API
+            //  if (frame_count % frame_skip == 0)
+             //     img_encoded = cv2.imencode('.jpg', frame)
+             //     files = {'image': ('frame.jpg', img_encoded.tobytes(), 'image/jpeg')}
+    //}
+        
     canvas.toBlob((blob) => {
       if (blob) {
         sendImageToBackend(blob);
