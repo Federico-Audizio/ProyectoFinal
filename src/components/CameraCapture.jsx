@@ -1,10 +1,12 @@
 import React, { useRef, useState, useEffect } from "react";
+import "./CameraCapture.css";
 
 const CameraCapture = () => {
   // Referencia al elemento <video> para asignar el stream de la cámara
   const videoRef = useRef(null);
   // Estado para manejar posibles errores (ej: usuario no da permiso)
   const [error, setError] = useState(null);
+  const [detectedEmotion, setDetectedEmotion] = useState("");
 
   // 📌 Habilitar cámara
   useEffect(() => {
@@ -26,7 +28,6 @@ const CameraCapture = () => {
 
     enableCamera();
 
-    // Cleanup: cuando el componente se desmonta, detiene la cámara
     return () => {
       if (videoRef.current && videoRef.current.srcObject) {
         videoRef.current.srcObject.getTracks().forEach(track => track.stop());
@@ -34,7 +35,7 @@ const CameraCapture = () => {
     };
   }, []);
 
-  // 📌 Función para enviar imagen al backend
+  // Enviar imagen al backend
   const sendImageToBackend = async (blob) => {
     const formData = new FormData();
     formData.append("image", blob, "capture.jpg");
@@ -46,13 +47,13 @@ const CameraCapture = () => {
       });
 
       const data = await response.json();
-      alert(`Emoción detectada: ${data.emotion}`);
+      setDetectedEmotion(data.emotion);
     } catch (error) {
       console.error("Error enviando imagen al backend:", error);
     }
   };
 
-  // 📌 Capturar un frame del video
+  // Capturar frame
   const captureImage = () => {
     const canvas = document.createElement("canvas");
     canvas.width = videoRef.current.videoWidth;
@@ -69,22 +70,37 @@ const CameraCapture = () => {
   };
 
   return (
-    <div style={{ textAlign: "center" }}>
-      <h3>Captura en tiempo real</h3>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        style={{ width: "100%", maxWidth: "500px", borderRadius: "10px" }}
-      />
-      <br />
-      <button onClick={captureImage} style={{ marginTop: "10px" }}>
-        Capturar y detectar emoción
-      </button>
+    <div className="camera-container">
+      <div className="video-wrapper">
+        {error && <p className="error">{error}</p>}
+        <video ref={videoRef} autoPlay playsInline muted />
+      </div>
+
+      <div className="emotion-button">
+        <button onClick={captureImage}>
+          {detectedEmotion || "Detectar emoción"}
+        </button>
+      </div>
+
+      <div className="pictograms-container">
+        {["Pictograma 1", "Pictograma 2", "Pictograma 3", "Pictograma 4"].map(
+          (text, idx) => (
+            <div
+              key={idx}
+              className={`pictogram-card ${
+                detectedEmotion &&
+                text.toLowerCase().includes(detectedEmotion.toLowerCase())
+                  ? "active"
+                  : ""
+              }`}
+            >
+              {text}
+            </div>
+          )
+        )}
+      </div>
     </div>
   );
 };
 
 export default CameraCapture;
-

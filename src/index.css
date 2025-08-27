@@ -24,11 +24,21 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  padding: 0;
+  background-color: white;
 }
+
+
+/* Cabecera */
+header {
+  background-color: #2e2e2e; /* Gris oscuro */
+  color: white;
+  padding: 15px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+}
+
 
 h1 {
   font-size: 3.2em;
