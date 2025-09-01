@@ -5,6 +5,8 @@ const CameraCapture = () => {
   const videoRef = useRef(null);
   // Estado para manejar posibles errores (ej: usuario no da permiso)
   const [error, setError] = useState(null);
+  const [intervalId, setIntervalId] = useState(null);
+
 
   // 📌 Habilitar cámara
   useEffect(() => {
@@ -31,8 +33,9 @@ const CameraCapture = () => {
       if (videoRef.current && videoRef.current.srcObject) {
         videoRef.current.srcObject.getTracks().forEach(track => track.stop());
       }
+      if (intervalId) clearInterval(intervalId);
     };
-  }, []);
+  }, [intervalId]);
 
   // 📌 Función para enviar imagen al backend
   const sendImageToBackend = async (blob) => {
@@ -46,15 +49,16 @@ const CameraCapture = () => {
         body: formData,
       });
 
+      if (!response.ok) {
+                   throw new Error(`Error del servidor: ${response.statusText}`);
+                }
+
       const data = await response.json();
       console.log("Respuesta backend:", data);
       if (data.emotion) {
         alert(`Emoción detectada: ${data.emotion}`);
       }else if (data.error) {
         alert(`Error del servidor: ${data.error}`);
-      }
-      else {
-        alert("Respuesta inesperada del servidor");
       }
       //alert(`Emoción detectada: ${data.emotion}`);
     } catch (error) {
@@ -64,6 +68,8 @@ const CameraCapture = () => {
 
   // 📌 Capturar un frame del video
   const captureImage = () => {
+    if (!videoRef.current) return;
+
     const canvas = document.createElement("canvas");
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
@@ -91,6 +97,21 @@ const CameraCapture = () => {
     }, "image/jpeg");
   };
 
+  // Iniciar captura automática
+  const startStreaming = () => {
+    if (!intervalId) {
+      const id = setInterval(captureImage, 5000); // 1 frame/seg
+      setIntervalId(id);
+    }
+  };
+
+  // Detener captura automática
+  const stopStreaming = () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+      setIntervalId(null);
+    }
+  };
   return (
     <div style={{ textAlign: "center" }}>
       <h3>Captura en tiempo real</h3>
@@ -102,8 +123,11 @@ const CameraCapture = () => {
         style={{ width: "100%", maxWidth: "500px", borderRadius: "10px" }}
       />
       <br />
-      <button onClick={captureImage} style={{ marginTop: "10px" }}>
-        Capturar y detectar emoción
+      <button onClick={startStreaming} style={{ marginTop: "10px" }}>
+        ▶️ Iniciar detección en tiempo real
+      </button>
+      <button onClick={stopStreaming} style={{ marginTop: "10px", marginLeft: "10px" }}>
+        ⏹️ Detener
       </button>
     </div>
   );
