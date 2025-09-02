@@ -6,7 +6,8 @@ const CameraCapture = () => {
   const videoRef = useRef(null);
   // Estado para manejar posibles errores (ej: usuario no da permiso)
   const [error, setError] = useState(null);
-  const [detectedEmotion, setDetectedEmotion] = useState("");
+  const [intervalId, setIntervalId] = useState(null);
+
 
   // 📌 Habilitar cámara
   useEffect(() => {
@@ -32,8 +33,9 @@ const CameraCapture = () => {
       if (videoRef.current && videoRef.current.srcObject) {
         videoRef.current.srcObject.getTracks().forEach(track => track.stop());
       }
+      if (intervalId) clearInterval(intervalId);
     };
-  }, []);
+  }, [intervalId]);
 
   // Enviar imagen al backend
   const sendImageToBackend = async (blob) => {
@@ -47,15 +49,16 @@ const CameraCapture = () => {
         body: formData,
       });
 
+      if (!response.ok) {
+                   throw new Error(`Error del servidor: ${response.statusText}`);
+                }
+
       const data = await response.json();
       console.log("Respuesta backend:", data);
       if (data.emotion) {
         alert(`Emoción detectada: ${data.emotion}`);
       }else if (data.error) {
         alert(`Error del servidor: ${data.error}`);
-      }
-      else {
-        alert("Respuesta inesperada del servidor");
       }
       //alert(`Emoción detectada: ${data.emotion}`);
     } catch (error) {
@@ -65,6 +68,8 @@ const CameraCapture = () => {
 
   // Capturar frame
   const captureImage = () => {
+    if (!videoRef.current) return;
+
     const canvas = document.createElement("canvas");
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
@@ -92,36 +97,38 @@ const CameraCapture = () => {
     }, "image/jpeg");
   };
 
+  // Iniciar captura automática
+  const startStreaming = () => {
+    if (!intervalId) {
+      const id = setInterval(captureImage, 5000); // 1 frame/seg
+      setIntervalId(id);
+    }
+  };
+
+  // Detener captura automática
+  const stopStreaming = () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+      setIntervalId(null);
+    }
+  };
   return (
-    <div className="camera-container">
-      <div className="video-wrapper">
-        {error && <p className="error">{error}</p>}
-        <video ref={videoRef} autoPlay playsInline muted />
-      </div>
-
-      <div className="emotion-button">
-        <button onClick={captureImage}>
-          {detectedEmotion || "Detectar emoción"}
-        </button>
-      </div>
-
-      <div className="pictograms-container">
-        {["Pictograma 1", "Pictograma 2", "Pictograma 3", "Pictograma 4"].map(
-          (text, idx) => (
-            <div
-              key={idx}
-              className={`pictogram-card ${
-                detectedEmotion &&
-                text.toLowerCase().includes(detectedEmotion.toLowerCase())
-                  ? "active"
-                  : ""
-              }`}
-            >
-              {text}
-            </div>
-          )
-        )}
-      </div>
+    <div style={{ textAlign: "center" }}>
+      <h3>Captura en tiempo real</h3>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        style={{ width: "100%", maxWidth: "500px", borderRadius: "10px" }}
+      />
+      <br />
+      <button onClick={startStreaming} style={{ marginTop: "10px" }}>
+        ▶️ Iniciar detección en tiempo real
+      </button>
+      <button onClick={stopStreaming} style={{ marginTop: "10px", marginLeft: "10px" }}>
+        ⏹️ Detener
+      </button>
     </div>
   );
 };
