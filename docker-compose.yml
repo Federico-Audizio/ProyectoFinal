@@ -7,4 +7,5 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+      - ./backend/model:/app/model
     command: npm run dev -- --host

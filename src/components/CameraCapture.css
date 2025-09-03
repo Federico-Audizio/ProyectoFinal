@@ -1,0 +1,75 @@
+.camera-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.video-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: black;
+}
+
+video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.error {
+  color: red;
+  font-weight: bold;
+}
+
+.emotion-button {
+  text-align: center;
+  padding: 10px;
+}
+
+.emotion-button button {
+  padding: 10px 20px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 8px;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+.emotion-button button:hover {
+  background: #0056b3;
+}
+
+.pictograms-container {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px;
+  background: white;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.pictogram-card {
+  width: 22%;
+  background: #fff;
+  border-radius: 12px;
+  text-align: center;
+  padding: 15px;
+  font-weight: bold;
+  font-size: 1rem;
+  border: 2px solid #ddd;
+  box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.pictogram-card:hover {
+  transform: scale(1.05);
+  border-color: #007bff;
+}
+
+.pictogram-card.active {
+  border-color: #28a745;
+  background-color: #e6ffed;
+}
