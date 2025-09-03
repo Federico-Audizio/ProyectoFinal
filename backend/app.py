@@ -2,12 +2,17 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import cv2
 import numpy as np
+import keras
 from keras.models import load_model
 import os
-import keras
+from ultralytics import YOLO  # ✅ Importamos YOLO
 
 app = Flask(__name__)
 CORS(app)  # 🔥 Habilita CORS para todas las rutas
+
+# -----------------------------
+# 🔹 MODELO 1 (Keras .keras)
+# -----------------------------
 
 # Cargamos el  modelo de detección de rostros
 prototxtPath = r"face_detector\deploy.prototxt"
@@ -102,3 +107,40 @@ def predict():
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
 
+
+# -----------------------------
+# 🔹 MODELO 2 (YOLO best.pt)
+# -----------------------------
+YOLO_PATH = r"C:\Users\Lenovo\OneDrive\Desktop\ProyectoFinal\backend\model\best.pt"
+yolo_model = YOLO(YOLO_PATH)
+
+@app.route('/predict-yolo', methods=['POST'])
+def predict_yolo():
+    try:
+        file = request.files.get('image')
+        if file is None:
+            return jsonify({"error": "No se recibió ninguna imagen"}), 400
+
+        npimg = np.frombuffer(file.read(), np.uint8)
+        image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+
+        results = yolo_model.predict(image, conf=0.5)
+
+        detections = []
+        for r in results:
+            for box in r.boxes:
+                detections.append({
+                    "class": yolo_model.names[int(box.cls)],
+                    "confidence": float(box.conf),
+                    "bbox": box.xyxy[0].tolist()
+                })
+
+        return jsonify({"detections": detections})
+
+    except Exception as e:
+        print("❌ Error YOLO", e)
+        return jsonify({"error": str(e)}), 500
+
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=5000, debug=True)
