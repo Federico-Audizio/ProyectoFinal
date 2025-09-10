@@ -1,17 +1,25 @@
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Layout from "./components/Layout";
+import CameraPage from "./pages/CameraPage";
+import PictogramPage from "./pages/PictogramPage";
 
-import React from 'react'
-// @ts-ignore
-import CameraCapture from './components/CameraCapture';
-
-
-function App() {
+function App(){
   return (
-    <div style={{ textAlign: 'center', marginTop: '20px' }}>
-      <h1>Apoyo Comunicacional</h1>
-      <CameraCapture />
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        {/* Layout = envoltorio con sidebar, se mantiene siempre */}
+        <Route path="/" element={<Layout />}>
+          {/* Estas son las pantallas que se cargan en <Outlet /> */}
+          <Route path="camera" element={<CameraPage />} />
+          <Route path="pictograms" element={<PictogramPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
+
+
 

@@ -1,0 +1,20 @@
+.sidebar {
+  width: 60px;                 /* ancho fijo de la barra */
+  background-color: #1e1e1e;   /* color gris oscuro estilo VS Code */
+  color: white;
+  height: 100vh;               /* ocupa toda la altura de la pantalla */
+  display: flex;
+  flex-direction: column;      /* íconos uno debajo del otro */
+  align-items: center;         /* centrados en el eje X */
+  padding-top: 20px;
+}
+
+.icon {
+  margin: 20px 0;
+  color: #ccc;
+  text-decoration: none;       /* sin subrayado */
+}
+
+.icon:hover {
+  color: #fff;                 /* al pasar el mouse cambia a blanco */
+}
