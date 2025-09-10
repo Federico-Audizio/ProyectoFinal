@@ -57,6 +57,53 @@ const CameraCapture = () => {
     } else if (data.error) {
       setDetectedEmotion(`Error: ${data.error}`);
     }
+    if (data.box && data.image_size) {
+      const [x1, y1, x2, y2] = data.box;
+      //const [origW, origH] = data.image_size;
+
+      const canvas = document.getElementById("overlay");
+      const ctx = canvas.getContext("2d");
+      
+
+      // ajustar tamaño del canvas al video
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+
+      // limpiar canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // dibujar rectángulo
+      ctx.strokeStyle = "lime";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+
+      // mostrar emoción y confianza arriba del recuadro
+      ctx.fillStyle = "red";
+      ctx.font = "20px Arial";
+      ctx.fillText(`${data.emotion} (${data.confidence.toFixed(1)}%)`, x1, y1 - 10);
+    }// Ajustar tamaño del canvas al del video
+  canvas.width = videoRef.current.videoWidth;
+  canvas.height = videoRef.current.videoHeight;
+
+  // Calcular factor de escala
+  const scaleX = canvas.width / origW;
+  const scaleY = canvas.height / origH;
+
+  // Escalar coordenadas
+  const adjX1 = x1 * scaleX;
+  const adjY1 = y1 * scaleY;
+  const adjX2 = x2 * scaleX;
+  const adjY2 = y2 * scaleY;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = "lime";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(adjX1, adjY1, adjX2 - adjX1, adjY2 - adjY1);
+
+  ctx.fillStyle = "red";
+  ctx.font = "20px Arial";
+  ctx.fillText(`${data.emotion} (${data.confidence.toFixed(1)}%)`, adjX1, adjY1 - 10);
 
   } catch (error) {
     console.error("Error enviando imagen al backend:", error);
@@ -119,6 +166,18 @@ const CameraCapture = () => {
         playsInline
         style={{ width: "100%", maxWidth: "600px", borderRadius: "10px" }}
       />
+      <canvas
+        id="overlay"
+        style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        maxWidth: "600px",
+        borderRadius: "10px",
+        pointerEvents: "none" // para que no bloquee clicks
+        }}
+      ></canvas>
       <div 
           style={{
             marginTop: "15px",
