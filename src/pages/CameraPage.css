@@ -107,15 +107,15 @@
 .pictogram-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr); /* 2 columnas */
-    gap: 15px; /* Espacio entre los pictogramas */
+    gap: 10px; /* Espacio entre los pictogramas */
     justify-items: center;
     align-items: center;
     padding: 20px;
 }
 
 .pictogram-grid img {
-    width: 100px; /* Ancho deseado de la imagen */
-    height: 100px; /* Altura deseada */
+    width: 200px; /* Ancho deseado de la imagen */
+    height: 200px; /* Altura deseada */
     border-radius: 10px;
     object-fit: contain; /* Asegura que la imagen se ajuste sin deformarse */
     border: 2px solid #ccc;
@@ -123,8 +123,8 @@
 }
 
 .pictogram {
-  width: 100px;  /* Ajusta el ancho y alto según lo necesites */
-  height: 100px;
+  width: 200px;  /* Ajusta el ancho y alto según lo necesites */
+  height: 200px;
   background: white;
   border-radius: 12px;
   display: flex;
