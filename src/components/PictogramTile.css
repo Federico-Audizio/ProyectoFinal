@@ -28,3 +28,11 @@
   transform: translateY(-4px);
   box-shadow: 0 6px 18px rgba(0,0,0,0.08);
 }
+
+.pictogram-tile.selected {
+  box-shadow: 0 0 12px 3px var(--tile-color, #007bff);
+  border: 3px solid var(--tile-color, #007bff);
+  transform: scale(1.05);
+  transition: all 0.2s ease;
+}
+
