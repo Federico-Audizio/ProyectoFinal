@@ -1,15 +1,17 @@
-import { Camera, Image } from "lucide-react"; // importamos íconos
-import { Link } from "react-router-dom";      // Link = navegación entre páginas
+import { Link } from "react-router-dom";      
 import "./Sidebar.css";
 
 const Sidebar = () => {
   return (
     <div className="sidebar">
-      <Link to="/camera" className="icon">   {/* link a la página de cámara */}
-        <Camera size={28} />
+      {/* link a la página de cámara */}
+      <Link to="/camera" className="icon">
+        <img src="/icons/emocion.png" alt="Cámara" className="sidebar-icon" />
       </Link>
-      <Link to="/pictograms" className="icon"> {/* link a la página de pictogramas */}
-        <Image size={28} />
+
+      {/* link a la página de pictogramas */}
+      <Link to="/pictograms" className="icon">
+        <img src="/icons/pictograma.png" alt="Pictogramas" className="sidebar-icon" />
       </Link>
     </div>
   );

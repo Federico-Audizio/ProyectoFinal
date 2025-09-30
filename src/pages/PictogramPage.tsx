@@ -85,8 +85,8 @@ const PictogramPage: React.FC = () => {
 
         {/* Botón borrar */}
         {selected && (
-          <button className="clear-btn" onClick={() => setSelected(null)}>
-            ❌ Borrar
+          <button className="close-btn" onClick={() => setSelected(null)}>
+            <img src="/icons/borrar.png" alt="Borrar" className="btn-icon" />Borrar
           </button>
         )}
       </div>
