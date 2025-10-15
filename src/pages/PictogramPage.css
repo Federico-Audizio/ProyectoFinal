@@ -24,7 +24,8 @@
 .sentence-content {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between; /* 👈 separa texto y botón */
+  width: 100%; /* ocupa todo el ancho */
 }
 
 .sentence-emoji {
@@ -44,6 +45,7 @@
   font-size: 20px;
   font-weight: bold;
   color: #333;
+  flex: 1;
 }
 
 .placeholder {
@@ -51,33 +53,41 @@
   color: #888;
 }
 
-/* Grilla de pictogramas */
 .pictogram-grid {
-  flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(9, 1fr); /* 9 columnas exactas */
+  grid-template-rows: repeat(4, 1fr);    /* 4 filas exactas */
+  gap: 6px; /* menos espacio entre tiles */
+  flex: 1;
+  height: 100%;
 }
 
-/* Cada pictograma */
 .pictogram-tile {
   background: white;
-  border: 3px solid #ccc;
-  border-radius: 12px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 15px;
-  font-size: 18px;
+  padding: 6px;            /* 👈 más chico */
+  font-size: 14px;         /* 👈 letra más chica */
   font-weight: bold;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.pictogram-tile .emoji {
-  font-size: 40px;
-  margin-bottom: 8px;
+.pictogram-tile .emoji,
+.pictogram-tile .picto-img {
+  max-width: 55px;   /* 👈 achicamos imágenes */
+  max-height: 55px;
+  margin-bottom: 6px; /* 👈 menos espacio con el texto */
+}
+
+.pictogram-tile .label {
+  font-size: 15px;   /* 👈 texto más compacto */
+  color: #333;
+  text-align: center;
 }
 
 .pictogram-tile .label {
@@ -88,13 +98,6 @@
 .pictogram-tile:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.picto-img {
-  width: 50px;
-  height: 50px;
-  margin-bottom: 8px;
-  object-fit: contain;
 }
 
 /* Carpeta */
@@ -129,25 +132,23 @@
 }
 
 .close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #dc3545; /* rojo estilo bootstrap */
+  background: #dc3545;
   color: white;
   border: none;
-  border-radius: 6px; /* esquinas redondeadas suaves */
-  padding: 6px 12px;
+  border-radius: 8px;
+  padding: 6px 10px;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: background 0.2s ease, transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close-btn:hover {
   background: #c82333; /* rojo más oscuro en hover */
-  transform: scale(1.05);
 }
+
 .modal-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
