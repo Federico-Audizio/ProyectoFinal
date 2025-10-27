@@ -73,10 +73,12 @@ const CameraPage: React.FC = () => {
       <div className="left-panel">
           <CameraCapture isStreaming={isStreaming} onEmotionDetected={handleEmotionDetected} />        <div className="controls">
           <button className="start-btn" onClick={() => setIsStreaming(true)}>
-            ▶️ Iniciar detección
+            <img src="/icons/iniciar.png" alt="Iniciar detección" className="btn-icon" />
+            Iniciar detección
           </button>
           <button className="stop-btn" onClick={() => setIsStreaming(false)}>
-            ⏹️ Detener
+            <img src="/icons/detener.png" alt="Detener detección" className="btn-icon" />
+            Detener
           </button>
           <select
             className="model-select"
