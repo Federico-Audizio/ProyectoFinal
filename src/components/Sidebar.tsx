@@ -11,6 +11,9 @@ const Sidebar = () => {
       <Link to="/pictograms" className="icon"> {/* link a la página de pictogramas */}
         <Image size={28} />
       </Link>
+      <Link to="/eyetracking" className="icon"> {/* link a la página de pictogramas */}
+        <Image size={28} />
+      </Link>
     </div>
   );
 };

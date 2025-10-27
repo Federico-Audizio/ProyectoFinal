@@ -19,10 +19,12 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ isStreaming, onEmotionDet
   const [error, setError] = useState<string | null>(null);
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
   const [detectionResult, setDetectionResult] = useState<DetectionResult | null>(null);
+  const [pictograms, setPictograms] = useState<string[]>([]);
 
 
   let currentStream: MediaStream | null = null;
   
+
   // 📌 Habilitar y detener cámara
   useEffect(() => {
     const enableCamera = async () => {
@@ -171,7 +173,8 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ isStreaming, onEmotionDet
   }, [isStreaming, intervalId, onEmotionDetected]);
 
   return (
-    <div className="camera-container" style={{ position: "relative", width: "100%", maxWidth: "640px", display: "inline-block" }}>
+    
+      <div className="camera-container" style={{ position: "relative", width: "100%", maxWidth: "640px", display: "inline-block" }}>
       {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
       <video 
         ref={videoRef} 
@@ -188,7 +191,8 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ isStreaming, onEmotionDet
           left: 0,
         }}
       ></canvas>
-        
+      
+
     </div>
   );
 };

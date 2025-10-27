@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import cv2
 import numpy as np
@@ -7,9 +7,15 @@ from keras.models import load_model
 import os
 from ultralytics import YOLO  # ✅ Importamos YOLO
 
+#BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # /proyecto/backend
+#PROJECT_DIR = os.path.dirname(BASE_DIR)                # /proyecto
+#PUBLIC_DIR = os.path.join(PROJECT_DIR, "public")       # /proyecto/public
+#PICTOGRAMS_DIR = os.path.join(PUBLIC_DIR, "pictograms")
+
 app = Flask(__name__)
 CORS(app)  # 🔥 Habilita CORS para todas las rutas
-
+PICTOGRAMS_DIR = "\ProyectoFinal\public\pictograms"
+#PICTOGRAMS_DIR = os.path.join(os.getcwd(), "public", "pictograms")
 # -----------------------------
 # 🔹 MODELO 1 (Keras .keras)
 # -----------------------------
@@ -71,6 +77,10 @@ def predict():
         Xf = min(w - 1, Xf)
         Yf = min(h - 1, Yf)
 
+        # 🔧 Ordenar coordenadas para evitar Xi > Xf o Yi > Yf
+        Xi, Xf = sorted([Xi, Xf])
+        Yi, Yf = sorted([Yi, Yf])
+
         # Asegurar que las coordenadas estén en el orden correcto
         if Xi >= Xf or Yi >= Yf:
             return jsonify({'emotion': 'Caja inválida', 'confidence': float(best_conf * 100)})
@@ -94,7 +104,7 @@ def predict():
 
         return jsonify({
             'emotion': result,
-            'confidence': confidence_emotion,
+            'confidence': float(best_conf * 100),
             'raw_prediction': prediction.tolist(),
             'box': [int(Xi), int(Yi), int(Xf), int(Yf)],
             'image_size': [w, h]
@@ -111,7 +121,7 @@ if __name__ == '__main__':
 # -----------------------------
 # 🔹 MODELO 2 (YOLO best.pt)
 # -----------------------------
-YOLO_PATH = r"C:\Users\Lenovo\OneDrive\Desktop\ProyectoFinal\backend\model\best.pt"
+YOLO_PATH = r"\ProyectoFinal\backend\model\best.pt"
 yolo_model = YOLO(YOLO_PATH)
 
 @app.route('/predict-yolo', methods=['POST'])
@@ -140,6 +150,8 @@ def predict_yolo():
     except Exception as e:
         print("❌ Error YOLO", e)
         return jsonify({"error": str(e)}), 500
+
+
 
 
 if __name__ == '__main__':
