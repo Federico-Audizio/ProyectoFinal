@@ -13,6 +13,11 @@ const Sidebar = () => {
       <Link to="/pictograms" className="icon">
         <img src="/icons/pictograma.png" alt="Pictogramas" className="sidebar-icon" />
       </Link>
+
+      {/* link a la página de seguimiento ocular */}
+      <Link to="/eyegestures" className="icon">
+        <img src="/icons/eye.png" alt="Seguimiento Ocular" className="sidebar-icon" />
+      </Link>
     </div>
   );
 };
