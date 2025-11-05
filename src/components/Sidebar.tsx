@@ -14,7 +14,7 @@ const Sidebar = () => {
         <img src="/icons/pictograma.png" alt="Pictogramas" className="sidebar-icon" />
       </Link>
       <Link to="/eyetracking" className="icon"> {/* link a la página de pictogramas */}
-        <Image size={28} />
+        <img className="sidebar-icon" />
       </Link>
     </div>
   );
