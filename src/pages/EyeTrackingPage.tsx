@@ -1,11 +1,9 @@
-<<<<<<< HEAD
-import React, { useState } from "react";
-// 🚨 Importa los estilos de la nueva página. Necesitarás crear este archivo.
-import "./EyeTrackingPage.css"; 
-import FiEye from "../components/Icons/FiEye"; 
+import React, { useState, useRef, useEffect } from "react";
+import "./EyeTrackingPage.css";
+import FiEye from "../components/Icons/FiEye";
 import FiCheckCircle from "../components/Icons/FiCheckCircle";
 
-// 🎯 1. Interfaz para definir la estructura de cada pictograma
+// 🎯 1. Interfaz para definir pictogramas
 interface Pictogram {
   id: number;
   name: string;
@@ -14,111 +12,92 @@ interface Pictogram {
   content?: Pictogram[];
 }
 
-// 🎯 2. LISTA DE PICTOGRAMAS (Simulando los de tu imagen EyeGesturesLite)
-// Asume que las imágenes están en /public/pictograms/general/
-const PICTOGRAM_LIST = [
-  { id: 1, label:"Casa", name: "Casa", imagePath: "/public/pictograms/Casa.png", isFolder: true, content: [
-      { id: 101, label:"Dormir", name: "Dormir", imagePath: "/public/pictograms/Casa/dormir.png" },
-      { id: 102, label:"Cocina", name: "Cocina", imagePath: "/public/pictograms/Casa/cocina.png" },
-      { id: 103, label:"Baño", name: "Baño", imagePath: "/public/pictograms/Casa/baño.png" },
-      { id: 104, label:"Jardín", name: "Jardín", imagePath: "/public/pictograms/Casa/jardín.png" },
-    ]
+// 🎯 2. LISTA DE PICTOGRAMAS
+const PICTOGRAM_LIST: Pictogram[] = [
+  {
+    id: 1,
+    name: "Casa",
+    imagePath: "/public/pictograms/casa de muñecas.png",
+    isFolder: true,
+    content: [
+      { id: 101, name: "Dormir", imagePath: "/public/pictograms/Casa/dormir.png" },
+      { id: 102, name: "Cocina", imagePath: "/public/pictograms/Casa/cocina.png" },
+      { id: 103, name: "Baño", imagePath: "/public/pictograms/Casa/baño.png" },
+      { id: 104, name: "Jardín", imagePath: "/public/pictograms/Casa/jardín.png" },
+    ],
   },
-  { id: 2, label:"Verbos", name: "Verbos", imagePath: "/public/pictograms/Verbos.png", isFolder: true, content: [
-      { id: 201, label:"Escribir", name: "Escribir", imagePath: "/public/pictograms/Verbos/escribir.png" },
-      { id: 202, label:"Pensar", name: "Pensar", imagePath: "/public/pictograms/Verbos/pensar.png" },
-      { id: 203, label:"Pasear", name: "Pasear", imagePath: "/public/pictograms/Verbos/pasear.png" },
-      { id: 204, label:"Romper", name: "Romper", imagePath: "/public/pictograms/Verbos/romper.png" },
-    ]
+  {
+    id: 2,
+    name: "Verbos",
+    imagePath: "/public/pictograms/Verbos.png",
+    isFolder: true,
+    content: [
+      { id: 201, name: "Escribir", imagePath: "/public/pictograms/Verbos/escribir.png" },
+      { id: 202, name: "Pensar", imagePath: "/public/pictograms/Verbos/pensar.png" },
+      { id: 203, name: "Pasear", imagePath: "/public/pictograms/Verbos/pasear.png" },
+      { id: 204, name: "Romper", imagePath: "/public/pictograms/Verbos/romper.png" },
+    ],
   },
-  { id: 3, label:"Alegre", name: "Alegre", imagePath: "/public/pictograms/Estado/alegre.png" },
+  { id: 3, name: "Alegre", imagePath: "/public/pictograms/Estado/alegre.png" },
+  { id: 4, name: "Mamá", imagePath: "/public/pictograms/Estado/mamá.png" },
+  { id: 5, name: "Comida", imagePath: "/public/pictograms/comer.png" },
+  { id: 6, name: "Beber", imagePath: "/public/pictograms/beber.png" },
+  { id: 7, name: "Ir al baño", imagePath: "/public/pictograms/baño.png" },
+  { id: 8, name: "Ver televisión", imagePath: "/public/pictograms/ver la televisión.png" },
+
 ];
 
-// 🎯 3. COMPONENTE PRINCIPAL
 const EyeTrackingPage: React.FC = () => {
-  // Estado para simular qué pictograma está siendo "mirado" (hovered)
   const [hoveredId, setHoveredId] = useState<number | null>(null);
-  // Estado para guardar el pictograma seleccionado de forma definitiva
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [currentFolder, setCurrentFolder] = useState<Pictogram[] | null>(null);
-  // 📌 NOTA: Esta sería la función que recibiría la entrada del modelo de seguimiento ocular
-  const handleGazeSelection = (id: number) => {
-      setHoveredId(id);
-      // Aquí podrías implementar un contador: si 'hoveredId' es el mismo por X tiempo, llamas a setSelectedId(id)
-  }
-  const pictogramsToShow = currentFolder || PICTOGRAM_LIST;
-  // Simulación de una acción al hacer clic (que sería la selección por tiempo de mirada)
-  const handlePictogramClick = (id: number) => {
-  const selected = (currentFolder || PICTOGRAM_LIST).find(p => p.id === id);
-  if (selected?.isFolder && selected.content) {
-    setCurrentFolder(selected.content);
-  } else {
-    setSelectedId(id);
-  }
+  const [animatingId, setAnimatingId] = useState<number | null>(null);
 
-  
-};
-const findPictogramById = (id: number, list: Pictogram[]): Pictogram | undefined => {
-  for (const pictogram of list) {
-    if (pictogram.id === id) return pictogram;
-    if (pictogram.content) {
-      const found = findPictogramById(id, pictogram.content);
-      if (found) return found;
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastHoveredRef = useRef<number | null>(null);
+
+  // 🔹 Función para encontrar pictograma por ID
+  const findPictogramById = (id: number, list: Pictogram[]): Pictogram | undefined => {
+    for (const pictogram of list) {
+      if (pictogram.id === id) return pictogram;
+      if (pictogram.content) {
+        const found = findPictogramById(id, pictogram.content);
+        if (found) return found;
+      }
     }
   };
-}
-  return (
-    <div className="eye-tracking-container">
-      <h1>EyeGesturesLite: Comunicación Asistida</h1>
+
+  const pictogramsToShow = currentFolder || PICTOGRAM_LIST;
+
+  // 🔹 Simulación hover por mirada
+  const handleGazeSelection = (id: number) => setHoveredId(id);
+
+  // 🔹 Click (o selección futura por mirada)
+  const handlePictogramClick = (id: number) => {
+    // 1. Evitar dobles clicks si ya se está animando
+    if (animatingId === id) return;
+    // 2. Activar la animación visual
+    setAnimatingId(id);
+    // 3. Esperar a que termine la animación (300ms) antes de ejecutar la lógica
+    setTimeout(() => {
+      const selected = pictogramsToShow.find((p) => p.id === id);
       
-      {/* 📌 BARRA DE ESTADO */}
-      <div className="status-bar">
-        {selectedId ? (
-          <p className="status-message success">
-            <FiCheckCircle /> Seleccionado: {findPictogramById(selectedId!, PICTOGRAM_LIST)?.name}
-          </p>
-        ) : (
-          <p className="status-message waiting">
-            <FiEye /> Seleccionado: {findPictogramById(selectedId!, PICTOGRAM_LIST)?.name}
-          </p>
-        )}
-      </div>
+      if (selected?.isFolder && selected.content) {
+        setCurrentFolder(selected.content);
+        setSelectedId(null);
+      } else {
+        setSelectedId(id);
+      }
+      // 4. Limpiar el estado de animación
+      setAnimatingId(null);
+      // Limpiar el hover para que no se quede "pegado" visualmente
+      setHoveredId(null); 
+    }, 300); // <--- Este tiempo debe coincidir con el de tu CSS (.3s)
+  };
 
-      {/* 📌 CUADRÍCULA DE PICTOGRAMAS */}
-      {/* 🔙 Botón para volver atrás si estás dentro de una carpeta */}
-        {currentFolder && (
-          <div className="back-button-container">
-            <button
-              className="back-button"
-                onClick={() => {
-                  setCurrentFolder(null);
-                  setSelectedId(null);
-                }}
-              >
-                ⬅ Volver
-            </button>
-          </div>
-        )}
-      <div className="pictogram-grid-selector">
-        {pictogramsToShow.map((pictogram) => (
-          <div
-            key={pictogram.id}
-            className={`pictogram-card 
-              ${hoveredId === pictogram.id ? "hovered" : ""}
-              ${selectedId === pictogram.id ? "selected" : ""}`}
-            onMouseEnter={() => handleGazeSelection(pictogram.id)}
-            onMouseLeave={() => setHoveredId(null)}
-            onClick={() => handlePictogramClick(pictogram.id)}
-          >
-            <img src={pictogram.imagePath} alt={pictogram.name} className="pictogram-image" />
-            <p className="pictogram-name">{pictogram.name}</p>
-          </div>
-        ))}
-      </div>
-=======
-import React, { useEffect } from "react";
-
-const EyeTrackingPage: React.FC = () => {
+  // ======================================
+  // 🔹 EyeGestures: carga e inicialización
+  // ======================================
   useEffect(() => {
     const loadEyeGestures = async () => {
       try {
@@ -148,11 +127,11 @@ const EyeTrackingPage: React.FC = () => {
             document.head.appendChild(l);
           });
 
-        // ✅ Cargamos tus archivos locales
+        // ✅ Cargamos localmente los archivos
         await loadCSS("/eyegestures.css");
         await loadScript("/eyegestures.js");
 
-        // Esperamos que la clase esté disponible
+        // Esperamos a que se monte EyeGestures
         const checkReady = () =>
           new Promise<void>((resolve, reject) => {
             let tries = 0;
@@ -172,36 +151,87 @@ const EyeTrackingPage: React.FC = () => {
         const EG = (window as any).EyeGestures;
         console.log("✅ EyeGestures detectado:", EG);
 
+        // 📍 Actualiza cursor y detecta coordenadas
         const onPoint = (point: number[], calibration: boolean) => {
           const [x, y] = point;
           const cursor = document.getElementById("cursor") as HTMLElement | null;
-          if (!cursor) return;
+          const brush = document.createElement("div");
+          if (!cursor || !brush) return;
 
-          // Si los valores son mayores a 1, asumimos que son píxeles reales
           const px = x > 1 ? x : x * window.innerWidth;
           const py = y > 1 ? y : y * window.innerHeight;
 
           cursor.style.left = `${px}px`;
           cursor.style.top = `${py}px`;
           cursor.style.display = "block";
-
-          // Cambia color según calibración
           cursor.style.backgroundColor = calibration
-            ? "rgba(0, 255, 0, 0.8)" // verde mientras calibra
-            : "rgba(0, 150, 255, 0.8)"; // azul normal
+            ? "rgba(0, 150, 255, 0.8)"
+            : "rgba(0, 150, 255, 0.8)";
+
+          // ⭐ Glow fuerte
+          cursor.style.boxShadow = calibration
+            ? "0px 0px 22px 12px rgba(0, 150, 255, 0.7)"
+            : "0px 0px 22px 12px rgba(0,150,255,0.7)";
+
+          // 🔷 Efecto estela suave
+          brush.style.position = "absolute";
+          brush.style.left = `${px}px`;
+          brush.style.top = `${py}px`;
+          brush.style.width = "80px";
+          brush.style.height = "80px";
+          brush.style.borderRadius = "50%";
+          brush.style.zIndex = "1";
+
+
+          // 💙 Color azul estilo demo (fuerte en el centro, suave afuera)
+          brush.style.background =
+            "radial-gradient(circle, rgba(0,150,255,0.6) 0%, rgba(0,150,255,0.30) 50%, rgba(0,150,255,0) 100%)";
+          // 🔥 Blur suave para que parezca una estela real
+          brush.style.filter = "blur(20px)";
+          brush.style.pointerEvents = "none";
+          brush.style.transform = "translate(-50%, -50%)";
+          // ⭐ Transición para que desaparezca lentamente
+          brush.style.transition = "opacity 1.2s ease-out";
+
+          // Agregar al contenedor
+          document.body.appendChild(brush);
+          // 🕒 Después de 20ms, bajamos opacidad para que se desvanezca
+          setTimeout(() => {
+            brush.style.opacity = "0";
+          }, 20);
+          // 🗑️ Eliminar la pincelada después de que desaparezca
+          setTimeout(() => {
+            brush.remove();
+          }, 1500);
+        
+
+          // 🎯 Aquí luego implementaremos detección de hover sobre pictogramas
+          // Verificar qué pictograma está bajo el cursor
+          const elements = document.elementsFromPoint(px, py);
+          const pictogramEl = elements.find((el) =>
+            el.classList.contains("pictogram-card")
+          ) as HTMLElement | undefined;
+
+          if (pictogramEl) {
+            const id = Number(pictogramEl.dataset.id);
+            if (id !== hoveredId) {
+              setHoveredId(id);
+              // Reinicia temporizador de selección
+              if (timerRef.current) clearTimeout(timerRef.current);
+              timerRef.current = setTimeout(() => {
+                handlePictogramClick(id);
+              }, 2000); // 👁️ selección tras 2 s de mirada
+            }
+          } else {
+            setHoveredId(null);
+            if (timerRef.current) clearTimeout(timerRef.current);
+          }
         };
-        // ✅ Inicia automáticamente
+
         const gestures = new EG("video", onPoint);
         gestures.start();
-
-        // 🔹 Forzar a mostrar el puntero azul creado por la librería
-        const cursorScript = document.getElementById("cursor");
-        if (cursorScript) cursorScript.style.display = "block";
-
         (window as any)._eyeGesturesInstance = gestures;
-
         console.log("🚀 EyeGestures iniciado automáticamente");
-
       } catch (error) {
         console.error("❌ Error al iniciar EyeGestures:", error);
       }
@@ -230,52 +260,102 @@ const EyeTrackingPage: React.FC = () => {
     };
   }, []);
 
+  // ======================================
+  // 🔹 Render principal
+  // ======================================
   return (
-    <div
-      style={{
-        position: "relative",
-        width: "100vw",
-        height: "100vh",
-        background: "#111",
-        overflow: "hidden",
-      }}
-    >
-      <video
-        id="video"
-        width="640"
-        height="480"
-        autoPlay
-        style={{ display: "none" }}
-      ></video>
+    <div className="eye-tracking-container">
+      <h1>EyeGesturesLite: Comunicación Asistida</h1>
 
-      <div id="status" style={{ display: "none" }}>
-        Initializing...
+      {/* 📌 Barra de estado */}
+      <div className="status-bar">
+        {selectedId ? (
+          <p className="status-message success">
+            <FiCheckCircle /> Seleccionado: {findPictogramById(selectedId!, PICTOGRAM_LIST)?.name}
+          </p>
+        ) : (
+          <p className="status-message waiting">
+            <FiEye /> Esperando selección...
+          </p>
+        )}
       </div>
+
+      {/* 🔙 Volver atrás */}
+      {currentFolder && (
+        <div className="back-button-container">
+          <button
+            className="back-button"
+            onClick={() => {
+              setCurrentFolder(null);
+              setSelectedId(null);
+            }}
+          >
+            ⬅ Volver
+          </button>
+        </div>
+      )}
+
+      {/* 📸 Video oculto + cursor */}
+      <video id="video" width="640" height="480" autoPlay style={{ display: "none" }}></video>
+      <div id="status" style={{ display: "none" }}>Initializing...</div>
       <div id="error" style={{ display: "none", color: "red" }}></div>
 
-      {/* Cursor visual */}
+      {/* 🎯 Cursor visual */}
+      {/* Cursor principal */}
       <div
         id="cursor"
         style={{
           position: "absolute",
-          width: "20px",
-          height: "20px",
-          backgroundColor: "rgba(0, 150, 255, 0.8)",
+          width: "28px",
+          height: "28px",
+          backgroundColor: "rgba(0, 150, 255, 0.95)",
           borderRadius: "50%",
           pointerEvents: "none",
-          left: "50%",
-          top: "50%",
           transform: "translate(-50%, -50%)",
-          transition: "left 0.05s linear, top 0.05s linear",
+          zIndex: 9999,
+          boxShadow: "0px 0px 20px 10px rgba(0, 150, 255, 0.7)",
         }}
       ></div>
->>>>>>> f0ccab6d6fb1c6cbc96567e7dd4d6b66a586252d
+
+      {/* 🔥 Estela estilo pincel (MATCH con EyeGestures) */}
+      <div
+        id="cursorTrail"
+        style={{
+          position: "absolute",
+          width: "160px",
+          height: "160px",
+          background:
+            "radial-gradient(circle, rgba(0,150,255,0.55) 0%, rgba(0,150,255,0.15) 60%, rgba(0,150,255,0) 100%)",
+          borderRadius: "50%",
+          filter: "blur(35px)",
+          pointerEvents: "none",
+          transform: "translate(-50%, -50%)",
+          transition: "left 0.35s ease-out, top 0.35s ease-out, opacity 0.4s",
+          zIndex: 999,
+        }}
+      ></div>
+
+      {/* 📦 Cuadrícula de pictogramas */}
+      <div className="pictogram-grid-selector">
+        {pictogramsToShow.map((pictogram) => (
+          <div
+            key={pictogram.id}
+            className={`pictogram-card 
+              ${hoveredId === pictogram.id ? "hovered" : ""}
+              ${selectedId === pictogram.id ? "selected" : ""}
+              ${animatingId === pictogram.id ? "click-animate" : ""}
+              `} 
+            onMouseEnter={() => handleGazeSelection(pictogram.id)}
+            onMouseLeave={() => setHoveredId(null)}
+            onClick={() => handlePictogramClick(pictogram.id)}
+          >
+            <img src={pictogram.imagePath} alt={pictogram.name} className="pictogram-image" />
+            <p className="pictogram-name">{pictogram.name}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
-<<<<<<< HEAD
 export default EyeTrackingPage;
-=======
-export default EyeTrackingPage;
->>>>>>> f0ccab6d6fb1c6cbc96567e7dd4d6b66a586252d

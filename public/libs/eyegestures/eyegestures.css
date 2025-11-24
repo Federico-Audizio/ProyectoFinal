@@ -37,6 +37,5 @@
     background: rgba(0, 150, 255, 0.8);
     pointer-events: none;
     z-index: 9999;
-    transition: left 0.05s linear, top 0.05s linear;
 }
  
