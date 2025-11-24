@@ -99,6 +99,8 @@ const EyeTrackingPage: React.FC = () => {
   // 🔹 EyeGestures: carga e inicialización
   // ======================================
   useEffect(() => {
+    if ((window as any)._eyeGesturesLoaded) return;
+      (window as any)._eyeGesturesLoaded = true;
     const loadEyeGestures = async () => {
       try {
         console.log("🔹 Cargando EyeGestures...");
@@ -203,24 +205,30 @@ const EyeTrackingPage: React.FC = () => {
           setTimeout(() => {
             brush.remove();
           }, 1500);
-        
-
-          // 🎯 Aquí luego implementaremos detección de hover sobre pictogramas
-          // Verificar qué pictograma está bajo el cursor
-          const elements = document.elementsFromPoint(px, py);
+          
+          // detectar elementos debajo del cursor
+          const elements = document.elementsFromPoint(px, py - window.scrollY);
           const pictogramEl = elements.find((el) =>
             el.classList.contains("pictogram-card")
           ) as HTMLElement | undefined;
 
           if (pictogramEl) {
             const id = Number(pictogramEl.dataset.id);
-            if (id !== hoveredId) {
-              setHoveredId(id);
-              // Reinicia temporizador de selección
+
+            // efecto hover
+            if (lastHoveredRef.current !== id) {
+              lastHoveredRef.current = id;
+
+              // reiniciar selección por mirada
               if (timerRef.current) clearTimeout(timerRef.current);
+
+              // selección automática a los 2 segundos
               timerRef.current = setTimeout(() => {
                 handlePictogramClick(id);
-              }, 2000); // 👁️ selección tras 2 s de mirada
+              pictogramEl.dispatchEvent(
+              new MouseEvent("click", { bubbles: true })
+            );
+          }, 3000);
             }
           } else {
             setHoveredId(null);
@@ -264,6 +272,7 @@ const EyeTrackingPage: React.FC = () => {
   // 🔹 Render principal
   // ======================================
   return (
+    
     <div className="eye-tracking-container">
       <h1>EyeGesturesLite: Comunicación Asistida</h1>
 
@@ -294,14 +303,14 @@ const EyeTrackingPage: React.FC = () => {
           </button>
         </div>
       )}
-
+      <div id="status" >Initializing...</div>
+      <div id="error" style={{ color: "red" }}></div>
       {/* 📸 Video oculto + cursor */}
       <video id="video" width="640" height="480" autoPlay style={{ display: "none" }}></video>
       <div id="status" style={{ display: "none" }}>Initializing...</div>
       <div id="error" style={{ display: "none", color: "red" }}></div>
 
       {/* 🎯 Cursor visual */}
-      {/* Cursor principal */}
       <div
         id="cursor"
         style={{
@@ -340,11 +349,10 @@ const EyeTrackingPage: React.FC = () => {
         {pictogramsToShow.map((pictogram) => (
           <div
             key={pictogram.id}
+            data-id={pictogram.id}
             className={`pictogram-card 
               ${hoveredId === pictogram.id ? "hovered" : ""}
-              ${selectedId === pictogram.id ? "selected" : ""}
-              ${animatingId === pictogram.id ? "click-animate" : ""}
-              `} 
+              ${selectedId === pictogram.id ? "selected" : ""}`}
             onMouseEnter={() => handleGazeSelection(pictogram.id)}
             onMouseLeave={() => setHoveredId(null)}
             onClick={() => handlePictogramClick(pictogram.id)}

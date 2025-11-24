@@ -3,10 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import CameraPage from "./pages/CameraPage";
 import PictogramPage from "./pages/PictogramPage";
-
-import EyeTrackingPage from "./pages/EyeTrackingPage"; // 👈 nueva importación
-
-
+import EyeTrackingPage from './pages/EyeTrackingPage'; 
 
 
 function App() {
