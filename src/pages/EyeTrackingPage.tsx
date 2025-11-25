@@ -130,8 +130,8 @@ const EyeTrackingPage: React.FC = () => {
           });
 
         // ✅ Cargamos localmente los archivos
-        await loadCSS("/eyegestures.css");
-        await loadScript("/eyegestures.js");
+        await loadCSS("/libs/eyegestures/eyegestures.css");
+        await loadScript("/libs/eyegestures/eyegestures.js");
 
         // Esperamos a que se monte EyeGestures
         const checkReady = () =>
@@ -219,16 +219,15 @@ const EyeTrackingPage: React.FC = () => {
             if (lastHoveredRef.current !== id) {
               lastHoveredRef.current = id;
 
-              // reiniciar selección por mirada
               if (timerRef.current) clearTimeout(timerRef.current);
 
-              // selección automática a los 2 segundos
+              // COINCIDE CON CSS: 3000ms = 3 segundos
               timerRef.current = setTimeout(() => {
                 handlePictogramClick(id);
-              pictogramEl.dispatchEvent(
-              new MouseEvent("click", { bubbles: true })
-            );
-          }, 3000);
+                
+                // Opcional: Feedback visual extra (click)
+                pictogramEl.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+              }, 3000); 
             }
           } else {
             setHoveredId(null);
@@ -352,11 +351,19 @@ const EyeTrackingPage: React.FC = () => {
             data-id={pictogram.id}
             className={`pictogram-card 
               ${hoveredId === pictogram.id ? "hovered" : ""}
-              ${selectedId === pictogram.id ? "selected" : ""}`}
+              ${selectedId === pictogram.id ? "selected" : ""}
+              ${animatingId === pictogram.id ? "click-animate" : ""}
+            `}
             onMouseEnter={() => handleGazeSelection(pictogram.id)}
             onMouseLeave={() => setHoveredId(null)}
             onClick={() => handlePictogramClick(pictogram.id)}
+            style={{ position: "relative" }} /* Importante para posicionar los bordes */
           >
+            {/* 👇 AGREGAR ESTO: Elemento visual para la carga de 3 segundos */}
+            <div className="selection-border">
+                <span></span>
+            </div>
+            {/* 👆 FIN DEL AGREGADO */}
             <img src={pictogram.imagePath} alt={pictogram.name} className="pictogram-image" />
             <p className="pictogram-name">{pictogram.name}</p>
           </div>
