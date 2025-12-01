@@ -1,12 +1,17 @@
 /* EyeTrackingPage.css */
 
 .eye-tracking-container {
+    width: 100%;          /* 👈 Ocupa todo el ancho disponible */
+    max-width: none;      /* 👈 Quitamos la limitación de 1000px */
+    height: 100vh;        /* 👈 Forza la altura al tamaño exacto de la pantalla */
+    margin: 0;            /* 👈 Quitamos márgenes de centrado */
     padding: 20px;
-    max-width: 1000px; /* Tamaño más ajustado para la cuadrícula */
-    margin: 0 auto;
-    text-align: center;
-    background-color: #f4f4f4; /* Fondo claro general */
-    min-height: 100vh;
+    box-sizing: border-box; /* Asegura que el padding no sume tamaño extra */
+    
+    display: flex;        /* Activamos Flexbox */
+    flex-direction: column; /* Elementos uno debajo del otro */
+    overflow: hidden;     /* 👈 Evita que salga scroll en la página principal */
+    background-color: #b1b1b1;
 }
 
 h1 {
@@ -16,18 +21,84 @@ h1 {
 }
 
 .status-bar {
+    display: flex; /* Para poner el botón atrás y el texto lado a lado */
+    align-items: center;
+    gap: 15px;
     margin-bottom: 25px;
     padding: 10px;
     background-color: #e0e0e0;
-    border-radius: 8px;
+    border-radius: 15px;
+    min-height: 80px; /* Altura fija para que no salte */
+    position: relative;
 }
 
-.status-message {
-    font-size: 1.2em;
+/* --- BOTÓN ATRÁS (Estilo Pictograma Mini) --- */
+.back-card-container {
+    flex-shrink: 0; /* Que no se encoja */
+}
+
+/* Hereda estilos de .pictogram-card pero ajustado */
+.pictogram-card.mini-card {
+    width: 130px;  /* Antes 80px */
+    height: 130px; /* Antes 80px */
+    padding: 10px;
+    margin: 0;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #fff; /* Fondo blanco para resaltar */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.back-icon {
+    font-size: 60px;
+    color: #333;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.pictogram-card.mini-card p {
+    font-size: 1.2em !important; /* Forzamos tamaño de letra */
+    font-weight: bold;
+    margin: 0;
+    color: #555;
+}
+
+/* --- ÁREA DE MENSAJE / SELECCIÓN --- */
+.status-message-area {
+    flex-grow: 1; /* Ocupa el resto del espacio */
     display: flex;
     align-items: center;
     justify-content: center;
+    background: #fff; /* Un fondo blanco suave para destacar */
+    border-radius: 10px;
+    height: 80px;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
 }
+
+.status-message {
+    font-size: 1.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px; /* Espacio entre imagen y texto */
+    margin: 0;
+    color: #333;
+}
+
+/* Imagen pequeña del seleccionado */
+.selected-preview-img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    border-radius: 5px;
+}
+
+/* Color de texto para estados */
+.status-message.waiting { color: #333; }
+.status-message.success { color: #28a745; font-weight: bold; }
 
 /* Estilo para la cuadrícula */
 .pictogram-grid-selector {
@@ -35,23 +106,33 @@ h1 {
     /* 4 columnas como en tu imagen de ejemplo */
     grid-template-columns: repeat(4, 1fr); 
     gap: 15px; /* Espacio entre las tarjetas */
+
+    flex: 1;              /* 👈 CLAVE: Ocupa todo el espacio vertical sobrante */
+    overflow-y: auto;     /* Si hay muchas tarjetas, el scroll aparece SOLO aquí */
+    overflow-x: hidden;
+    padding-bottom: 15px; /* Espacio al final para que no se pegue al borde */
 }
 
 /* Estilo de cada tarjeta/pictograma */
 .pictogram-card {
     background-color: #e9e9e9; /* Fondo gris claro de la tarjeta */
-    border-radius: 10px;
-    padding: 15px;
+    border-radius: 15px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    /* Sombras sutiles como las de tu imagen */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); 
     transition: all 0.2s ease-in-out;
     cursor: pointer;
     border: 3px solid transparent; /* Borde base transparente */
     aspect-ratio: 1 / 1; /* Asegura que la tarjeta sea cuadrada */
+    height: 100%; /* Que intenten llenar su celda */
+    max-height: 250px; /* 👈 Límite para que no sean gigantes en pantallas grandes */
+
+    /* Evitar desbordamiento interno */
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 /* Estilos de selección (simulación de Eye-Tracking) */
@@ -80,6 +161,16 @@ h1 {
 .pictogram-card.hovered .pictogram-image {
     /* Si quieres un efecto de color en la imagen al ser mirada */
     filter: none; 
+}
+
+.pictogram-name {
+    font-size: 1.2rem; /* Tamaño de letra relativo */
+    margin: 0;
+    text-align: center;
+    width: 100%;
+    white-space: nowrap; /* Evita que el texto ocupe dos líneas si es posible */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Pone "..." si el texto es muy largo */
 }
 
 #cursor {

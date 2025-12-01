@@ -1,23 +1,26 @@
-import { Link } from "react-router-dom";      
+import { NavLink } from "react-router-dom";
 import "./Sidebar.css";
 
 const Sidebar = () => {
   return (
     <div className="sidebar">
-      {/* link a la página de cámara */}
-      <Link to="/camera" className="icon">
+      {/* 1. Link CÁMARA */}
+      <NavLink to="/camera" className="icon">
         <img src="/icons/emocion.png" alt="Cámara" className="sidebar-icon" />
-      </Link>
+        <span className="link-text">Cámara</span> {/* <--- Nuevo Texto */}
+      </NavLink>
 
-      {/* link a la página de pictogramas */}
-      <Link to="/pictograms" className="icon">
+      {/* 2. Link PICTOGRAMAS */}
+      <NavLink to="/pictograms" className="icon">
         <img src="/icons/pictograma.png" alt="Pictogramas" className="sidebar-icon" />
-      </Link>
+        <span className="link-text">Pictogramas</span> {/* <--- Nuevo Texto */}
+      </NavLink>
 
-      {/* link a la página de seguimiento ocular */}
-      <Link to="/eyegestures" className="icon">
-        <img src="/icons/visibilidad.png" alt="Seguimiento Ocular" className="sidebar-icon" />
-      </Link>
+      {/* 3. Link SEGUIMIENTO OCULAR */}
+      <NavLink to="/eyegestures" className="icon">
+        <img src="/icons/visibilidad.png" alt="EyeTracking" className="sidebar-icon" />
+        <span className="link-text">Calibración</span> {/* <--- Nuevo Texto */}
+      </NavLink>
     </div>
   );
 };

@@ -55,6 +55,7 @@ const EyeTrackingPage: React.FC = () => {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastHoveredRef = useRef<number | null>(null);
+  const BACK_BUTTON_ID = -99;
 
   // 🔹 Función para encontrar pictograma por ID
   const findPictogramById = (id: number, list: Pictogram[]): Pictogram | undefined => {
@@ -80,20 +81,29 @@ const EyeTrackingPage: React.FC = () => {
     setAnimatingId(id);
     // 3. Esperar a que termine la animación (300ms) antes de ejecutar la lógica
     setTimeout(() => {
-      const selected = pictogramsToShow.find((p) => p.id === id);
-      
-      if (selected?.isFolder && selected.content) {
-        setCurrentFolder(selected.content);
+      // CASO 1: Es el botón de atrás
+      if (id === BACK_BUTTON_ID) {
+        setCurrentFolder(null);
         setSelectedId(null);
-      } else {
-        setSelectedId(id);
+      } 
+      // CASO 2: Es un pictograma normal
+      else {
+        const selected = pictogramsToShow.find((p) => p.id === id);
+        if (selected?.isFolder && selected.content) {
+          setCurrentFolder(selected.content);
+          setSelectedId(null);
+        } else {
+          setSelectedId(id);
+        }
       }
-      // 4. Limpiar el estado de animación
+      
       setAnimatingId(null);
-      // Limpiar el hover para que no se quede "pegado" visualmente
       setHoveredId(null); 
-    }, 300); // <--- Este tiempo debe coincidir con el de tu CSS (.3s)
+    }, 300); // 3 Segundos// <--- Este tiempo debe coincidir con el de tu CSS (.3s)
   };
+
+  // Helper para obtener el objeto seleccionado actual
+  const selectedPictogramObj = selectedId ? findPictogramById(selectedId, PICTOGRAM_LIST) : null;
 
   // ======================================
   // 🔹 EyeGestures: carga e inicialización
@@ -218,6 +228,7 @@ const EyeTrackingPage: React.FC = () => {
             // efecto hover
             if (lastHoveredRef.current !== id) {
               lastHoveredRef.current = id;
+              setHoveredId(id);
 
               if (timerRef.current) clearTimeout(timerRef.current);
 
@@ -273,35 +284,57 @@ const EyeTrackingPage: React.FC = () => {
   return (
     
     <div className="eye-tracking-container">
-      <h1>EyeGesturesLite: Comunicación Asistida</h1>
 
-      {/* 📌 Barra de estado */}
+      {/* ✅ NUEVA BARRA DE ESTADO INTEGRADA */}
       <div className="status-bar">
-        {selectedId ? (
-          <p className="status-message success">
-            <FiCheckCircle /> Seleccionado: {findPictogramById(selectedId!, PICTOGRAM_LIST)?.name}
-          </p>
-        ) : (
-          <p className="status-message waiting">
-            <FiEye /> Esperando selección...
-          </p>
+        
+        {/* 1. BOTÓN ATRÁS (Solo si estamos dentro de una carpeta) */}
+        {currentFolder && (
+          <div className="back-card-container">
+             <div
+                data-id={BACK_BUTTON_ID}
+                className={`pictogram-card mini-card
+                  ${hoveredId === BACK_BUTTON_ID ? "hovered" : ""}
+                  ${animatingId === BACK_BUTTON_ID ? "click-animate" : ""}
+                `}
+                onMouseEnter={() => handleGazeSelection(BACK_BUTTON_ID)}
+                onMouseLeave={() => setHoveredId(null)}
+                onClick={() => handlePictogramClick(BACK_BUTTON_ID)}
+                style={{ position: "relative", cursor: "pointer" }}
+              >
+                {/* BORDE DE CARGA (El mismo que las otras tarjetas) */}
+                <div className="selection-border"><span></span></div>
+                
+                {/* Icono o Imagen de Flecha Atrás */}
+                {/* Puedes poner <img src="/ruta/flecha.png" /> si prefieres */}
+                <span className="back-icon">⬅️</span> 
+                <p style={{margin: "5px 0 0 0", fontSize: "12px", fontWeight: "bold"}}>Volver</p>
+            </div>
+          </div>
         )}
+
+        {/* 2. ÁREA CENTRAL (Mensaje + Imagen Seleccionada) */}
+        <div className="status-message-area">
+          {selectedId && selectedPictogramObj ? (
+            <div className="status-message success">
+              {/* Muestra la IMAGEN */}
+              <img 
+                src={selectedPictogramObj.imagePath} 
+                alt={selectedPictogramObj.name} 
+                className="selected-preview-img" 
+              />
+              {/* Muestra el TEXTO */}
+              <span>{selectedPictogramObj.name}</span>
+              <FiCheckCircle />
+            </div>
+          ) : (
+            <p className="status-message waiting">
+              <FiEye style={{marginRight: "10px"}}/> Esperando selección...
+            </p>
+          )}
+        </div>
       </div>
 
-      {/* 🔙 Volver atrás */}
-      {currentFolder && (
-        <div className="back-button-container">
-          <button
-            className="back-button"
-            onClick={() => {
-              setCurrentFolder(null);
-              setSelectedId(null);
-            }}
-          >
-            ⬅ Volver
-          </button>
-        </div>
-      )}
       <div id="status" >Initializing...</div>
       <div id="error" style={{ color: "red" }}></div>
       {/* 📸 Video oculto + cursor */}

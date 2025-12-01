@@ -60,6 +60,7 @@
   gap: 26px; /* menos espacio entre tiles */
   flex: 1;
   height: 100%;
+  min-height: 0;
 }
 
 .pictogram-tile {
@@ -70,7 +71,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 6px;            /* 👈 más chico */
+  padding: 4px;            /* 👈 más chico */
   font-size: 14px;         /* 👈 letra más chica */
   font-weight: bold;
   cursor: pointer;

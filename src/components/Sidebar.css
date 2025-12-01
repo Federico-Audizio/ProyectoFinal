@@ -1,27 +1,85 @@
 .sidebar {
-  width: 60px;                 /* ancho fijo de la barra */
-  background-color: #1e1e1e;   /* color gris oscuro estilo VS Code */
-  color: white;
-  height: 100vh;               /* ocupa toda la altura de la pantalla */
+  /* Ancho inicial (colapsado) */
+  width: 60px; 
+  background-color: #1e1e1e;
+  height: 100vh;
   display: flex;
-  flex-direction: column;      /* íconos uno debajo del otro */
-  align-items: center;         /* centrados en el eje X */
+  flex-direction: column;
   padding-top: 20px;
+  box-sizing: border-box;
+  
+  /* ANIMACIÓN SUAVE DE APERTURA */
+  transition: width 0.3s ease;
+  overflow: hidden; /* Importante: oculta el texto que no cabe mientras se cierra */
+  
+  /* Asegura que la barra esté por encima del contenido si se expande */
+  position: relative; 
+  z-index: 1000;
 }
 
+/* --- ESTADO EXPANDIDO (HOVER) --- */
+.sidebar:hover {
+  width: 220px; /* Ancho final cuando pasas el mouse */
+}
+
+/* El enlace contenedor */
 .icon {
-  margin: 20px 0;
+  padding: 15px 0; 
   color: #ccc;
-  text-decoration: none;       /* sin subrayado */
+  text-decoration: none;
+  display: flex;
+  align-items: center; /* Centra verticalmente icono y texto */
+  
+  /* Alineación: ahora alineamos a la izquierda, no al centro */
+  justify-content: flex-start; 
+  padding-left: 14px; /* (60px ancho - 32px icono) / 2 = ~14px para centrar el icono cuando está cerrado */
+  
+  border-left: 4px solid transparent; 
+  transition: all 0.2s ease;
+  white-space: nowrap; /* Evita que el texto salte de línea */
+  cursor: pointer;
 }
 
 .sidebar-icon {
   width: 32px;
   height: 32px;
   object-fit: contain;
+  transition: filter 0.2s ease;
+  flex-shrink: 0; /* Evita que el icono se aplaste */
 }
 
+/* --- EL TEXTO NUEVO --- */
+.link-text {
+  margin-left: 15px; /* Espacio entre icono y texto */
+  font-size: 16px;
+  font-weight: 500;
+  
+  /* Oculto por defecto */
+  opacity: 0;
+  transform: translateX(-10px); /* Efecto sutil de entrada */
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
 
-.icon:hover {
-  color: #fff;                 /* al pasar el mouse cambia a blanco */
+/* Mostrar texto cuando el mouse está sobre la barra lateral */
+.sidebar:hover .link-text {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.1s; /* Pequeño retraso para que espere a que la barra abra un poco */
+}
+
+/* --- ESTADOS (Mantenemos tu estilo azul neón) --- */
+
+.icon:hover:not(.active) {
+  color: #fff;
+  background-color: #2a2d2e;
+}
+
+.icon.active {
+  border-left-color: #007bff;
+  background-color: #252526; 
+  color: #fff;
+}
+
+.icon.active .sidebar-icon {
+  filter: drop-shadow(0 0 5px #007bff);
 }
