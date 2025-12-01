@@ -7,6 +7,7 @@
   flex-direction: column;      /* íconos uno debajo del otro */
   align-items: center;         /* centrados en el eje X */
   padding-top: 20px;
+  min-width: 60px;
 }
 
 .icon {
