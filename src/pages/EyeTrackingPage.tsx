@@ -230,6 +230,9 @@ const EyeTrackingPage: React.FC = () => {
               lastHoveredRef.current = id;
               setHoveredId(id);
 
+              // ⭐ Activa animación de borde 3s
+              setHoveredId(id);
+
               if (timerRef.current) clearTimeout(timerRef.current);
 
               // COINCIDE CON CSS: 3000ms = 3 segundos

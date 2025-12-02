@@ -4,12 +4,16 @@ import Layout from "./components/Layout";
 import CameraPage from "./pages/CameraPage";
 import PictogramPage from "./pages/PictogramPage";
 import EyeTrackingPage from './pages/EyeTrackingPage'; 
+import Home from "./pages/Home";
+//import { Home } from "lucide-react";
 
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+
+        <Route path="/" element={<Home />} />
         {/* Layout = envoltorio con sidebar, se mantiene siempre */}
         <Route path="/" element={<Layout />}>
           {/* Estas son las pantallas que se cargan en <Outlet /> */}

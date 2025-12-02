@@ -1,0 +1,96 @@
+/* Home.css */
+
+/* Contenedor principal: Fondo azul degradado y centrado total */
+.home-container {
+  background: linear-gradient(180deg, #0e2a47 0%, #1c4e80 100%);
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Título BIENVENIDOS */
+.home-title {
+  color: #dbeafe; /* Blanco azulado */
+  font-size: 4rem; /* Tamaño grande */
+  font-weight: 900; /* Muy negrita */
+  text-transform: uppercase;
+  margin-bottom: 3rem; /* Espacio antes de los botones */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  font-stretch: condensed; /* Intenta condensar la letra si la fuente lo permite */
+  text-align: center;
+}
+
+/* Contenedor de la lista de opciones */
+.menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Espacio entre cada fila de botones */
+  width: 100%;
+  max-width: 600px; /* Ancho máximo para que no se estiren demasiado */
+}
+
+/* Fila individual: Icono + Botón */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Espacio entre el círculo y el botón */
+}
+
+/* El círculo pequeño para el icono */
+.icon-circle {
+  width: 60px;
+  height: 60px;
+  background-color: #dbeafe; /* Mismo color azul claro */
+  border-radius: 50%; /* Círculo perfecto */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0; /* Evita que el círculo se aplaste */
+  font-size: 1.5rem; /* Tamaño del icono dentro */
+  color: #1c4e80;
+}
+
+/* El botón grande rectangular (Píldora) */
+.nav-button {
+  background-color: #dbeafe;
+  color: #000;
+  flex-grow: 1; /* Ocupa el resto del espacio */
+  padding: 18px 20px;
+  border-radius: 50px; /* Bordes muy redondeados */
+  text-decoration: none; /* Quitar subrayado del Link */
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, background-color 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+/* Efecto Hover (cuando pasas el mouse) */
+.nav-button:hover, .icon-circle:hover {
+  background-color: #ffffff;
+  transform: scale(1.02);
+}
+
+/* Responsive: Para celulares pequeños */
+@media (max-width: 600px) {
+  .home-title {
+    font-size: 2.5rem;
+  }
+  .icon-circle {
+    width: 50px;
+    height: 50px;
+  }
+  .nav-button {
+    font-size: 0.9rem;
+    padding: 15px;
+  }
+}

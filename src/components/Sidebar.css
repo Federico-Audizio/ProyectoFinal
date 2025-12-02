@@ -15,6 +15,7 @@
   /* Asegura que la barra esté por encima del contenido si se expande */
   position: relative; 
   z-index: 1000;
+  min-width: 60px;
 }
 
 /* --- ESTADO EXPANDIDO (HOVER) --- */
