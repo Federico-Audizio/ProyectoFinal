@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import CameraCapture from "../components/CameraCapture";
 import "./CameraPage.css"; // 🔥 Estilos externos
 
@@ -66,50 +66,92 @@ const CameraPage: React.FC = () => {
     setCurrentPictograms(pictogramPaths);
   };
 
+  // 👇 2. AGREGA ESTO: Expone la función a la ventana global del navegador
+  useEffect(() => {
+    (window as any).forzarEmocion = (emocion: string) => {
+      console.log("Forzando emoción:", emocion);
+      handleEmotionDetected(emocion);
+    };
+  }, []);
+
+  // Función para alternar entre Iniciar y Detener
+  const toggleStreaming = () => {
+    setIsStreaming(!isStreaming);
+    if (isStreaming) {
+        setEmotion("Detección detenida.");
+        setCurrentPictograms([]);
+    }
+  };
+
 
   return (
     <div className="camera-page">
       {/* ---- Panel Izquierdo ---- */}
       <div className="left-panel">
-          <CameraCapture isStreaming={isStreaming} onEmotionDetected={handleEmotionDetected} />        <div className="controls">
-          <button className="start-btn" onClick={() => setIsStreaming(true)}>
-            <img src="/icons/iniciar.png" alt="Iniciar detección" className="btn-icon" />
-            Iniciar detección
-          </button>
-          <button className="stop-btn" onClick={() => setIsStreaming(false)}>
-            <img src="/icons/detener.png" alt="Detener detección" className="btn-icon" />
-            Detener
-          </button>
-          <select
-            className="model-select"
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-          >
-            <option value="keras">Modelo Keras</option>
-            <option value="yolo">Modelo YOLO</option>
-          </select>
+          {/* 1. Cámara: Ocupa todo el espacio superior */}
+          <div className="camera-wrapper">
+             <CameraCapture isStreaming={isStreaming} onEmotionDetected={handleEmotionDetected} />
+          </div>
+
+          {/* 2. Controles: Alineados abajo */}
+          <div className="controls-footer">
+            {/* Botón Unificado */}
+            <button 
+                className={`toggle-btn ${isStreaming ? "stop" : "start"}`} 
+                onClick={toggleStreaming}
+            >
+                {isStreaming ? (
+                    <>
+                        {/* Icono de Stop (cuadrado) o Fin */}
+                        <div className="icon-square">■</div> 
+                        Fin
+                    </>
+                ) : (
+                    <>
+                        {/* Icono de Play (triángulo) */}
+                        <div className="icon-play">▶</div> 
+                        Iniciar
+                    </>
+                )}
+            </button>
+
+            {/* Selector de Modelo */}
+            <select
+                className="model-select"
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+            >
+                <option value="keras">Modelo Keras</option>
+                <option value="yolo">Modelo YOLO</option>
+            </select>
         </div>
       </div>
 
       {/* ---- Panel Derecho ---- */}
       <div className="right-panel">
-        <div className="pictogram-grid">
-          {/* 📌 Renderizado dinámico de los pictogramas */}
-          {currentPictograms.length > 0 ? (
-            currentPictograms.map((p, index) => (
-              <div key={index} className="pictogram-item">
-                <img src={p.src} alt={p.label} className="pictogram" loading="lazy"/>
-                <p>{p.label}</p>
-              </div>
-            ))
-          ) : (
-            <div className="placeholder">
-              <p>Esperando detección de emoción...</p>
+        {/* 1. Grid: Ocupa todo el espacio superior */}
+        <div className="pictogram-grid-container">
+            <div className="camera-pictogram-grid"> 
+            {currentPictograms.length > 0 ? (
+                currentPictograms.map((p, index) => (
+                <div 
+                    key={index} 
+                    className="camera-pictogram-item"
+                >
+                    <img src={p.src} alt={p.label} className="camera-pictogram" loading="lazy"/> 
+                    <p>{p.label}</p>
+                </div>
+                ))
+            ) : (
+                <div className="placeholder">
+                 <p>Esperando...</p>
+                </div>
+            )}
             </div>
-          )}
         </div>
 
-        <div className="emotion-box">
+        {/* 2. Caja Emoción: Alineada abajo (misma altura que controles) */}
+        <div className="emotion-box-footer">
           <span>Emoción: {emotion}</span>
         </div>
       </div>

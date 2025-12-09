@@ -18,78 +18,84 @@
   flex: 3;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  gap: 15px;
+  height: 100%;
 }
 
 /* Contenedor de la cámara */
-.camera-container {
+.camera-wrapper {
   flex: 1;
   background: #000;
   border-radius: 12px;
   overflow: hidden;
-  max-height: 70vh;
   position: relative;
+  margin-bottom: 20px; /* Espacio antes de los botones */
+  border: 2px solid #2c3e50;
 }
 
-.camera-container video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* asegura que el video se adapte */
+/* Ajuste del componente interno */
+.camera-wrapper > div, 
+.camera-wrapper video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Para ver todo el cuadro de video */
 }
 
 /* ====================
-   📌 Controles (botones + selector)
+   📌 Controles Inferiores (Izquierda)
 ==================== */
-.controls {
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  flex-wrap: wrap;
+.controls-footer {
+    height: 80px; /* Altura FIJA */
+    display: flex;
+    gap: 15px;
 }
 
-.controls button,
-.controls select {
-  flex: 1;
-  padding: 12px;
-  font-size: 22px;
-  font-weight: bold;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  min-width: 120px;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+/* BOTÓN UNIFICADO */
+.toggle-btn {
+    flex: 1; /* Ocupa la mitad */
+    border: none;
+    border-radius: 10px;
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
 
-.start-btn {
-  background-color: #28a745;
-  color: #fff;
+/* Estilo Iniciar (Azul) */
+.toggle-btn.start {
+    background-color: #007bff; /* Azul vibrante */
+}
+.toggle-btn.start:hover {
+    background-color: #0056b3;
 }
 
-.start-btn:hover {
-  background-color: #218838;
-  transform: scale(1.05);
+/* Estilo Fin (Gris) */
+.toggle-btn.stop {
+    background-color: #6c757d; /* Gris */
+}
+.toggle-btn.stop:hover {
+    background-color: #545b62;
 }
 
-.stop-btn {
-  background-color: #dc3545;
-  color: #fff;
-}
+/* Iconos hechos con CSS para no depender de imágenes */
+.icon-play { font-size: 28px; line-height: 1; }
+.icon-square { font-size: 22px; line-height: 1; margin-top: -2px;}
 
-.stop-btn:hover {
-  background-color: #c82333;
-  transform: scale(1.05);
-}
-
+/* Selector de Modelo */
 .model-select {
-  background-color: #fff;
-  color: #333;
-  border: 2px solid #ccc;
-}
-
-.model-select:focus {
-  border-color: #007bff;
-  outline: none;
+    flex: 1; /* Ocupa la otra mitad */
+    border-radius: 10px;
+    border: 2px solid #ccc;
+    font-size: 20px;
+    font-weight: 500;
+    padding: 0 15px;
+    background-color: white;
+    cursor: pointer;
 }
 
 /* ====================
@@ -99,68 +105,67 @@
   flex: 2;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 20px;
+  height: 100%;
 }
 
-/* Grid de pictogramas */
-.pictogram-grid {
+/* Contenedor Grilla (maneja el scroll y el fondo) */
+.pictogram-grid-container {
+    flex: 1; 
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    overflow-y: auto; 
+    margin-bottom: 20px; 
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* 🔥 LA CUADRÍCULA (GRID) - CLASE ÚNICA 🔥 */
+.camera-pictogram-grid { /* ¡Clase renombrada! */
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2 columnas */
-    gap: 10px; /* Espacio entre los pictogramas */
-    justify-items: center;
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 10px; 
+    width: 100%;
+    grid-auto-rows: min-content; 
+}
+
+/* Contenedor individual del pictograma - CLASE ÚNICA */
+.camera-pictogram-item { /* ¡Clase renombrada! */
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    padding: 20px;
 }
 
-.pictogram-grid img {
-    width: 200px; /* Ancho deseado de la imagen */
-    height: 200px; /* Altura deseada */
-    border-radius: 10px;
-    object-fit: contain; /* Asegura que la imagen se ajuste sin deformarse */
-    border: 2px solid #ccc;
-    transition: transform 0.2s; /* Transición para un efecto suave */
+.camera-pictogram-item p {
+    color: white;
+    margin-top: 5px;
+    font-weight: 500;
+    text-align: center;
 }
 
-.pictogram {
-  width: 200px;  /* Ajusta el ancho y alto según lo necesites */
-  height: 200px;
+/* 🔥 LA IMAGEN DEL PICTOGRAMA (EL CUADRADO) - CLASE ÚNICA 🔥 */
+.camera-pictogram { /* ¡Clase renombrada! */
+  width: 100%; 
+  aspect-ratio: 1 / 1; /* Se mantiene el cuadrado perfecto */
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
+  object-fit: contain;
+  padding: 5px;
+  box-sizing: border-box; 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Estilos de la caja de emoción (footer) */
+.emotion-box-footer {
+  height: 80px; 
+  background: white;
+  border-radius: 10px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  font-size: 60px;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.pictogram:hover {
-  transform: scale(1.05);
-}
-
-.pictogram.active {
-  box-shadow: 0 0 15px 5px #28a745;
-  transform: scale(1.1);
-}
-
-/* ====================
-   📌 Caja de emoción detectada
-==================== */
-.emotion-box {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  text-align: center;
+  justify-content: center;
+  font-size: 24px;
   font-weight: bold;
-  font-size: 22px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  min-height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   color: #333;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
 
 /* ====================
