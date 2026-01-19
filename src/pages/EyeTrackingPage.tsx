@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import "./EyeTrackingPage.css";
 import FiEye from "../components/Icons/FiEye";
 import FiCheckCircle from "../components/Icons/FiCheckCircle";
+import { useAudio } from "../hooks/useAudio";
 
 // 🎯 1. Interfaz para definir pictogramas
 interface Pictogram {
@@ -52,6 +53,7 @@ const EyeTrackingPage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [currentFolder, setCurrentFolder] = useState<Pictogram[] | null>(null);
   const [animatingId, setAnimatingId] = useState<number | null>(null);
+  const { playAudio } = useAudio();
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastHoveredRef = useRef<number | null>(null);
@@ -92,8 +94,9 @@ const EyeTrackingPage: React.FC = () => {
         if (selected?.isFolder && selected.content) {
           setCurrentFolder(selected.content);
           setSelectedId(null);
-        } else {
+        } else if (selected) {
           setSelectedId(id);
+          playAudio(selected.name);
         }
       }
       
@@ -104,6 +107,17 @@ const EyeTrackingPage: React.FC = () => {
 
   // Helper para obtener el objeto seleccionado actual
   const selectedPictogramObj = selectedId ? findPictogramById(selectedId, PICTOGRAM_LIST) : null;
+
+  /*🔊 Función para reproducir el audio
+  const playAudio = (text: string) => {
+  // Convertimos el texto a un nombre de archivo compatible (ej: "Ir al baño" -> "ir_al_baño.mp3")
+  // Asegúrate de que coincida con cómo guardaste los archivos en tu script de Polly
+  const fileName = text.toLowerCase().replace(/\s+/g, "_") + ".mp3";
+  const audioPath = `public/AudioGenerator/audio/es/${fileName}`; 
+
+  const audio = new Audio(audioPath);
+  audio.play().catch(err => console.error("Error al reproducir audio:", err));
+};*/
 
   // ======================================
   // 🔹 EyeGestures: carga e inicialización
