@@ -188,7 +188,7 @@ class EyeGestures {
             const e = document.getElementById(t);
             async function s() {
                 var t = document.getElementById("video");
-                if (t.readyState === t.HAVE_ENOUGH_DATA) {
+                if (t && t.readyState === t.HAVE_ENOUGH_DATA) {
                     var i = document.getElementById("output_canvas")
                       , e = i.getContext("2d");
                     try {
@@ -226,6 +226,10 @@ class EyeGestures {
               , g = y.getContext("2d");
             g.clearRect(0, 0, y.width, y.height);
             for (var u of t.multiFaceLandmarks) {
+
+                //Lo agregue yo
+                window.currentFaceLandmarks = u;
+
                 r = u[0].x,
                 n = u[1].y,
                 u.forEach(t => {

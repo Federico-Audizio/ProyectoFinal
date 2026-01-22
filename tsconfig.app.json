@@ -9,14 +9,20 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "Node",
+    
+    /* 🚀 CAMBIO: "bundler" es el estándar para Vite y resuelve mejor las librerías */
+    "moduleResolution": "bundler", 
+    "allowImportingTsExtensions": true,
+    
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "allowJs": true,        // ✅ Permite importar archivos .js / .jsx
-    "checkJs": false        // ✅ No les aplica chequeo de tipos
+    "allowJs": true,
+    "checkJs": false,
+
+    /* 🚀 FUNDAMENTAL: Esto le dice a TS dónde buscar el "manual" de Node */
+    "types": ["node"] 
   },
   "include": ["src"]
 }
-

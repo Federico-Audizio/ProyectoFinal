@@ -53,6 +53,19 @@ const EyeTrackingPage: React.FC = () => {
   const [currentFolder, setCurrentFolder] = useState<Pictogram[] | null>(null);
   const [animatingId, setAnimatingId] = useState<number | null>(null);
 
+  // Estado para seguimiento facial
+  //const [mode, setMode] = useState<'center' | 'calibrating' | 'tracking'>('center');
+  const [guideState, setGuideState] = useState<'red' | 'yellow' | 'white' |'green'>('red');
+  const [countdown, setCountdown] = useState(5);  const [faceOk, setFaceOk] = useState(false);
+  const [calibrationStarted, setCalibrationStarted] = useState(false);
+
+  // Centrado de rostro refs
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const faceOkRef = useRef(false); // 👈 ESTO ES LA CLAVE
+
+  
+  const stableTimeRef = useRef<number | null>(null);
+  const hudRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastHoveredRef = useRef<number | null>(null);
   const BACK_BUTTON_ID = -99;
@@ -104,6 +117,60 @@ const EyeTrackingPage: React.FC = () => {
 
   // Helper para obtener el objeto seleccionado actual
   const selectedPictogramObj = selectedId ? findPictogramById(selectedId, PICTOGRAM_LIST) : null;
+
+  // Ref para contar frames estables
+  const faceStableFramesRef = useRef(0);
+
+  // Función de Diagnóstico para chequear si la cara está centrada
+  const checkFacePosition = () => {
+    const landmarks = (window as any).currentFaceLandmarks;
+    
+    // Si no hay cara, ROJO directo.
+    if (!landmarks) {
+        faceStableFramesRef.current = 0;
+        return false;
+    }
+
+    const leftEye = landmarks[33];
+    const rightEye = landmarks[263];
+    if (!leftEye || !rightEye) return false;
+
+    const eyesCenterX = (leftEye.x + rightEye.x) / 2;
+    const eyesCenterY = (leftEye.y + rightEye.y) / 2;
+
+    // 1. EL RECUADRO DE SEGURIDAD
+    // Definimos la zona "buena". Si te sales de aquí, pausa.
+    const FACE_BOX = {
+      left: 0.40,  
+      right: 0.60,
+      top: 0.45,
+      bottom: 0.65
+    };
+
+    const isInside =
+      eyesCenterX > FACE_BOX.left &&
+      eyesCenterX < FACE_BOX.right &&
+      eyesCenterY > FACE_BOX.top &&
+      eyesCenterY < FACE_BOX.bottom;
+
+    if (isInside) {
+      // ✅ ESTÁS DENTRO: Sumamos confianza
+      faceStableFramesRef.current += 1;
+      
+      // Exigimos 10 frames seguidos (aprox 0.3 segundos) para quitar la pausa.
+      // Esto evita que se desbloquee por error si solo pasaste rápido.
+      if (faceStableFramesRef.current > 50) {
+          return true; // SEMÁFORO VERDE
+      }
+      return false; // Aún esperando estabilidad...
+      
+    } else {
+      // ❌ TE SALISTE: Reseteamos confianza inmediatamente
+      faceStableFramesRef.current = 0;
+      console.log("⚠️ Usuario fuera de posición -> PAUSA");
+      return false; // SEMÁFORO ROJO
+    }
+  };
 
   // ======================================
   // 🔹 EyeGestures: carga e inicialización
@@ -163,20 +230,56 @@ const EyeTrackingPage: React.FC = () => {
         const EG = (window as any).EyeGestures;
         console.log("✅ EyeGestures detectado:", EG);
 
+
         // 📍 Actualiza cursor y detecta coordenadas
         const onPoint = (point: number[], calibration: boolean) => {
+          // 1. Consultamos al semáforo
+          const isStableAndCentered = checkFacePosition();
+          
+          // 2. Guardamos el estado real
+          faceOkRef.current = isStableAndCentered;
+
+          // 3. CONTROL DEL OVERLAY (PANTALLA DE CENTRADO)
+          // Si el estado cambió, actualizamos la pantalla.
+          // Si isStableAndCentered es FALSE -> Se muestra el recuadro rojo (Pausa).
+          // Si isStableAndCentered es TRUE -> Se quita el recuadro (Juego).
+          //if (faceOk !== isStableAndCentered) {
+          //   setFaceOk(isStableAndCentered); 
+          //   setGuideState(isStableAndCentered ? "green" : "red");
+          //}
+
+          // 4. LA PAUSA
+          // Si no tienes luz verde, cortamos aquí.
+          // El cursor se queda quieto donde estaba, y el usuario ve el recuadro rojo.
+          if (!faceOkRef.current) {
+            return; 
+          }
+          
           const [x, y] = point;
-          const cursor = document.getElementById("cursor") as HTMLElement | null;
-          const brush = document.createElement("div");
-          if (!cursor || !brush) return;
 
           const px = x > 1 ? x : x * window.innerWidth;
           const py = y > 1 ? y : y * window.innerHeight;
 
+          //if (mode !== 'center') return; // Solo procesar esto si estamos en modo centrado
+          const cursor = document.getElementById("cursor") as HTMLElement | null;
+          const brush = document.createElement("div");
+          if (!cursor || !brush) return;
+
+          // --- POSICIONAMIENTO BÁSICO DEL CURSOR ---
           cursor.style.left = `${px}px`;
           cursor.style.top = `${py}px`;
+              
+          // 👁️ CAMBIO AQUÍ: Si estamos centrando, ocultamos el cursor real
+          // para que solo se vea el HUD técnico.
+          cursor.style.opacity = faceOk ? "0.5" : "1";
           cursor.style.display = "block";
-          cursor.style.backgroundColor = calibration
+
+          // --- LÓGICA DE CALIBRACION NORMAL ---
+
+          //cursor.style.left = `${px}px`;
+          //cursor.style.top = `${py}px`;
+          //cursor.style.display = "block";
+         cursor.style.backgroundColor = calibration
             ? "rgba(0, 150, 255, 0.8)"
             : "rgba(0, 150, 255, 0.8)";
 
@@ -249,10 +352,27 @@ const EyeTrackingPage: React.FC = () => {
           }
         };
 
-        const gestures = new EG("video", onPoint);
-        gestures.start();
-        (window as any)._eyeGesturesInstance = gestures;
-        console.log("🚀 EyeGestures iniciado automáticamente");
+        const startSafe = () => {
+          const videoEl = document.getElementById("video");
+          
+          if (videoEl) {
+            // ¡Video encontrado! Arrancamos seguro
+            const gestures = new EG("video", onPoint);
+            gestures.start();
+
+            setCalibrationStarted(true);
+            (window as any)._eyeGesturesInstance = gestures;
+            console.log("🚀 EyeGestures iniciado correctamente (Video detectado)");
+          } else {
+            // El video aún no existe, esperamos 100ms y probamos de nuevo
+            console.warn("⏳ Esperando elemento <video>...");
+            setTimeout(startSafe, 100);
+          }
+        };
+
+        // Llamamos a la función por primera vez
+        startSafe();
+
       } catch (error) {
         console.error("❌ Error al iniciar EyeGestures:", error);
       }
@@ -279,6 +399,39 @@ const EyeTrackingPage: React.FC = () => {
         }
       }
     };
+  }, []);
+  
+  // ======================================
+  // 🔹 Efecto de chequeo facial periódico
+  // ======================================
+  const visualStableRef = useRef(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const isConfirmed = checkFacePosition();
+
+      if (!isConfirmed) {
+        visualStableRef.current = 0;
+        setFaceOk(false);
+        setGuideState("red");
+        return;
+      }
+
+      visualStableRef.current += 100;
+
+      // ⚪ Primeros 1.5s
+      if (visualStableRef.current < 1000) {
+        setGuideState("white");
+        return;
+      }
+
+      // 🟢 Confirmado visible
+      setFaceOk(true);
+      setGuideState("green");
+
+    }, 100);
+
+    return () => clearInterval(interval);
   }, []);
 
   // ======================================
@@ -340,10 +493,6 @@ const EyeTrackingPage: React.FC = () => {
 
       <div id="status" >Initializing...</div>
       <div id="error" style={{ color: "red" }}></div>
-      {/* 📸 Video oculto + cursor */}
-      <video id="video" width="640" height="480" autoPlay style={{ display: "none" }}></video>
-      <div id="status" style={{ display: "none" }}>Initializing...</div>
-      <div id="error" style={{ display: "none", color: "red" }}></div>
 
       {/* 🎯 Cursor visual */}
       <div
@@ -405,6 +554,42 @@ const EyeTrackingPage: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* 🔳 Overlay de centrado de ojos */}
+      <div 
+        className="calibration-overlay"
+        style={{ 
+          // Si faceOk es true (jugando): Escondemos visualmente y permitimos clicks a través
+          opacity: faceOk ? 0 : 1,
+          visibility: faceOk ? "hidden" : "visible",
+          pointerEvents: faceOk ? "none" : "auto", // Importante para poder clickear abajo
+          transition: "all 0.5s ease" // Suaviza la desaparición
+        }}
+      >
+          <div className="calibration-window">
+            <div className="camera-container-mini">
+            <video id="video" autoPlay muted playsInline className="video-mini" />
+                <div ref={hudRef} className={`eye-guide-hud-mini ${guideState}`} >
+                <div className="scan-line"></div>
+                    {/* Esquinas decorativas */}
+                    <div className="corner top-left"></div>
+                    <div className="corner top-right"></div>
+                    <div className="corner bottom-left"></div>
+                    <div className="corner bottom-right"></div>
+
+                    <span className="guide-text-hud">
+                      {guideState === 'red' && 'ALINEE SUS OJOS'}
+                      {guideState === 'green' && 'POSICIÓN CORRECTA'}
+                    </span>
+              </div>
+            </div>
+            
+            <div className="instruction-footer">
+              <p className="main-instruction">Detección de Rostro</p>
+              <p className="sub-instruction">Centre su rostro dentro del recuadro</p>
+            </div>
+          </div>
+        </div>
     </div>
   );
 };

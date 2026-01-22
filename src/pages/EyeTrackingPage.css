@@ -304,3 +304,184 @@ h1 {
     transform: scaleY(1);
     transition: transform 0.75s linear 2.25s; /* Delay de 2.25s */
 }
+
+
+/* --- ESTILO DE POSICIÓN DE ROSTRO --- */
+/* 1. FONDO OSCURO Y DESENFOCADO */
+.calibration-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 20, 30, 0.85); /* Un azul muy oscuro traslúcido */
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+/* 2. VENTANA EMERGENTE ESTILO TÉCNICO */
+.calibration-window {
+  background: #111;
+  padding: 15px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
+  width: 550px; /* Tamaño controlado */
+  overflow: hidden;
+}
+
+.camera-container-mini {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.video-mini {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 3. EL HUD (FRANJA TÉCNICA) */
+.eye-guide-hud-mini {
+  position: absolute;
+  
+  /* 📐 GEOMETRÍA EXACTA BASADA EN TU CÓDIGO REACT */
+  top: 45%;   /* FACE_BOX.top = 0.45 */
+  left: 50%;
+  transform: translateX(-50%); /* Centrado horizontal */
+  
+  width: 30%;  /* 0.60 - 0.40 = 0.20 */
+  height: 20%; /* 0.65 - 0.45 = 0.20 */
+
+  /* Estilos Flex para centrar el texto adentro */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Transición suave para tamaño y color */
+  transition: 
+    background-color 1.2s ease,
+    border-color 1.2s ease,
+    box-shadow 1.2s ease,
+    color 1.2s ease;  
+  /* Un ligero blur para que se vea moderno */
+  /*backdrop-filter: blur(1px);*/
+  
+  /* Borde base */
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* ESTADOS DE COLOR */
+/* 🔴 ROJO (Fuera / Pausa) */
+.eye-guide-hud-mini.red { 
+  background-color: rgba(255, 71, 87, 0.2); /* Fondo rojo transparente */
+  border: 2px solid rgba(255, 71, 87, 0.6); /* Borde sólido semi-transparente */
+  color: #ff4757; /* Color del texto y esquinas */
+  box-shadow: 0 0 15px rgba(255, 71, 87, 0.2);
+}
+
+/* 🟡 AMARILLO (Cargando / Esperando) */
+.eye-guide-hud-mini.yellow { 
+  background-color: rgba(255, 204, 0, 0.2); /* Fondo amarillo transparente */
+  border: 2px solid rgba(255, 204, 0, 0.6);
+  color: #ffcc00;
+  box-shadow: 0 0 15px rgba(255, 204, 0, 0.2);
+}
+
+/* 🟢 VERDE (Éxito / Desbloqueado) */
+.eye-guide-hud-mini.green { 
+  background-color: rgba(46, 213, 115, 0.2); /* Fondo verde transparente */
+  border: 2px solid rgba(46, 213, 115, 0.6);
+  color: #2ed573;
+  box-shadow: 0 0 20px rgba(46, 213, 115, 0.4);
+}
+
+/* ⚪ BLANCO (Rostro bien posicionado) */
+.eye-guide-hud-mini.white {
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  color: #ffffff;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+
+/* ESQUINAS (Corners) */
+.corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 3px solid currentColor; /* Usa el color del texto (rojo o verde) */
+  transition: all 0.3s ease;
+}
+.top-left { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+.top-right { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
+.bottom-left { bottom: -2px; left: -2px; border-right: 0; border-top: 0; }
+.bottom-right { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+
+/* LÍNEA DE ESCANEO ANIMADA */
+.scan-line {
+  position: absolute;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.2;
+  top: 0;
+  animation: scanHUD 2.5s linear infinite;
+}
+
+@keyframes scanHUD {
+  0% { top: 0; opacity: 0; }
+  50% { opacity: 0.4; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.guide-text-hud {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  font-size: 0.8rem; /* Un poco más pequeño para entrar en el 20% de ancho */
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 5px;
+}
+
+/* TEXTOS DE LA VENTANA */
+.instruction-footer {
+  padding: 15px 0 5px 0;
+  text-align: center;
+}
+
+.main-instruction {
+  color: white;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.sub-instruction {
+  color: #666;
+  margin: 5px 0 0 0;
+  font-size: 0.85rem;
+}
+
+.hud-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.countdown-badge {
+  background: rgba(46, 213, 115, 0.2);
+  padding: 2px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-family: monospace;
+  border: 1px solid #2ed573;
+  animation: pulse 1s infinite;
+}
