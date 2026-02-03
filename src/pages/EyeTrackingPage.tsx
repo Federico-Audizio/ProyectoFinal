@@ -518,7 +518,7 @@ const EyeTrackingPage: React.FC = () => {
           borderRadius: "50%",
           pointerEvents: "none",
           transform: "translate(-50%, -50%)",
-          zIndex: 9999,
+          zIndex: 50,
           boxShadow: "0px 0px 20px 10px rgba(0, 150, 255, 0.7)",
         }}
       ></div>
@@ -568,42 +568,43 @@ const EyeTrackingPage: React.FC = () => {
         ))}
       </div>
 
-      {/* 🔳 Overlay de centrado de ojos */}
-      <div 
-        className="calibration-overlay"
-        style={{ 
-          // Si faceOk es true (jugando): Escondemos visualmente y permitimos clicks a través
-          opacity: faceOk ? 0 : 1,
-          visibility: faceOk ? "hidden" : "visible",
-          pointerEvents: faceOk ? "none" : "auto", // Importante para poder clickear abajo
-          transition: "all 0.5s ease" // Suaviza la desaparición
-        }}
-      >
-          <div className="calibration-window">
-            <div className="camera-container-mini">
-            <video id="video" autoPlay muted playsInline className="video-mini" />
-                <div ref={hudRef} className={`eye-guide-hud-mini ${guideState}`} >
-                <div className="scan-line"></div>
-                    {/* Esquinas decorativas */}
-                    <div className="corner top-left"></div>
-                    <div className="corner top-right"></div>
-                    <div className="corner bottom-left"></div>
-                    <div className="corner bottom-right"></div>
+      
+        {/* 🔳 Overlay de centrado de ojos */}
+        <div 
+          className="calibration-overlay"
+          style={{ 
+            // Si faceOk es true (jugando): Escondemos visualmente y permitimos clicks a través
+            opacity: faceOk ? 0 : 1,
+            visibility: faceOk ? "hidden" : "visible",
+            pointerEvents: faceOk ? "none" : "auto", // Importante para poder clickear abajo
+            transition: "all 0.5s ease" // Suaviza la desaparición
+          }}>
+            <div className="calibration-window">
+              <div className="camera-container-mini">
+              <video id="video" autoPlay muted playsInline className="video-mini" />
+                  <div ref={hudRef} className={`eye-guide-hud-mini ${guideState}`} >
+                  <div className="scan-line"></div>
+                      {/* Esquinas decorativas */}
+                      <div className="corner top-left"></div>
+                      <div className="corner top-right"></div>
+                      <div className="corner bottom-left"></div>
+                      <div className="corner bottom-right"></div>
 
-                    <span className="guide-text-hud">
-                      {guideState === 'red' && 'ALINEE SUS OJOS'}
-                      {guideState === 'green' && 'POSICIÓN CORRECTA'}
-                    </span>
+                      <span className="guide-text-hud">
+                        {guideState === 'red' && 'ALINEE SUS OJOS'}
+                        {guideState === 'green' && 'POSICIÓN CORRECTA'}
+                      </span>
+                </div>
+              </div>
+              
+              <div className="instruction-footer">
+                <p className="main-instruction">Detección de Rostro</p>
+                <p className="sub-instruction">Centre su rostro dentro del recuadro</p>
               </div>
             </div>
-            
-            <div className="instruction-footer">
-              <p className="main-instruction">Detección de Rostro</p>
-              <p className="sub-instruction">Centre su rostro dentro del recuadro</p>
-            </div>
           </div>
-        </div>
-    </div>
+      </div>
+    
   );
 };
 
