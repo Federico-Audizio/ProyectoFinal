@@ -133,10 +133,32 @@ class EyeGestures {
         this.onGaze = i,
         this.run = !1,
         this.__invisible = !1,
+        // 1. AGREGADO: Bandera para controlar cuándo inicia la calibración real
+        this.isCalibrationActive = !1,
+
         window.isSecureContext ? this.init(t) : console.error("This application requires a secure context (HTTPS or localhost)")
     }
     updateStatus(t) {
         document.getElementById("status").textContent = t
+    }
+    // 2. AGREGADO: Método que llamarás desde React cuando el rostro esté OK
+    startCalibrationNow() {
+        this.isCalibrationActive = !0;
+        
+        // 👇 ESTA ES LA CLAVE QUE FALTABA
+        // Como la calibración estaba pausada, el sistema ocultó el cursor.
+        // Debemos forzar su aparición para que el usuario vea el punto rojo.
+        const calibCursor = document.getElementById("calib_cursor");
+        if (calibCursor) {
+            calibCursor.style.display = "block";
+            // Aseguramos que empiece en la posición correcta (opcional pero recomendado)
+             const p = this.calibrator.getCurrentPoint(this.screen_width, this.screen_height);
+             this.prev_calib = p; 
+             calibCursor.style.left = p[0] - 100 + "px";
+             calibCursor.style.top = p[1] - 100 + "px";
+        }
+
+        console.log("🟢 Calibración autorizada y VISIBLE.");
     }
     showError(t) {
         var i = document.getElementById("error");
@@ -270,18 +292,23 @@ class EyeGestures {
     processKeyPoints(t, i, e, s, a, r, n, o) {
         let h = t;
         h = (h = (h = (h = h.concat(i)).concat([[e, s]])).concat([[a, r]])).concat([[n, o]]);
-        t = this.calib_counter < this.calib_max,
+        // 3. MODIFICADO: Solo calibra si el contador es menor al máximo Y si activamos la calibración
+        t = (this.calib_counter < this.calib_max) && this.isCalibrationActive;
+
+        //t = this.calib_counter < this.calib_max,
         i = this.calibrator.predict(h);
         this.buffor.push(i),
         this.buffor_max < this.buffor.length && this.buffor.shift();
         let c = [0, 0];
         i = c = 0 < this.buffor.length ? this.buffor.reduce( (t, i) => [t[0] + i[0], t[1] + i[1]], [0, 0]).map(t => t / this.buffor.length) : c,
+        
         t ? (e = this.calibrator.getCurrentPoint(this.screen_width, this.screen_height),
         this.calibrator.add(h, e),
         euclideanDistance(i, e) < .1 * this.screen_width && 20 < this.counter ? (this.calibrator.movePoint(),
         this.counter = 0) : euclideanDistance(i, e) < .1 * this.screen_width && (this.counter = this.counter + 1),
         this.prev_calib[0] == e[0] && this.prev_calib[1] == e[1] || (this.prev_calib = e,
         this.calib_counter = this.calib_counter + 1)) : document.getElementById("calib_cursor").style.display = "None";
+        
         s = document.getElementById("cursor"),
         a = Math.min(Math.max(i[0], 0), this.screen_width),
         r = Math.min(Math.max(i[1], 0), this.screen_height),
@@ -314,6 +341,7 @@ class EyeGestures {
         this.calibrator.unfit(),
         this.calib_counter = 0
     }
+    
 }
 
 window.EyeGestures = EyeGestures;

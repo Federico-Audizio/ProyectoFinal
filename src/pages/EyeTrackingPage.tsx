@@ -59,14 +59,14 @@ const EyeTrackingPage: React.FC = () => {
   //const [mode, setMode] = useState<'center' | 'calibrating' | 'tracking'>('center');
   const [guideState, setGuideState] = useState<'red' | 'yellow' | 'white' |'green'>('red');
   const [countdown, setCountdown] = useState(5);  const [faceOk, setFaceOk] = useState(false);
-  const [calibrationStarted, setCalibrationStarted] = useState(false);
+  //const [calibrationStarted, setCalibrationStarted] = useState(false);
 
   // Centrado de rostro refs
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  //const videoRef = useRef<HTMLVideoElement | null>(null);
   const faceOkRef = useRef(false); // 👈 ESTO ES LA CLAVE
 
   
-  const stableTimeRef = useRef<number | null>(null);
+  //const stableTimeRef = useRef<number | null>(null);
   const hudRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastHoveredRef = useRef<number | null>(null);
@@ -144,10 +144,10 @@ const EyeTrackingPage: React.FC = () => {
     // 1. EL RECUADRO DE SEGURIDAD
     // Definimos la zona "buena". Si te sales de aquí, pausa.
     const FACE_BOX = {
-      left: 0.40,  
-      right: 0.60,
-      top: 0.45,
-      bottom: 0.65
+      left: 0.47,  
+      right: 0.53,
+      top: 0.53,
+      bottom: 0.57
     };
 
     const isInside =
@@ -246,6 +246,9 @@ const EyeTrackingPage: React.FC = () => {
 
         // 📍 Actualiza cursor y detecta coordenadas
         const onPoint = (point: number[], calibration: boolean) => {
+          // 🛑 BLOQUEO ABSOLUTO SI EL ROSTRO NO ESTÁ OK
+          // Si el visor está en rojo, ignoramos cualquier dato que venga del script
+          
           // 1. Consultamos al semáforo
           const isStableAndCentered = checkFacePosition();
           
@@ -275,6 +278,8 @@ const EyeTrackingPage: React.FC = () => {
 
           //if (mode !== 'center') return; // Solo procesar esto si estamos en modo centrado
           const cursor = document.getElementById("cursor") as HTMLElement | null;
+          if (!cursor) return;
+
           const brush = document.createElement("div");
           if (!cursor || !brush) return;
 
@@ -373,7 +378,10 @@ const EyeTrackingPage: React.FC = () => {
             const gestures = new EG("video", onPoint);
             gestures.start();
 
-            setCalibrationStarted(true);
+            // Al arrancar, nos aseguramos que esté PAUSADO (false) hasta que el visor lo autorice
+            gestures.isCalibrationActive = false;
+
+            //setCalibrationStarted(true);
             (window as any)._eyeGesturesInstance = gestures;
             console.log("🚀 EyeGestures iniciado correctamente (Video detectado)");
           } else {
@@ -418,15 +426,33 @@ const EyeTrackingPage: React.FC = () => {
   // 🔹 Efecto de chequeo facial periódico
   // ======================================
   const visualStableRef = useRef(0);
+  const calibrationTriggeredRef = useRef(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
       const isConfirmed = checkFacePosition();
+      faceOkRef.current = isConfirmed;
 
+      const inst = (window as any)._eyeGesturesInstance;
+
+      // 🔴 CASO 1: USUARIO FUERA DE POSICIÓN
       if (!isConfirmed) {
         visualStableRef.current = 0;
         setFaceOk(false);
         setGuideState("red");
+
+        // PAUSAR CALIBRACIÓN (Si existe la instancia y estaba activa)
+        if (inst && calibrationTriggeredRef.current === true) {
+            console.log("⏸️ Usuario perdido: Pausando calibración");
+            // Accedemos directamente a la propiedad para pausar el cálculo interno
+            inst.isCalibrationActive = false; 
+            
+            // Ocultamos el cursor de calibración (punto rojo) si existe
+            const calibCursor = document.getElementById("calib_cursor");
+            if (calibCursor) calibCursor.style.display = "none";
+            
+            calibrationTriggeredRef.current = false;
+        }
         return;
       }
 
@@ -441,6 +467,20 @@ const EyeTrackingPage: React.FC = () => {
       // 🟢 Confirmado visible
       setFaceOk(true);
       setGuideState("green");
+
+      if (inst && calibrationTriggeredRef.current === false) {
+        //const inst = (window as any)._eyeGesturesInstance;
+        
+        // Verificamos que la instancia y el nuevo método existan
+        if (typeof inst.startCalibrationNow === 'function') {
+           inst.startCalibrationNow();
+           //calibrationTriggeredRef.current = true; // Marcamos para no llamarlo mil veces
+           //setCalibrationStarted(true); // Tu estado visual de React
+        }else {
+          inst.isCalibrationActive = true; // Método alternativo
+        }
+        calibrationTriggeredRef.current = true;
+      }
 
     }, 100);
 
