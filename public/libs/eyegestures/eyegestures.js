@@ -95,7 +95,7 @@ class EyeGestures {
         s.style.position = "fixed",
         s.style.bottom = "10px",
         s.style.right = "10px",
-        s.style.zIndex = "9999",
+        s.style.zIndex = "30",
         s.style.background = "black",
         s.style.borderRadius = "10px",
         s.style.display = "none",
