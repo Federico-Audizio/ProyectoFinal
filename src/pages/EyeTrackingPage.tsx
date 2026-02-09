@@ -107,6 +107,7 @@ const EyeTrackingPage: React.FC = () => {
         if (selected?.isFolder && selected.content) {
           setCurrentFolder(selected.content);
           setSelectedId(null);
+          playAudio(selected.name); // Reproducir audio al entrar a carpeta
         } else if (selected) {
           setSelectedId(id);
           playAudio(selected.name);
@@ -146,8 +147,8 @@ const EyeTrackingPage: React.FC = () => {
     const FACE_BOX = {
       left: 0.47,  
       right: 0.53,
-      top: 0.53,
-      bottom: 0.57
+      top: 0.50,
+      bottom: 0.60
     };
 
     const isInside =

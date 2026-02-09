@@ -343,6 +343,8 @@ h1 {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /*transform: none !important;*/
+  transform: scaleX(-1); /* Espejado horizontal */
 }
 
 /* 3. EL HUD (FRANJA TÉCNICA) */

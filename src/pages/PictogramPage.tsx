@@ -118,6 +118,7 @@ const PictogramPage: React.FC = () => {
                 playAudio(pic.label);
     
               }else{
+                playAudio(pic.label);
                 if(pic.content) {
                   setCurrentFolder(pic.content); // cargamos el contenido de esa carpeta
                   setIsModalOpen(true);

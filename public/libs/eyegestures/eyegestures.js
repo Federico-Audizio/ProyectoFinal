@@ -334,8 +334,21 @@ class EyeGestures {
         document.getElementById("cursor").style.display = "block"
     }
     stop() {
-        this.run = !1,
-        console.log("stop")
+        this.run = !1;
+        console.log("EyeGestures: Stopping and hiding elements...");
+        
+        // Ocultar elementos visuales inmediatamente
+        const ids = ["cursor", "calib_cursor", "logoDivEyeGestures"];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = "none";
+        });
+
+        // Detener el loop de procesamiento
+        if (this.videoElement && this.videoElement.srcObject) {
+            const stream = this.videoElement.srcObject;
+            stream.getTracks().forEach(track => track.stop());
+        }
     }
     recalibrate() {
         this.calibrator.unfit(),
