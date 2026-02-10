@@ -266,8 +266,12 @@ const EyeTrackingPage: React.FC = () => {
   // 🔹 EyeGestures: carga e inicialización
   // ======================================
   useEffect(() => {
-    if ((window as any)._eyeGesturesLoaded) return;
-      (window as any)._eyeGesturesLoaded = true;
+    //if ((window as any)._eyeGesturesLoaded) return;
+    //  (window as any)._eyeGesturesLoaded = true;
+
+    let isMounted = true; // 🔒 Candado para saber si el componente sigue vivo
+    let gesturesInstance: any = null; // Referencia local para limpieza segura
+    
     const loadEyeGestures = async () => {
       try {
         console.log("🔹 Cargando EyeGestures...");
@@ -300,6 +304,8 @@ const EyeTrackingPage: React.FC = () => {
         await loadCSS("/libs/eyegestures/eyegestures.css");
         await loadScript("/libs/eyegestures/eyegestures.js");
 
+        // 🔒 CHECK 1: Si al terminar de cargar scripts el usuario ya se fue, CANCELAR.
+        if (!isMounted) return;
         // Esperamos a que se monte EyeGestures
         const checkReady = () =>
           new Promise<void>((resolve, reject) => {
@@ -308,7 +314,7 @@ const EyeTrackingPage: React.FC = () => {
               if ((window as any).EyeGestures) {
                 clearInterval(interval);
                 resolve();
-              } else if (tries++ > 10) {
+              } else if (tries++ > 20) { // Un poco más de paciencia
                 clearInterval(interval);
                 reject(new Error("❌ EyeGestures no se encontró en window"));
               }
@@ -317,9 +323,9 @@ const EyeTrackingPage: React.FC = () => {
 
         await checkReady();
 
+        // 🔒 CHECK 2: Si al terminar de esperar la clase el usuario ya se fue, CANCELAR.
+        if (!isMounted) return;
         const EG = (window as any).EyeGestures;
-        console.log("✅ EyeGestures detectado:", EG);
-
 
         // 📍 Actualiza cursor y detecta coordenadas
         const onPoint = (point: number[], calibration: boolean) => {
@@ -448,27 +454,31 @@ const EyeTrackingPage: React.FC = () => {
         };
 
         const startSafe = () => {
+          // 🔒 CHECK 3: Última verificación antes de crear la instancia
+          if (!isMounted) return;
+
           const videoEl = document.getElementById("video");
-          
           if (videoEl) {
-            // ¡Video encontrado! Arrancamos seguro
-            const gestures = new EG("video", onPoint);
-            gestures.start();
+            // 🛑 SI YA EXISTE UNA INSTANCIA PREVIA, MATARLA ANTES DE CREAR OTRA
+            if ((window as any)._eyeGesturesInstance) {
+                console.warn("⚠️ Encontrada instancia previa. Limpiando...");
+                (window as any)._eyeGesturesInstance.stop();
+                (window as any)._eyeGesturesInstance = null;
+            }
 
-            // Al arrancar, nos aseguramos que esté PAUSADO (false) hasta que el visor lo autorice
-            gestures.isCalibrationActive = false;
+            // AHORA SÍ, CREAR LA NUEVA
+            console.log("🚀 Iniciando NUEVA instancia de EyeGestures");
+            gesturesInstance = new EG("video", onPoint);
+            gesturesInstance.start();
+            gesturesInstance.isCalibrationActive = false;
 
-            //setCalibrationStarted(true);
-            (window as any)._eyeGesturesInstance = gestures;
-            console.log("🚀 EyeGestures iniciado correctamente (Video detectado)");
+            // Guardar referencia global
+            (window as any)._eyeGesturesInstance = gesturesInstance;
           } else {
-            // El video aún no existe, esperamos 100ms y probamos de nuevo
-            console.warn("⏳ Esperando elemento <video>...");
-            setTimeout(startSafe, 100);
+            if (isMounted) setTimeout(startSafe, 100);
           }
         };
 
-        // Llamamos a la función por primera vez
         startSafe();
 
       } catch (error) {
@@ -478,23 +488,31 @@ const EyeTrackingPage: React.FC = () => {
 
     loadEyeGestures();
 
+    // 🧹 LIMPIEZA AL SALIR DE LA PANTALLA
     return () => {
-      console.log("🧹 Limpiando EyeGestures...");
-      try {
-        const inst = (window as any)._eyeGesturesInstance;
-        if (inst && typeof inst.stop === "function") inst.stop();
-      } catch (e) {
-        console.warn("Error deteniendo EyeGestures instance", e);
+      console.log("👋 Saliendo de EyeTrackingPage: Limpiando todo...");
+      isMounted = false; // 🔒 CERRAR CANDADO: Bloquea cualquier carga pendiente
+
+      // 1. Detener la instancia de EyeGestures (llama al stop() modificado del Paso 1)
+      if (gesturesInstance) {
+        gesturesInstance.stop();
+      } else if ((window as any)._eyeGesturesInstance) {
+        (window as any)._eyeGesturesInstance.stop();
       }
 
+      // 2. Limpiar referencias globales
+      (window as any)._eyeGesturesInstance = null;
+
+      // 3. Eliminar manualmente elementos residuales por seguridad
+      // (Por si el stop() de JS fallara o no se ejecutara a tiempo)
+      const elementsToRemove = ["cursor", "calib_cursor", "logoDivEyeGestures", "cursorTrail", "output_canvas"];
+      elementsToRemove.forEach(id => document.getElementById(id)?.remove());
+
+      // 4. Detener video del elemento React si aún existe
       const video = document.getElementById("video") as HTMLVideoElement | null;
       if (video && video.srcObject) {
-        try {
-          const s = video.srcObject as MediaStream;
-          s.getTracks().forEach((t) => t.stop());
-        } catch (e) {
-          console.warn("Error deteniendo tracks de video", e);
-        }
+        const stream = video.srcObject as MediaStream;
+        stream.getTracks().forEach((t) => t.stop());
       }
     };
   }, []);

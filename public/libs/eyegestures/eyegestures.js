@@ -224,6 +224,7 @@ class EyeGestures {
                     } catch (t) {
                         console.error("Error processing frame:", t),
                         showError("Error processing frame: " + t.message)
+                        console.log("Error en frame (ignorado para evitar loop)");
                     }
                 }
                 requestAnimationFrame(s)
@@ -335,20 +336,31 @@ class EyeGestures {
     }
     stop() {
         this.run = !1;
-        console.log("EyeGestures: Stopping and hiding elements...");
+        console.log("EyeGestures: Stopping and cleaning up...");
         
-        // Ocultar elementos visuales inmediatamente
-        const ids = ["cursor", "calib_cursor", "logoDivEyeGestures"];
+        // 1. ELIMINAR ELEMENTOS DEL DOM (No solo ocultar)
+        const ids = ["cursor", "calib_cursor", "logoDivEyeGestures", "output_canvas"];
         ids.forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.style.display = "none";
+            if (el) {
+                el.remove(); // 👈 ESTO ES CLAVE: Borra el elemento para que al volver no se duplique
+            }
         });
 
-        // Detener el loop de procesamiento
+        // 2. DETENER LA CÁMARA COMPLETAMENTE
         if (this.videoElement && this.videoElement.srcObject) {
             const stream = this.videoElement.srcObject;
-            stream.getTracks().forEach(track => track.stop());
+            const tracks = stream.getTracks();
+            tracks.forEach(track => {
+                track.stop(); // Detiene la luz de la cámara
+                stream.removeTrack(track);
+            });
+            this.videoElement.srcObject = null;
         }
+        
+        // 3. Limpiar referencias internas
+        this.videoElement = null;
+        this.calibrator = null;
     }
     recalibrate() {
         this.calibrator.unfit(),
