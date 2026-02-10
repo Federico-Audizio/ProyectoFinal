@@ -53,11 +53,11 @@ const PictogramPage: React.FC = () => {
         { label: "Cine", image: "/pictograms/Lugares/cine.png", color: "#FF8000" },
         { label: "Restaurante", image: "/pictograms/Lugares/restaurante.png", color: "#FF8000" },
         { label: "Heladería", image: "/pictograms/Lugares/heladería.png", color: "#FF8000" },
-        { label: "Comisaria", image: "/pictograms/Lugares/comisaria.png", color: "#FF8000" }
+        { label: "Comisaría", image: "/pictograms/Lugares/comisaria.png", color: "#FF8000" }
       ]
 
     },
-    { label: "Si", image: "/pictograms/sí.png", color: "#33FF33" },
+    { label: "Sí", image: "/pictograms/sí.png", color: "#33FF33" },
     { label: "Mamá", image: "/pictograms/Familia/mamá.png", color: "#FFFF00" },
     { label: "Baño", image: "/pictograms/baño.png", color: "#00FF00" },
     { label: "Salir", image: "/pictograms/salir.png", color: "#00FF00" },
@@ -105,7 +105,7 @@ const PictogramPage: React.FC = () => {
     { label: "Jugar", image: "/pictograms/Verbos/jugar.png", color: "#00FF00" },
     { label: "Ver la televisión", image: "/pictograms/Verbos/ver la televisión.png", color: "#00FF00" },
     { label: "Escuchar música", image: "/pictograms/Verbos/escuchar música.png", color: "#00FF00" },
-    { label: "¿Por que?", image: "/pictograms/Preguntas/por qué.png", color: "#9933FF" },
+    { label: "¿Por qué?", image: "/pictograms/Preguntas/por qué.png", color: "#9933FF" },
     { label: "¿Quién?", image: "/pictograms/Preguntas/quién.png", color: "#9933FF" },
     { label: "Enojado", image: "/pictograms/Estado/enfadado.png", color: "#007FFF" },
     { label: "Alegre", image: "/pictograms/Estado/alegre.png", color: "#007FFF" },
@@ -174,7 +174,7 @@ const PictogramPage: React.FC = () => {
         { label: "¿Qué dices?", image: "/pictograms/Preguntas/¿qué dices.png", color: "#9933FF" },
         { label: "¿Cuándo?", image: "/pictograms/Preguntas/cuándo.png", color: "#9933FF" },
         { label: "¿Cómo?", image: "/pictograms/Preguntas/cómo.png", color: "#9933FF" },
-        { label: "¿Cual?", image: "/pictograms/Preguntas/¿cuál.png", color: "#9933FF" },
+        { label: "¿Cuál?", image: "/pictograms/Preguntas/¿cuál.png", color: "#9933FF" },
         { label: "¿Qué es?", image: "/pictograms/Preguntas/qué es.png", color: "#9933FF" },
       ]
      },
@@ -262,6 +262,7 @@ const PictogramPage: React.FC = () => {
         pictograms={currentFolder}
         onSelect={(pic) => {
           setSelected(pic);
+          playAudio(pic.label); // Reproducimos el audio del pictograma seleccionado dentro del modal
           // Opcional: Si quieres que al seleccionar se cierre el modal automáticamente
           // (aunque el Modal que te pasé ya lo hace por dentro, no está de más asegurarlo)
           setIsModalOpen(false); 

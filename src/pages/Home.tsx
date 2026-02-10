@@ -32,7 +32,7 @@ const Home: React.FC = () => {
 
         console.log("Audios listos y decodificados.");
 
-        // 3. Precarga de Imágenes (Mejorado con Promesas)
+        /* 3. Precarga de Imágenes (Mejorado con Promesas)
         const imagePromises = data.pictograms.map(p => {
           return new Promise((resolve, reject) => {
             const img = new Image();
@@ -45,10 +45,10 @@ const Home: React.FC = () => {
               resolve(null); 
             };
           });
-        });
+        });*/
 
         // 4. Esperamos a que TODO (audios e imágenes) termine
-        await Promise.all([...audioPromises, ...imagePromises]);
+        await Promise.all([...audioPromises]);
 
         console.log("Todos los audios e imágenes han sido precargados correctamente.");
       } catch (error) {

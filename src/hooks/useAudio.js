@@ -65,10 +65,10 @@ export const useAudio = () => {
     }
     const fileName = textOrPath
       .toLowerCase()
-      .replace(/ñ/g, "ni")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/\s+/g, "_")
+      //.replace(/ñ/g, "ni")
+      //.normalize("NFD")
+      //.replace(/[\u0300-\u036f]/g, "")
+      //.replace(/\s+/g, "_")
       .replace(/[¿?]/g, "");
     return `/AudioGenerator/audio/es/${fileName}.mp3`;
   };
