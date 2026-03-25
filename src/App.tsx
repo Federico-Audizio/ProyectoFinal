@@ -5,6 +5,8 @@ import CameraPage from "./pages/CameraPage";
 import PictogramPage from "./pages/PictogramPage";
 import EyeTrackingPage from './pages/EyeTrackingPage'; 
 import Home from "./pages/Home";
+import SenaPage from "./pages/SenaPage";
+
 //import { Home } from "lucide-react";
 
 
@@ -20,7 +22,8 @@ function App() {
           <Route path="camera" element={<CameraPage />} />
           <Route path="pictograms" element={<PictogramPage />} />
           <Route path="eyetracking" element={<EyeTrackingPage />} />
-          <Route path="eyegestures" element={<EyeTrackingPage />} /> {/* 👈 nueva ruta */}
+          <Route path="eyegestures" element={<EyeTrackingPage />} /> 
+          <Route path="sena" element={<SenaPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

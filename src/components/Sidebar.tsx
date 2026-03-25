@@ -21,6 +21,12 @@ const Sidebar = () => {
         <img src="/icons/visibilidad.png" alt="EyeTracking" className="sidebar-icon" />
         <span className="link-text">Calibración</span> {/* <--- Nuevo Texto */}
       </NavLink>
+
+      {/* 4. Link SEÑAS */}
+      <NavLink to="/sena" className="icon">
+        <img src="/icons/mano.png" alt="Señas" className="sidebar-icon" />
+        <span className="link-text">Señas</span> {/* <--- Nuevo Texto */}
+      </NavLink>
     </div>
   );
 };

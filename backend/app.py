@@ -6,6 +6,8 @@ import keras
 from keras.models import load_model
 import os
 from ultralytics import YOLO  # ✅ Importamos YOLO
+import torch
+
 
 #BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # /proyecto/backend
 #PROJECT_DIR = os.path.dirname(BASE_DIR)                # /proyecto
@@ -152,7 +154,66 @@ def predict_yolo():
         return jsonify({"error": str(e)}), 500
 
 
+# -----------------------------
+# 🔹 MODELO 3 (LSA64)
+# -----------------------------
 
+# cargar modelo
+#modelLSA = LSTMModel()
+#modelLSA.load_state_dict(torch.load("lsa64_model.pth", map_location=torch.device('cpu')))
+#modelLSA.eval()
+
+#sequence = []
+
+import torch.nn as nn
+
+class LSTMModel(nn.Module):
+    def __init__(self, input_size=63, hidden_size=128, num_classes=15):
+        super().__init__()
+        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
+        self.fc = nn.Linear(hidden_size, num_classes)
+
+    def forward(self, x):
+        out, _ = self.lstm(x)
+        out = out[:, -1, :]
+        return self.fc(out)
+
+modelLSA = LSTMModel()
+
+modelLSA.load_state_dict(
+    torch.load("model/lsa64_model.pth", map_location=torch.device("cpu"))
+)
+
+modelLSA.eval()
+
+from flask import request, jsonify
+
+@app.route('/predict', methods=['POST'])
+def predict():
+
+    global sequence
+
+    data = request.json
+    keypoints = data["keypoints"]
+
+    sequence.append(keypoints)
+
+    if len(sequence) > 30:
+        sequence = sequence[-30:]
+
+    if len(sequence) == 30:
+        input_data = np.array(sequence)
+        input_data = torch.tensor(input_data, dtype=torch.float32).unsqueeze(0)
+
+        with torch.no_grad():
+            output = model(input_data)
+            pred = torch.argmax(output, dim=1).item()
+
+        return jsonify({"prediction": int(pred)})
+
+    return jsonify({"prediction": None})
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+    
+    

@@ -90,6 +90,15 @@ const Home: React.FC = () => {
             Seguimiento Visual
           </Link>
         </div>
+
+        <div className="menu-item">
+          <div className="icon-circle">
+            <span>🤟</span>
+          </div>
+          <Link to="/sena" className="nav-button">
+            Detector de Señas
+          </Link>
+        </div>
       </div>
     </div>
   );
