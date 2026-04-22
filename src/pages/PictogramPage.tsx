@@ -12,15 +12,55 @@ interface SelectedPicto {
   color: string; 
 }
 
+type CommLevel = "simple" | "composed";
+
 const PictogramPage: React.FC = () => {
+
+  // Estados principales
+  const [phrase, setPhrase] = useState<SelectedPicto[]>([]);
+  const [commLevel, setCommLevel] = useState<CommLevel>("simple");
+
+
   const [selected, setSelected] = useState<SelectedPicto | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentFolder, setCurrentFolder] = useState<any[]>([]);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { playAudio } = useAudio();
   
 
+  const lugaresContent = [
+    { label: "Parque", image: "/pictograms/Lugares/parque.png", color: "#FF8000" },
+    { label: "Pileta", image: "/pictograms/Lugares/piscina.png", color: "#FF8000" },
+    { label: "Cine", image: "/pictograms/Lugares/cine.png", color: "#FF8000" },
+    { label: "Restaurante", image: "/pictograms/Lugares/restaurante.png", color: "#FF8000" },
+    { label: "Heladería", image: "/pictograms/Lugares/heladería.png", color: "#FF8000" },
+    { label: "Comisaría", image: "/pictograms/Lugares/comisaria.png", color: "#FF8000" }
+  ];
+
+  // Si estamos en nivel compuesto, le metemos Escuela y Hospital adentro
+  if (commLevel === "composed") {
+    lugaresContent.unshift(
+      { label: "Escuela", image: "/pictograms/Lugares/director de escuela.png", color: "#FF8000" },
+      { label: "Hospital", image: "/pictograms/Lugares/hospital.png", color: "#FF8000" }
+    );
+  }
+
   const pictograms = [
     { label: "Yo", image: "/pictograms/yo.png", color: "#ffff00ff" },
+    // 👇 ESTOS DOS SOLO APARECEN EN MODO COMPUESTO
+    ...(commLevel === "composed" ? [
+      { label: "Quiero", image: "/pictograms/Conectores/quiero.png", color: "#fa18c2" }, // Asegurá la ruta
+      { label: "Conectores", isFolder: true, image: "/pictograms/Conectores/tengo.png", color: "#fa18c2", content: [
+        { label: "No quero", imagePath: "/public/pictograms/Conectores/no quiero.png", color: "#fa18c2" },
+        { label: "Tengo", imagePath: "/public/pictograms/Conectores/tengo.png", color: "#fa18c2" },
+        { label: "Con", imagePath: "/public/pictograms/Conectores/_con.png", color: "#fa18c2" },
+        { label: "Estoy", imagePath: "/public/pictograms/Conectores/estoy.png", color: "#fa18c2" },
+        { label: "Ir", imagePath: "/public/pictograms/Conectores/ir.png", color: "#fa18c2" },
+        { label: "Necesito", imagePath: "/public/pictograms/Conectores/necesito.png", color: "#fa18c2" },
+        { label: "Tú", imagePath: "/public/pictograms/Conectores/tu.png", color: "#fa18c2" },
+      ]}
+    ] : []),
+    
     { label: "Sed", image: "/pictograms/beber.png", color: "#00FF00" },
     { label: "Bebida", isFolder: true, image: "/pictograms/bebida.png", color: "#FF8000",
       content: [
@@ -44,20 +84,18 @@ const PictogramPage: React.FC = () => {
         { label: "Galleta", imagePath: "/public/pictograms/Comida/galletas.png", color: "#FF8000" }
       ]
      },
-    { label: "Escuela", image: "/pictograms/Lugares/director de escuela.png", color: "#FF8000" },
-    { label: "Hospital", image: "/pictograms/Lugares/hospital.png", color: "#FF8000" },
-    { label: "Lugares", isFolder: true, image: "/pictograms/lugares.png", color: "#FF8000", 
-      content: [
-        { label: "Parque", image: "/pictograms/Lugares/parque.png", color: "#FF8000" },
-        { label: "Pileta", image: "/pictograms/Lugares/piscina.png", color: "#FF8000" },
-        { label: "Cine", image: "/pictograms/Lugares/cine.png", color: "#FF8000" },
-        { label: "Restaurante", image: "/pictograms/Lugares/restaurante.png", color: "#FF8000" },
-        { label: "Heladería", image: "/pictograms/Lugares/heladería.png", color: "#FF8000" },
-        { label: "Comisaría", image: "/pictograms/Lugares/comisaria.png", color: "#FF8000" }
-      ]
+    // 👇 ESTOS DOS SOLO APARECEN EN MODO SIMPLE
+    ...(commLevel === "simple" ? [
+      { label: "Escuela", image: "/pictograms/Lugares/director de escuela.png", color: "#FF8000" },
+      { label: "Hospital", image: "/pictograms/Lugares/hospital.png", color: "#FF8000" }
+    ] : []),
 
-    },
+    // La carpeta lugares usa el contenido que armamos arriba dinámicamente
+    { label: "Lugares", isFolder: true, image: "/pictograms/lugares.png", color: "#FF8000", content: lugaresContent },
     { label: "Sí", image: "/pictograms/sí.png", color: "#33FF33" },
+    
+    
+
     { label: "Mamá", image: "/pictograms/Familia/mamá.png", color: "#FFFF00" },
     { label: "Baño", image: "/pictograms/baño.png", color: "#00FF00" },
     { label: "Salir", image: "/pictograms/salir.png", color: "#00FF00" },
@@ -191,33 +229,149 @@ const PictogramPage: React.FC = () => {
     { label: "Triste", image: "/pictograms/Estado/triste.png", color: "#007FFF" },
   ];
 
+  // Manejador centralizado para cuando se hace clic en un pictograma (principal o modal)
+  const handlePictogramSelect = (pic: any) => {
+    if (pic.isFolder) {
+      if (commLevel === "simple") {
+        playAudio(pic.label);
+      }
+      if (pic.content) {
+        setCurrentFolder(pic.content);
+        setIsModalOpen(true);
+      }
+      return;
+    }
+
+    // 🔊 CAMBIO: Solo suena automáticamente si NO estamos en modo compuesto
+    //if (commLevel === "simple") {
+    //  playAudio(pic.label);
+    //}
+
+    const newSelected: SelectedPicto = {
+      label: pic.label,
+      emoji: pic.emoji,
+      image: pic.image || pic.imagePath, // Maneja ambas propiedas según tu array
+      color: pic.color,
+    };
+
+    if (commLevel === "simple") {
+      // Nivel simple: Reemplaza lo que haya por el nuevo pictograma (array de 1 elemento)
+      setPhrase([newSelected]);
+    } else {
+      // Nivel compuesto: Agrega al final
+      if (phrase.length < 7) {
+        setPhrase((prev) => [...prev, newSelected]); 
+      }
+    }
+  };
+
+  // Funciones para los controles de frase compuesta
+  const removeLast = () => {
+    setPhrase((prev) => prev.slice(0, -1));
+  };
+
+  const clearPhrase = () => {
+    setPhrase([]);
+  };
+
+  const playFullPhrase = async () => {
+    for (const pic of phrase) {
+      playAudio(pic.label);
+
+      // Pausa simple entre palabras (ajusta los milisegundos según necesites)
+      await new Promise((resolve) => setTimeout(resolve, 800)); 
+    }
+  };
+
   return (
     <div className="pictogram-page">
       {/* 🔹 Barra superior */}
       <div className="sentence-bar">
-        {selected ? (
-          <div className="sentence-content">
-            <div className="sentence-emoji">
-              {selected.image ? (
-                <img
-                  src={selected.image}
-                  alt={selected.label}
-                  className="sentence-img"
-                />
-              ) : (
-                selected.emoji || "❓"
-              )}
-            </div>
-            <span className="sentence-text">{selected.label}</span>
 
-            {/* ✅ Botón borrar dentro del bloque */}
-            <button className="close-btn" onClick={() => setSelected(null)}>
-              <img src="/icons/borrar.png" alt="Borrar" className="btn-icon" /> Borrar
+        {/* Lado Izquierdo: Contenido de la frase */}
+        <div className="sentence-content">
+          {phrase.length === 0 ? (
+            <span className="placeholder">Selecciona un pictograma...</span>
+          ) : (
+            <div className="phrase-items-container">
+              {phrase.map((p, index) => (
+                <div key={index} className="phrase-item">
+                  {p.image ? (
+                    <img src={p.image} alt={p.label} className="sentence-img" />
+                  ) : (
+                    <span className="sentence-emoji">{p.emoji || "❓"}</span>
+                  )}
+                  <span className="sentence-text">{p.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Lado Derecho: Controles y Configuración */}
+        <div className="sentence-controls">
+          
+          {/* Controles de Nivel Simple */}
+          {commLevel === "simple" && phrase.length > 0 && (
+            <button className="control-btn btn-danger" onClick={clearPhrase} title="Borrar">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             </button>
+          )}
+
+          {/* Controles de Frases Compuestas */}
+          {commLevel === "composed" && phrase.length > 0 && (
+            <div className="composed-controls">
+              {/* Borrar último: Rojo */}
+              <button className="control-btn btn-danger" onClick={removeLast} title="Borrar último">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
+              </button>
+              
+              {/* Play: Verde */}
+              <button className="control-btn btn-success" onClick={playFullPhrase} title="Reproducir frase">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+              </button>
+
+              {/* Borrar todo: Rojo */}
+              <button className="control-btn btn-danger" onClick={clearPhrase} title="Borrar todo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+          )}
+
+          {/* Botón de Configuración (Dropdown) */}
+          <div className="settings-wrapper">
+            <button 
+              className="control-btn settings-btn" 
+              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+
+            {isSettingsOpen && (
+              <div className="settings-dropdown">
+                <p className="dropdown-title">Nivel de Comunicación</p>
+                <label className="dropdown-option">
+                  <input 
+                    type="radio" 
+                    name="level" 
+                    checked={commLevel === "simple"}
+                    onChange={() => { setCommLevel("simple"); setPhrase([]); setIsSettingsOpen(false); }}
+                  />
+                  Palabra Simple
+                </label>
+                <label className="dropdown-option">
+                  <input 
+                    type="radio" 
+                    name="level" 
+                    checked={commLevel === "composed"}
+                    onChange={() => { setCommLevel("composed"); setPhrase([]); setIsSettingsOpen(false); }}
+                  />
+                  Frases Compuestas
+                </label>
+              </div>
+            )}
           </div>
-        ) : (
-          <span className="placeholder">Selecciona un pictograma...</span>
-        )}
+        </div>
       </div>
 
       {/* 🔹 Grilla principal */}
@@ -230,25 +384,35 @@ const PictogramPage: React.FC = () => {
             image={pic.image}
             color={pic.color}
             isFolder={pic.isFolder}
-            isSelected={selected?.label === pic.label}
+            // CAMBIO 1: Validamos contra el array 'phrase' (si es simple, mira el primer elemento)
+            isSelected={commLevel === "simple" && phrase[0]?.label === pic.label}
             onClick={() => {
               if (!pic.isFolder) {
-                playAudio(pic.label);
-    
-              }else{
+                if (commLevel === "simple") {
+                  playAudio(pic.label);
+                }
+              } else {
                 playAudio(pic.label);
                 if(pic.content) {
-                  setCurrentFolder(pic.content); // cargamos el contenido de esa carpeta
+                  setCurrentFolder(pic.content); 
                   setIsModalOpen(true);
-                } 
+                }
+                return; // CAMBIO 2: ¡Importante! Cortamos acá para que la carpeta no suba a la barra
               }
 
-                setSelected({
-                  label: pic.label,
-                  emoji: (pic as any).emoji,
-                  image: (pic as any).image,
-                  color: pic.color,
-                });
+              // CAMBIO 3: En vez de setSelected, armamos el objeto y usamos setPhrase
+              const newSelected = {
+                label: pic.label,
+                emoji: (pic as any).emoji,
+                image: pic.image || (pic as any).imagePath, // Cubrimos image e imagePath por las dudas
+                color: pic.color,
+              };
+
+              if (commLevel === "simple") {
+                setPhrase([newSelected]); // Modo simple: pisa lo que había y deja solo este
+              } else {
+                setPhrase((prev) => [...prev, newSelected]); // Modo compuesto: lo suma al final de la frase
+              }
             }}
           />
         ))}
@@ -261,10 +425,27 @@ const PictogramPage: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         pictograms={currentFolder}
         onSelect={(pic) => {
-          setSelected(pic);
-          playAudio(pic.label); // Reproducimos el audio del pictograma seleccionado dentro del modal
-          // Opcional: Si quieres que al seleccionar se cierre el modal automáticamente
-          // (aunque el Modal que te pasé ya lo hace por dentro, no está de más asegurarlo)
+          // 🔊 Solo reproducimos el audio automáticamente en nivel simple
+          if (commLevel === "simple") {
+            playAudio(pic.label);
+          }
+          
+          const newSelected = {
+            label: pic.label,
+            emoji: (pic as any).emoji,
+            image: pic.image || (pic as any).imagePath,
+            color: pic.color,
+          };
+
+          // Dependiendo del nivel, lo sumamos a la frase o lo reemplazamos
+          if (commLevel === "simple") {
+            setPhrase([newSelected]);
+          } else {
+            if (phrase.length < 7) {
+              setPhrase((prev) => [...prev, newSelected]);
+            }
+          }
+          
           setIsModalOpen(false); 
         }}
       />
