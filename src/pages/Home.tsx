@@ -14,6 +14,15 @@ interface PictogramResponse {
   pictograms: Pictogram[];
 }
 
+interface SignResponse {
+  language: string;
+  voice: string;
+  sign: {
+    text: string;
+    file: string;
+  }[];
+}
+
 const Home: React.FC = () => {
   const { preloadAudio } = useAudio();
 
@@ -22,12 +31,20 @@ const Home: React.FC = () => {
   useEffect(() => {
     const preload = async () => {
       try {
-        const res = await fetch("/AudioGenerator/pictograms.json");
-        const data: PictogramResponse = await res.json();
+        const pictoPath = await fetch("/AudioGenerator/pictograms.json");
+        const pictoData: PictogramResponse = await pictoPath.json();
+        const signPath = await fetch("/AudioGenerator/sign.json");
+        const signData: SignResponse = await signPath.json();
 
-        const audioPromises = data.pictograms.map(p => {
-          const audioPath = `/AudioGenerator/audio/es/${p.file}`;
-          return preloadAudio(audioPath);
+
+        const PictoPromises = pictoData.pictograms.map(p => {
+          const audioPicto = `/AudioGenerator/audio/es/${p.file}`;
+          return preloadAudio(audioPicto);
+        });
+
+        const SignPromises = signData.sign.map(p => {
+          const audioSign = `/AudioGenerator/audio/es/${p.file}`;
+          return preloadAudio(audioSign);
         });
 
         console.log("Audios listos y decodificados.");
@@ -48,7 +65,7 @@ const Home: React.FC = () => {
         });*/
 
         // 4. Esperamos a que TODO (audios e imágenes) termine
-        await Promise.all([...audioPromises]);
+        await Promise.all([...SignPromises, ...PictoPromises]);
 
         console.log("Todos los audios e imágenes han sido precargados correctamente.");
       } catch (error) {
