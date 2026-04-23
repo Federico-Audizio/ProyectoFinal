@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useAudio } from "../hooks/useAudio";
+
 import "./SenaPage.css";
 
 // 🎯 DICCIONARIO LSA64: Mapea el número de predicción (0-63) a su palabra
@@ -16,12 +18,16 @@ const LSA_LABELS = [
 const SenaPage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const [prediction, setPrediction] = useState<string>("Sistema listo");
   const [error, setError] = useState<string | null>(null);
   const frameBufferRef = useRef<number[][]>([]);
+  const { playAudio, preloadAudio } = useAudio();
+
   //let frameCount = 0;
 
   // Para detectar si la persona está haciendo una seña o no, y contar los frames
+  const [hasStarted, setHasStarted] = useState(false); // Controla el botón inicial
   const [isSigning, setIsSigning] = useState(false);
   const [frameCount, setFrameCount] = useState(0);
   const isSigningRef = useRef(false); // <--- NUEVA
@@ -42,6 +48,30 @@ const SenaPage = () => {
     }
     return total;
   };
+
+  // Extrae los keypoints y asegura que siempre devuelva un array de 126 elementos
+  const extractKeypoints = (results: any): number[] => {
+    let leftHand = new Array(63).fill(0);
+    let rightHand = new Array(63).fill(0);
+
+    if (results.multiHandLandmarks && results.multiHandedness) {
+      for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+        const landmarks = results.multiHandLandmarks[i];
+        const handedness = results.multiHandedness[i].label;
+
+        const flatLandmarks = landmarks.flatMap((lm: any) => [lm.x, lm.y, lm.z]);
+
+        if (handedness === 'Left') {
+          leftHand = flatLandmarks;
+        } else if (handedness === 'Right') {
+          rightHand = flatLandmarks;
+        }
+      }
+    }
+
+    return [...leftHand, ...rightHand];
+  };
+
 
   useEffect(() => {
     let camera: any = null;
@@ -100,11 +130,13 @@ const SenaPage = () => {
           canvasCtx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
           
           if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-          // 1. Extraer keypoints de la primera mano detectada
-            const hand = results.multiHandLandmarks[0];
+            // 1. Extraer keypoints de la primera mano detectada
+            //const hand = results.multiHandLandmarks[0];
             // Convertir 21 puntos (x, y, z) en un array plano de 63 números
-            const rawkeypoints = hand.flatMap((point: any) => [point.x, point.y, point.z]);
-            const keypoints = normalizeKeypoints(rawkeypoints);
+            //const rawkeypoints = hand.flatMap((point: any) => [point.x, point.y, point.z]);
+            //const keypoints = normalizeKeypoints(rawkeypoints);
+
+            const keypoints = extractKeypoints(results);
             // 2. Enviar a tu API de Flask
             const prev = prevKeypointsRef.current;
 
@@ -113,7 +145,7 @@ const SenaPage = () => {
 
               const canCapture = !predictionRef.current.includes("Seña detectada");
 
-              if (movement > 0.05 && canCapture) {
+              if (movement > 0.02 && canCapture) {
                 // 🟢 EMPEZÓ / SIGUE LA SEÑA
                 if (!isSigningRef.current) {
                   isSigningRef.current = true;
@@ -122,17 +154,18 @@ const SenaPage = () => {
                   console.log("iniciando captura de seña...");
                 }
 
-                // Guardamos el frame actual en el buffer
-                // Agregamos el frame actual al buffer
-                if (frameBufferRef.current.length < 30) {
-                  frameBufferRef.current.push(keypoints);
-                  setFrameCount(frameBufferRef.current.length);
+                 // 🔥 BUFFER CONTINUO (SLIDING WINDOW)
+                frameBufferRef.current.push(keypoints);
+
+                if (frameBufferRef.current.length > 30) {
+                  frameBufferRef.current.shift(); // elimina el más viejo
                 }
-                // Cuando llegamos a 30, enviamos el paquete completo
+
+                setFrameCount(frameBufferRef.current.length);
+
+                // 🚀 Siempre que haya 30 → predice
                 if (frameBufferRef.current.length === 30) {
-                  sendToBackend(frameBufferRef.current);
-                  isSigningRef.current = false; // Detenemos la captura hasta que se procese
-                  setIsSigning(false);
+                  sendToBackend([...frameBufferRef.current]);
                 }
               } else {
                 // 🔴 MANO QUIETA → reset
@@ -200,6 +233,8 @@ const SenaPage = () => {
 
             updatePrediction(`Seña detectada: ${bestName} (${bestProb}%)`);
 
+            playAudio(bestName); // Reproducir el audio de la seña detectada
+            
             console.log("Top 5 predicciones:");
 
             data.top5.forEach((p: any) => {
@@ -259,109 +294,162 @@ const SenaPage = () => {
       active = false;
       if (camera) camera.stop();
     };
-  }, []);
+  }, [hasStarted]);
 
- return (
+
+  return (
     <div className="sena-tracking-container">
 
-      {/* 🔹 ÁREA DE LA CÁMARA (Ocupa el espacio principal) */}
+      {/* 🔹 ÁREA DE LA CÁMARA */}
       <div className="sena-camera-area">
         <div className="sena-video-wrapper">
-
-          <div className={`sign-indicator ${isSigning ? "active" : ""}`} />
           
-          {/* Cámara */}
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            playsInline 
-            muted 
-            className="sena-video-element" 
-          />
-          {/* Canvas para los puntos de la mano */}
-          <canvas 
-            ref={canvasRef} 
-            width="640" 
-            height="480" 
-            className="sena-canvas-element" 
-          />
-          
-          {/* Overlay técnico para que se vea igual al EyeTracking */}
-          <div className="sena-tech-hud">
-            {/*<div className="scan-line"></div> */}
-            <div className="corner top-left"></div>
-            <div className="corner top-right"></div>
-            <div className="corner bottom-left"></div>
-            <div className="corner bottom-right"></div>
-          </div>
-
-          {isSigning && (
-            <div className="frame-counter">
-              <div className="frame-text">
-                Capturando seña {frameCount}/30
-              </div>
-
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill"
-                  style={{ width: `${(frameCount / 30) * 100}%` }}
-                />
-              </div>
+          {!hasStarted ? (
+            /* BOTÓN INTEGRADO EN EL RECUADRO DE LA CÁMARA */
+            <div className="sena-placeholder-overlay">
+              <button 
+                className="btn-activate-camera"
+                onClick={() => setHasStarted(true)}
+              >
+                <span className="icon">📷</span>
+                Activar Cámara y Voz
+              </button>
             </div>
+          ) : (
+            /* ELEMENTOS DE LA CÁMARA (Se activan al pulsar) */
+            <>
+              <div className={`sign-indicator ${isSigning ? "active" : ""}`} />
+              
+              <video 
+                ref={videoRef} 
+                autoPlay 
+                playsInline 
+                muted 
+                className="sena-video-element" 
+              />
+              <canvas 
+                ref={canvasRef} 
+                width="640" 
+                height="480" 
+                className="sena-canvas-element" 
+              />
+              
+              <div className="sena-tech-hud">
+                <div className="corner top-left"></div>
+                <div className="corner top-right"></div>
+                <div className="corner bottom-left"></div>
+                <div className="corner bottom-right"></div>
+              </div>
+
+              {isSigning && (
+                <div className="frame-counter">
+                  <div className="frame-text">
+                    Capturando seña {frameCount}/30
+                  </div>
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill"
+                      style={{ width: `${(frameCount / 30) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      {/* 🔹 PANEL INFERIOR (Ocupa la parte de abajo, fondo blanco) */}
+      {/* 🔹 PANEL INFERIOR (Siempre visible para mantener la estructura) */}
       <div className="sena-bottom-panel">
-        
-        {/* Manejo de errores */}
-        {error && (
-          <div className="sena-error-message">
-            <b>Error:</b> {error} <br/> 
-            <small>Revisa si estás en HTTPS o si el backend está corriendo.</small>
-          </div>
-        )}
-
-        {/* Resultados */}
+        {/* ... (Todo el contenido de resultados y topPredictions igual que antes) */}
         <div className="sena-results-area">
           <h2 className="sena-title">Lenguaje de Señas (LSA-T)</h2>
-          
           <div className={`sena-prediction-display ${prediction.includes('Seña detectada') ? 'success' : 'waiting'}`}>
-            <div className="top5-container">
-
-              {topPredictions.map((p, i) => {
-
-                const name = LSA_LABELS[p.class];
-                const prob = (p.prob * 100).toFixed(1);
-
-                return (
-                  <div key={i} className="top5-item">
-
-                    <div className="top5-label">
-                      <span>{name}</span>
-                     <span>{prob}%</span>
-                    </div>
-
-                    <div className="top5-bar">
-                      <div
-                        className="top5-fill"
-                        style={{ width: `${prob}%` }}
-                      />
-                    </div>
-
-                  </div>
-                );
-              })}
-
-            </div>
-
+             {topPredictions.map((p, i) => {
+                    const name = LSA_LABELS[p.class];
+                    const prob = (p.prob * 100).toFixed(1);
+                    return (
+                      <div key={i} className="top5-item">
+                        <div className="top5-label"><span>{name}</span><span>{prob}%</span></div>
+                        <div className="top5-bar"><div className="top5-fill" style={{ width: `${prob}%` }} /></div>
+                      </div>
+                    );
+                  })}
           </div>
         </div>
-
       </div>
     </div>
   );
 };
+ /* 3. RENDERIZADO CONDICIONAL
+  return (
+    <div className="sena-tracking-container">
+      
+      {!hasStarted ? (
+        /* PANTALLA INICIAL DE ACCESIBILIDAD 
+        <div className="sena-start-overlay">
+          <div className="start-card">
+            <h1>Asistente LSA</h1>
+            <p>Para comenzar, activa la cámara y el sistema de voz.</p>
+            <button 
+              className="btn-start-assistant"
+              onClick={() => setHasStarted(true)}
+            >
+              Iniciar Asistente
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* INTERFAZ DE CÁMARA ACTIVA 
+        <>
+          <div className="sena-camera-area">
+            <div className="sena-video-wrapper">
+              <div className={`sign-indicator ${isSigning ? "active" : ""}`} />
+              <video ref={videoRef} autoPlay playsInline muted className="sena-video-element" />
+              <canvas ref={canvasRef} width="640" height="480" className="sena-canvas-element" />
+              
+              <div className="sena-tech-hud">
+                <div className="corner top-left"></div>
+                <div className="corner top-right"></div>
+                <div className="corner bottom-left"></div>
+                <div className="corner bottom-right"></div>
+              </div>
+
+              {isSigning && (
+                <div className="frame-counter">
+                  <div className="frame-text">Capturando seña {frameCount}/30</div>
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{ width: `${(frameCount / 30) * 100}%` }} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="sena-bottom-panel">
+            {error && <div className="sena-error-message"><b>Error:</b> {error}</div>}
+            <div className="sena-results-area">
+              <h2 className="sena-title">Lenguaje de Señas (LSA-T)</h2>
+              <div className={`sena-prediction-display ${prediction.includes('Seña detectada') ? 'success' : 'waiting'}`}>
+                <div className="top5-container">
+                  {topPredictions.map((p, i) => {
+                    const name = LSA_LABELS[p.class];
+                    const prob = (p.prob * 100).toFixed(1);
+                    return (
+                      <div key={i} className="top5-item">
+                        <div className="top5-label"><span>{name}</span><span>{prob}%</span></div>
+                        <div className="top5-bar"><div className="top5-fill" style={{ width: `${prob}%` }} /></div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};*/
 
 export default SenaPage;

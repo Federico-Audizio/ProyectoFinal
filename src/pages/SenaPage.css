@@ -258,3 +258,45 @@
   border-radius: 6px;
   transition: width 0.4s ease;
 }
+
+/* Contenedor que ocupa el lugar de la cámara antes de iniciar */
+.sena-placeholder-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #1a1a1a; /* Fondo oscuro simulando cámara apagada */
+  border-radius: 8px;
+  z-index: 10;
+}
+
+/* El botón de activación */
+.btn-activate-camera {
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-activate-camera:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+.btn-activate-camera .icon {
+  font-size: 2rem;
+}
