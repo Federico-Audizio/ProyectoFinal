@@ -35,6 +35,29 @@ const SenaPage = () => {
     predictionRef.current = msg;
   };
 
+  // Extrae los keypoints y asegura que siempre devuelva un array de 126 elementos
+  const extractKeypoints = (results: any): number[] => {
+    let leftHand = new Array(63).fill(0);
+    let rightHand = new Array(63).fill(0);
+
+    if (results.multiHandLandmarks && results.multiHandedness) {
+      for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+        const landmarks = results.multiHandLandmarks[i];
+        const handedness = results.multiHandedness[i].label;
+
+        const flatLandmarks = landmarks.flatMap((lm: any) => [lm.x, lm.y, lm.z]);
+
+        if (handedness === 'Left') {
+          leftHand = flatLandmarks;
+        } else if (handedness === 'Right') {
+          rightHand = flatLandmarks;
+        }
+      }
+    }
+
+    return [...leftHand, ...rightHand];
+  };
+
   const getMovement = (prev: number[], curr: number[]) => {
     let total = 0;
     for (let i = 0; i < curr.length; i++) {
@@ -100,11 +123,13 @@ const SenaPage = () => {
           canvasCtx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
           
           if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-          // 1. Extraer keypoints de la primera mano detectada
-            const hand = results.multiHandLandmarks[0];
+            // 1. Extraer keypoints de la primera mano detectada
+            //const hand = results.multiHandLandmarks[0];
             // Convertir 21 puntos (x, y, z) en un array plano de 63 números
-            const rawkeypoints = hand.flatMap((point: any) => [point.x, point.y, point.z]);
-            const keypoints = normalizeKeypoints(rawkeypoints);
+            //const rawkeypoints = hand.flatMap((point: any) => [point.x, point.y, point.z]);
+            //const keypoints = normalizeKeypoints(rawkeypoints);
+
+            const keypoints = extractKeypoints(results);
             // 2. Enviar a tu API de Flask
             const prev = prevKeypointsRef.current;
 
@@ -113,7 +138,7 @@ const SenaPage = () => {
 
               const canCapture = !predictionRef.current.includes("Seña detectada");
 
-              if (movement > 0.05 && canCapture) {
+              if (movement > 0.02 && canCapture) {
                 // 🟢 EMPEZÓ / SIGUE LA SEÑA
                 if (!isSigningRef.current) {
                   isSigningRef.current = true;
@@ -122,17 +147,18 @@ const SenaPage = () => {
                   console.log("iniciando captura de seña...");
                 }
 
-                // Guardamos el frame actual en el buffer
-                // Agregamos el frame actual al buffer
-                if (frameBufferRef.current.length < 30) {
-                  frameBufferRef.current.push(keypoints);
-                  setFrameCount(frameBufferRef.current.length);
+                 // 🔥 BUFFER CONTINUO (SLIDING WINDOW)
+                frameBufferRef.current.push(keypoints);
+
+                if (frameBufferRef.current.length > 30) {
+                  frameBufferRef.current.shift(); // elimina el más viejo
                 }
-                // Cuando llegamos a 30, enviamos el paquete completo
+
+                setFrameCount(frameBufferRef.current.length);
+
+                // 🚀 Siempre que haya 30 → predice
                 if (frameBufferRef.current.length === 30) {
-                  sendToBackend(frameBufferRef.current);
-                  isSigningRef.current = false; // Detenemos la captura hasta que se procese
-                  setIsSigning(false);
+                  sendToBackend([...frameBufferRef.current]);
                 }
               } else {
                 // 🔴 MANO QUIETA → reset

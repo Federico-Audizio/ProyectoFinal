@@ -164,15 +164,36 @@ import torch.nn as nn
 
 # --- MODELO LSA64 (LSTM) ---
 class LSTMModel(nn.Module):
-    def __init__(self, input_size=63, hidden_size=128, num_classes=64):
+    def __init__(self, input_size=126, hidden_size=256, num_layers=3, num_classes=64): # Ajustá num_classes si es 20 o 64
         super().__init__()
-        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
-        self.fc = nn.Linear(hidden_size, num_classes)
+        # Capa LSTM con 3 capas y dropout
+        self.lstm = nn.LSTM(
+            input_size=input_size, 
+            hidden_size=hidden_size, 
+            num_layers=num_layers, 
+            batch_first=True,
+            dropout=0.3
+        )
+        # Capas densas de salida
+        self.fc1 = nn.Linear(hidden_size, 128)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.4)
+        self.fc2 = nn.Linear(128, num_classes)
 
     def forward(self, x):
+        # x shape: (batch, seq_len, input_size) -> (1, 30, 126)
         out, _ = self.lstm(x)
+        
+        # Tomamos solo la salida del último timestep
         out = out[:, -1, :]
-        return self.fc(out)
+        
+        # Pasamos por las capas densas
+        out = self.fc1(out)
+        out = self.relu(out)
+        out = self.dropout(out)
+        out = self.fc2(out)
+        
+        return out
 
 modelLSA = LSTMModel()
 try:
@@ -190,20 +211,36 @@ def predict_lsa():
         data = request.json
         full_sequence = data.get("sequence", [])
 
-        if not full_sequence or len(full_sequence) < 30:
-            return jsonify({"error": "Secuencia incompleta o no recibida"}), 400
+        # Validación
+        if not full_sequence or len(full_sequence) != 30:
+            return jsonify({"error": f"Secuencia incompleta. Se esperaban 30 frames, llegaron {len(full_sequence)}"}), 400
 
-        # Convertimos a tensor (Asegúrate de que tenga forma [1, 30, 63])
-        input_tensor = torch.tensor(np.array(full_sequence), dtype=torch.float32).unsqueeze(0)
- 
+        seq_array = np.array(full_sequence)
+
+        if seq_array.shape != (30, 126):
+            return jsonify({"error": f"Formato incorrecto. Se esperaba (30,126) y llegó {seq_array.shape}"}), 400
+
+        # Validar NaN
+        if np.isnan(seq_array).any():
+            return jsonify({"error": "NaN en la secuencia"}), 400
+
+        # 🔥 NORMALIZACIÓN CORRECTA (por frame)
+        mean = seq_array.mean(axis=1, keepdims=True)
+        std = seq_array.std(axis=1, keepdims=True)
+        std[std == 0] = 1
+        seq_array = (seq_array - mean) / std
+
+        # Tensor
+        input_tensor = torch.tensor(seq_array, dtype=torch.float32).unsqueeze(0)
+
         with torch.no_grad():
             output = modelLSA(input_tensor)
 
-            probs = F.softmax(output, dim=1)  # convertir a probabilidades
-            probs = probs.squeeze().numpy()
+            probs = F.softmax(output, dim=1).squeeze().numpy()
 
             # obtener top 5
             top5_idx = probs.argsort()[-5:][::-1]
+
             top5 = [
                 {"class": int(i), "prob": float(probs[i])}
                 for i in top5_idx
@@ -215,6 +252,7 @@ def predict_lsa():
             "prediction": predicted_class,
             "top5": top5
         })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
