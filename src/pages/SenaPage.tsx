@@ -41,6 +41,7 @@ const SenaPage = () => {
     predictionRef.current = msg;
   };
 
+
   const getMovement = (prev: number[], curr: number[]) => {
     let total = 0;
     for (let i = 0; i < curr.length; i++) {

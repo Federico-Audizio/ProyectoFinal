@@ -9,40 +9,71 @@
   box-sizing: border-box;
 }
 
-/* Barra superior */
+/* ====================
+   📌 BARRA SUPERIOR Y FRASES
+==================== */
 .sentence-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: white;
-  padding: 12px 20px;
+  padding: 10px 15px;
   border-radius: 10px;
   margin-bottom: 20px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  min-height: 60px; /* Evita saltos de diseño cuando está vacía */
+  gap: 15px;
 }
 
 .sentence-content {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* 👈 separa texto y botón */
-  width: 100%; /* ocupa todo el ancho */
+  flex: 1;
+  overflow-x: auto; /* Permite scroll si la frase es muy larga */
+  padding-bottom: 4px; /* Espacio para el scrollbar */
+}
+
+/* Ocultar scrollbar visualmente pero permitir scroll */
+.sentence-content::-webkit-scrollbar {
+  height: 6px;
+}
+.sentence-content::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+.phrase-items-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.phrase-item {
+  display: flex;
+  align-items: center;
+  background: #f8f9fa;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  gap: 8px;
+  white-space: nowrap;
 }
 
 .sentence-emoji {
-  font-size: 28px;
+  font-size: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .sentence-img {
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
   object-fit: contain;
 }
 
 .sentence-text {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
   color: #333;
   flex: 1;
@@ -52,6 +83,175 @@
   font-size: 18px;
   color: #888;
 }
+
+/* Botón de borrar rojo (Nivel Simple) */
+.delete-btn {
+  background: #ff4d4d;
+  color: white;
+  border-color: #cc0000;
+  width: 45px;
+  height: 45px;
+  padding: 8px;
+}
+
+.delete-btn:hover {
+  background: #e60000;
+  transform: scale(1.05);
+}
+
+.delete-btn svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Botón Danger (Rojo): Borrar y Tacho */
+.control-btn.btn-danger {
+  border-color: #ff4d4d;
+  color: #ff4d4d;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.control-btn.btn-danger:hover {
+  background: #ff4d4d;
+  color: white;
+  box-shadow: 0 0 18px 4px rgba(255, 77, 77, 0.6); /* Glow rojo */
+  transform: translateY(-2px);
+}
+
+/* Botón Success (Verde): Play */
+.control-btn.btn-success {
+  border-color: #28a745;
+  color: #28a745;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.control-btn.btn-success:hover {
+  background: #28a745;
+  color: white;
+  box-shadow: 0 0 18px 4px rgba(40, 167, 69, 0.6); /* Glow verde */
+  transform: translateY(-2px);
+}
+
+/* Ajustes generales de los íconos dentro de estos botones */
+.control-btn svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* Mantener el diseño cuadrado con bordes redondeados suave */
+.control-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  padding: 8px;
+}
+
+/* ====================
+   📌 CONTROLES Y BOTONES
+==================== */
+.sentence-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.composed-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.control-btn {
+  background: white;
+  border: 2px solid #333;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: #333;
+  font-weight: bold;
+}
+
+.control-btn:hover {
+  background: #f0f0f0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.control-btn:active {
+  transform: translateY(0);
+}
+
+.basic-delete {
+  padding: 8px 15px;
+  font-size: 16px;
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.icon-btn, .settings-btn {
+  width: 45px;
+  height: 45px;
+  padding: 8px;
+}
+
+/* Botón de configuración específico */
+.settings-wrapper {
+  position: relative;
+  border-left: 2px solid #eee;
+  padding-left: 15px;
+}
+
+/* ====================
+   📌 DROPDOWN DE NIVELES
+==================== */
+.settings-dropdown {
+  position: absolute;
+  top: 120%;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  padding: 15px;
+  width: 220px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.dropdown-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: bold;
+  color: #555;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.dropdown-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  color: #333;
+}
+
+.dropdown-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* ====================
+   📌 grilla de pictogramas y tiles
+==================== */
 
 .pictogram-grid {
   display: grid;

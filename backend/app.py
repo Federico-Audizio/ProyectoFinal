@@ -179,9 +179,25 @@ class LSTMModel(nn.Module):
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(0.4)
         self.fc2 = nn.Linear(128, num_classes)
+        # Capa LSTM con 3 capas y dropout
+        self.lstm = nn.LSTM(
+            input_size=input_size, 
+            hidden_size=hidden_size, 
+            num_layers=num_layers, 
+            batch_first=True,
+            dropout=0.3
+        )
+        # Capas densas de salida
+        self.fc1 = nn.Linear(hidden_size, 128)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.4)
+        self.fc2 = nn.Linear(128, num_classes)
 
     def forward(self, x):
+        # x shape: (batch, seq_len, input_size) -> (1, 30, 126)
         out, _ = self.lstm(x)
+        
+        # Tomamos solo la salida del último timestep
         out = out[:, -1, :]
         out = self.fc1(out)
         out = self.relu(out)
@@ -261,6 +277,7 @@ def predict_lsa():
 
             # obtener top 5
             top5_idx = probs.argsort()[-5:][::-1]
+
             top5 = [
                 {"class": int(i), "prob": float(probs[i])}
                 for i in top5_idx
@@ -272,6 +289,7 @@ def predict_lsa():
             "prediction": predicted_class,
             "top5": top5
         })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
