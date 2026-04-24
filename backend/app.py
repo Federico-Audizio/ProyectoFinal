@@ -165,7 +165,21 @@ import torch.nn as nn
 # --- MODELO LSA64 (LSTM) ---
 class LSTMModel(nn.Module):
     def __init__(self, input_size=126, hidden_size=256, num_layers=3, num_classes=64): # Ajustá num_classes si es 20 o 64
+    def __init__(self, input_size=126, hidden_size=256, num_layers=3, num_classes=64): # Ajustá num_classes si es 20 o 64
         super().__init__()
+        # Capa LSTM con 3 capas y dropout
+        self.lstm = nn.LSTM(
+            input_size=input_size, 
+            hidden_size=hidden_size, 
+            num_layers=num_layers, 
+            batch_first=True,
+            dropout=0.3
+        )
+        # Capas densas de salida
+        self.fc1 = nn.Linear(hidden_size, 128)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.4)
+        self.fc2 = nn.Linear(128, num_classes)
         # Capa LSTM con 3 capas y dropout
         self.lstm = nn.LSTM(
             input_size=input_size, 
@@ -194,6 +208,28 @@ class LSTMModel(nn.Module):
         out = self.fc2(out)
         
         return out
+        out = self.fc1(out)
+        out = self.relu(out)
+        out = self.dropout(out)
+        out = self.fc2(out)
+
+        return out
+
+# 2. Función de preprocesamiento dentro de predict_lsa
+#def preprocess_sequence(seq):
+ #   seq = np.array(seq) # (50, 126)
+    
+    # Calcular velocidad (diff) como en Colab
+  #  velocity = np.diff(seq, axis=0)
+   # velocity = np.vstack([np.zeros((1, 126)), velocity])
+    
+    # Concatenar posición + velocidad = 252
+    #full_seq = np.concatenate([seq, velocity], axis=1)
+    
+    # Normalización estadística (Z-score)
+    #full_seq = (full_seq - np.mean(full_seq)) / (np.std(full_seq) + 1e-8)
+    
+    #return torch.tensor(full_seq, dtype=torch.float32).unsqueeze(0)
 
 modelLSA = LSTMModel()
 try:
@@ -211,32 +247,42 @@ def predict_lsa():
         data = request.json
         full_sequence = data.get("sequence", [])
 
-        # Validación
         if not full_sequence or len(full_sequence) != 30:
-            return jsonify({"error": f"Secuencia incompleta. Se esperaban 30 frames, llegaron {len(full_sequence)}"}), 400
+            return jsonify({"error": "Secuencia incompleta o no recibida"}), 400
 
-        seq_array = np.array(full_sequence)
+        # 1. Convertir a Array de NumPy (50, 126)
+        sequence_np = np.array(full_sequence)
 
-        if seq_array.shape != (30, 126):
-            return jsonify({"error": f"Formato incorrecto. Se esperaba (30,126) y llegó {seq_array.shape}"}), 400
-
-        # Validar NaN
-        if np.isnan(seq_array).any():
+        if sequence_np.shape != (30, 126):
+            return jsonify({"error": f"Formato incorrecto. Se esperaba (30,126) y llegó {sequence_np.shape}"}), 400
+        
+        if np.isnan(sequence_np).any():
             return jsonify({"error": "NaN en la secuencia"}), 400
-
-        # 🔥 NORMALIZACIÓN CORRECTA (por frame)
-        mean = seq_array.mean(axis=1, keepdims=True)
-        std = seq_array.std(axis=1, keepdims=True)
+        
+        mean = sequence_np.mean(axis=1, keepdims=True)
+        std = sequence_np.std(axis=1, keepdims=True)
         std[std == 0] = 1
-        seq_array = (seq_array - mean) / std
+        sequence_np = (sequence_np - mean) / std
+        # 2. Calcular Velocidad (Igual que en Colab)
+        # Calculamos la diferencia entre frames
+        #velocity = np.diff(sequence_np, axis=0)
+        # Agregamos un frame de ceros al inicio para mantener el tamaño 50
+        #velocity = np.vstack([np.zeros((1, 126)), velocity])
 
-        # Tensor
-        input_tensor = torch.tensor(seq_array, dtype=torch.float32).unsqueeze(0)
+        # 3. Concatenar Posición + Velocidad (126 + 126 = 252)
+        #final_input = np.concatenate([sequence_np, velocity], axis=1)
 
+        # 4. Normalización Estadística (Z-Score)
+        # Esto es lo que evita que el modelo de siempre la misma probabilidad
+        #final_input = (final_input - np.mean(final_input)) / (np.std(final_input) + 1e-8)
+
+        # 5. Convertir a Tensor y Predecir
+        input_tensor = torch.tensor(sequence_np, dtype=torch.float32).unsqueeze(0)
+ 
         with torch.no_grad():
             output = modelLSA(input_tensor)
 
-            probs = F.softmax(output, dim=1).squeeze().numpy()
+            probs = F.softmax(output, dim=1).squeeze().numpy()  # convertir a probabilidades    
 
             # obtener top 5
             top5_idx = probs.argsort()[-5:][::-1]
