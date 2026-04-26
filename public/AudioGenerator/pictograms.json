@@ -143,7 +143,17 @@
   { "text": "ansioso", "file": "ansioso.mp3", "image": "ansioso.png" },
   { "text": "confusión", "file": "confusión.mp3", "image": "confusión.png" },
   { "text": "distraído", "file": "distraído.mp3", "image": "distraído.png" },
-  { "text": "emocionado", "file": "emocionado.mp3", "image": "emocionado.png" }
+  { "text": "emocionado", "file": "emocionado.mp3", "image": "emocionado.png" },
+
+  {"text": "conn", "file": "conn.mp3", "image": "_con.png"},
+  {"text": "Con", "file": "Con.mp3", "image": "_con.png"},
+  {"text": "estoy", "file": "estoy.mp3", "image": "estoy.png"},
+  {"text": "ir", "file": "ir.mp3", "image": "ir.png"},
+  {"text": "necesito", "file": "necesito.mp3", "image": "necesito.png"},
+  {"text": "no quiero", "file": "no quiero.mp3", "image": "no quiero.png"},
+  {"text": "quiero", "file": "quiero.mp3", "image": "quiero.png"},
+  {"text": "tengo", "file": "tengo.mp3", "image": "tengo.png"},
+  {"text": "tu", "file": "tu.mp3", "image": "tu.png"}
 
 ] 
 }
