@@ -176,10 +176,53 @@ export const useAudio = () => {
     }
   };
 
+  const playPhrase = async (items) => {
+    if (!audioContext || !unlockedRef.current) return;
+
+    if (audioContext.state === "suspended") {
+      await audioContext.resume();
+    }
+
+    for (const item of items) {
+      await new Promise((resolve) => {
+        const finalSrc = getCleanPath(item);
+
+        const startPlayback = (buffer) => {
+          const source = audioContext.createBufferSource();
+          source.buffer = buffer;
+          source.playbackRate.value = playbackSpeedRef.current;
+          source.connect(audioContext.destination);
+
+          currentSourceRef.current = source;
+
+          source.start(0);
+
+          source.onended = () => {
+            resolve(); // 👈 espera a que termine antes de seguir
+          };
+        };
+
+        if (audioBuffers[finalSrc]) {
+          startPlayback(audioBuffers[finalSrc]);
+        } else {
+          preloadAudio(finalSrc).then((path) => {
+            if (path && audioBuffers[path]) {
+              startPlayback(audioBuffers[path]);
+            } else {
+              resolve();
+            }
+          });
+        }
+      });
+    }
+  };
+
+
+
   // Función para cambiar la velocidad desde los componentes
   const setPlaybackSpeed = (speed) => {
     playbackSpeedRef.current = speed;
   };
 
-  return { playAudio, preloadAudio, setPlaybackSpeed };
+  return { playAudio, preloadAudio, setPlaybackSpeed, playPhrase };
 };

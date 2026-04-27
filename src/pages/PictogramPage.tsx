@@ -25,7 +25,7 @@ const PictogramPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentFolder, setCurrentFolder] = useState<any[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const { playAudio } = useAudio();
+  const { playAudio, playPhrase } = useAudio();
   
 
   const lugaresContent = [
@@ -53,7 +53,7 @@ const PictogramPage: React.FC = () => {
       { label: "Conectores", isFolder: true, image: "/pictograms/Conectores/tengo.png", color: "#fa18c2", content: [
         { label: "No quero", imagePath: "/public/pictograms/Conectores/no quiero.png", color: "#fa18c2" },
         { label: "Tengo", imagePath: "/public/pictograms/Conectores/tengo.png", color: "#fa18c2" },
-        { label: "Con", imagePath: "/public/pictograms/Conectores/_con.png", color: "#fa18c2" },
+        { label: "Conn", imagePath: "/public/pictograms/Conectores/_con.png", color: "#fa18c2" },
         { label: "Estoy", imagePath: "/public/pictograms/Conectores/estoy.png", color: "#fa18c2" },
         { label: "Ir", imagePath: "/public/pictograms/Conectores/ir.png", color: "#fa18c2" },
         { label: "Necesito", imagePath: "/public/pictograms/Conectores/necesito.png", color: "#fa18c2" },
@@ -260,7 +260,11 @@ const PictogramPage: React.FC = () => {
     } else {
       // Nivel compuesto: Agrega al final
       if (phrase.length < 7) {
-        setPhrase((prev) => [...prev, newSelected]); 
+        setPhrase(prev => [...prev, newSelected]); 
+      }
+      else if (phrase.length >= 7) {
+        console.log("Límite de 7 pictogramas alcanzado. No se pueden agregar más.");
+        return;
       }
     }
   };
@@ -275,12 +279,7 @@ const PictogramPage: React.FC = () => {
   };
 
   const playFullPhrase = async () => {
-    for (const pic of phrase) {
-      playAudio(pic.label);
-
-      // Pausa simple entre palabras (ajusta los milisegundos según necesites)
-      await new Promise((resolve) => setTimeout(resolve, 800)); 
-    }
+    playPhrase(phrase.map(p => p.label));
   };
 
   return (
@@ -392,7 +391,9 @@ const PictogramPage: React.FC = () => {
                   playAudio(pic.label);
                 }
               } else {
-                playAudio(pic.label);
+                  if(commLevel === "simple"){
+                    playAudio(pic.label);
+                  }
                 if(pic.content) {
                   setCurrentFolder(pic.content); 
                   setIsModalOpen(true);
@@ -411,7 +412,13 @@ const PictogramPage: React.FC = () => {
               if (commLevel === "simple") {
                 setPhrase([newSelected]); // Modo simple: pisa lo que había y deja solo este
               } else {
-                setPhrase((prev) => [...prev, newSelected]); // Modo compuesto: lo suma al final de la frase
+                if (phrase.length < 7) {
+                  setPhrase((prev) => [...prev, newSelected]); // Modo compuesto: lo suma al final de la frase
+                }
+                else if (phrase.length >= 7) {
+                  console.log("Límite de 7 pictogramas alcanzado. No se pueden agregar más.");
+                  return;
+                }
               }
             }}
           />
@@ -443,6 +450,10 @@ const PictogramPage: React.FC = () => {
           } else {
             if (phrase.length < 7) {
               setPhrase((prev) => [...prev, newSelected]);
+            }
+            else if (phrase.length >= 7) {
+              console.log("Límite de 7 pictogramas alcanzado. No se pueden agregar más.");
+              return;
             }
           }
           

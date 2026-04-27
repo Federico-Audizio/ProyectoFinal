@@ -41,28 +41,6 @@ const SenaPage = () => {
     predictionRef.current = msg;
   };
 
-  // Extrae los keypoints y asegura que siempre devuelva un array de 126 elementos
-  const extractKeypoints = (results: any): number[] => {
-    let leftHand = new Array(63).fill(0);
-    let rightHand = new Array(63).fill(0);
-
-    if (results.multiHandLandmarks && results.multiHandedness) {
-      for (let i = 0; i < results.multiHandLandmarks.length; i++) {
-        const landmarks = results.multiHandLandmarks[i];
-        const handedness = results.multiHandedness[i].label;
-
-        const flatLandmarks = landmarks.flatMap((lm: any) => [lm.x, lm.y, lm.z]);
-
-        if (handedness === 'Left') {
-          leftHand = flatLandmarks;
-        } else if (handedness === 'Right') {
-          rightHand = flatLandmarks;
-        }
-      }
-    }
-
-    return [...leftHand, ...rightHand];
-  };
 
   const getMovement = (prev: number[], curr: number[]) => {
     let total = 0;
