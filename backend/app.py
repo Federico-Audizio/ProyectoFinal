@@ -165,7 +165,6 @@ import torch.nn as nn
 # --- MODELO LSA64 (LSTM) ---
 class LSTMModel(nn.Module):
     def __init__(self, input_size=126, hidden_size=256, num_layers=3, num_classes=64): # Ajustá num_classes si es 20 o 64
-    def __init__(self, input_size=126, hidden_size=256, num_layers=3, num_classes=64): # Ajustá num_classes si es 20 o 64
         super().__init__()
         # Capa LSTM con 3 capas y dropout
         self.lstm = nn.LSTM(
@@ -213,16 +212,12 @@ class LSTMModel(nn.Module):
         
         # Tomamos solo la salida del último timestep
         out = out[:, -1, :]
-<<<<<<<<< Temporary merge branch 1
-=========
         
         # Pasamos por las capas densas
->>>>>>>>> Temporary merge branch 2
         out = self.fc1(out)
         out = self.relu(out)
         out = self.dropout(out)
         out = self.fc2(out)
-<<<<<<<<< Temporary merge branch 1
 
         return out
 

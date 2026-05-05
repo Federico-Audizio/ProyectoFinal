@@ -262,6 +262,30 @@ const EyeTrackingPage: React.FC = () => {
   audio.play().catch(err => console.error("Error al reproducir audio:", err));
 };*/
 
+// Estados de Accesibilidad (Tamaño de texto e imágenes)
+  type SizeOption = "small" | "normal" | "large";
+  const [textSize, setTextSize] = useState<SizeOption>("normal");
+  const [imageSize, setImageSize] = useState<SizeOption>("normal");
+  const [isSizeModalOpen, setIsSizeModalOpen] = useState(false);
+
+  // Función para inyectar estilos dinámicos
+  const getDynamicStyles = () => {
+    // Configuración de imagen
+    let imgSize = "70%"; // normal
+    if (imageSize === "small") imgSize = "50%";
+    if (imageSize === "large") imgSize = "85%";
+
+    // Configuración de texto
+    let txtSize = "1.2rem"; // normal
+    if (textSize === "small") txtSize = "1rem";
+    if (textSize === "large") txtSize = "1.8rem";
+
+    return {
+      "--dynamic-img-size": imgSize,
+      "--dynamic-txt-size": txtSize,
+    } as React.CSSProperties;
+  };
+
   // ======================================
   // 🔹 EyeGestures: carga e inicialización
   // ======================================
@@ -587,7 +611,7 @@ const EyeTrackingPage: React.FC = () => {
   // ======================================
   return (
     
-    <div className="eye-tracking-container">
+    <div className="eye-tracking-container" style={getDynamicStyles()}>
 
       {/* ✅ NUEVA BARRA DE ESTADO INTEGRADA */}
       <div className="status-bar">
@@ -732,12 +756,57 @@ const EyeTrackingPage: React.FC = () => {
                 </div>
               </div>
               
-              <div className="instruction-footer">
+              <div className="instruction-footer"  style={{position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '50px' }}>
                 <p className="main-instruction">Detección de Rostro</p>
                 <p className="sub-instruction">Centre su rostro dentro del recuadro</p>
+
+                <button 
+                  className="hud-settings-btn"
+                  onClick={() => setIsSizeModalOpen(true)}
+                  title="Configurar Tamaño"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>                </button>
+                
               </div>
             </div>
           </div>
+
+          {isSizeModalOpen && (
+          <div className="calibration-overlay" style={{ zIndex: 300, opacity: 1, visibility: 'visible', pointerEvents: 'auto' }}>
+            <div className="eye-config-modal-content">
+              <button className="eye-config-close-btn" onClick={() => setIsSizeModalOpen(false)}>×</button>
+              <h2 className="eye-config-modal-title">Personalización Visual</h2>
+              
+              <div className="eye-config-section">
+                <p className="eye-config-label">Tamaño de los Pictogramas</p>
+                <div className="eye-config-segmented">
+                  <button className={`segment ${imageSize === "small" ? "active" : ""}`} onClick={() => setImageSize("small")}>Pequeño</button>
+                  <button className={`segment ${imageSize === "normal" ? "active" : ""}`} onClick={() => setImageSize("normal")}>Normal</button>
+                  <button className={`segment ${imageSize === "large" ? "active" : ""}`} onClick={() => setImageSize("large")}>Grande</button>
+                </div>
+              </div>
+
+              <div className="eye-config-section">
+                <p className="eye-config-label">Tamaño del Texto</p>
+                <div className="eye-config-segmented">
+                  <button className={`segment ${textSize === "small" ? "active" : ""}`} onClick={() => setTextSize("small")}>Pequeño</button>
+                  <button className={`segment ${textSize === "normal" ? "active" : ""}`} onClick={() => setTextSize("normal")}>Normal</button>
+                  <button className={`segment ${textSize === "large" ? "active" : ""}`} onClick={() => setTextSize("large")}>Grande</button>
+                </div>
+              </div>
+
+              {/* Vista previa en tiempo real adaptada para seguimiento ocular */}
+              <div className="eye-config-preview-box">
+                <p className="eye-config-preview-title">Vista Previa</p>
+                <div className="eye-config-preview-card">
+                  <img src="/public/pictograms/bebida.png" alt="preview" className="pictogram-image" />                </div>
+                  <p className="pictogram-name">Ejemplo</p>
+              </div>
+              
+              <button className="eye-config-save-btn" onClick={() => setIsSizeModalOpen(false)}>Guardar cambios</button>
+            </div>
+          </div>
+        )}
       </div>
     
   );

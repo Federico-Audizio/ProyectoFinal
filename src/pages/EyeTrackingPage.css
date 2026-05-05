@@ -105,6 +105,7 @@ h1 {
     display: grid;
     /* 4 columnas como en tu imagen de ejemplo */
     grid-template-columns: repeat(4, 1fr); 
+    grid-auto-rows: minmax(160px, 1fr); /* Altura mínima de 160px, pero pueden crecer para llenar el espacio */
     gap: 15px; /* Espacio entre las tarjetas */
 
     flex: 1;              /* 👈 CLAVE: Ocupa todo el espacio vertical sobrante */
@@ -117,17 +118,18 @@ h1 {
 .pictogram-card {
     background-color: #e9e9e9; /* Fondo gris claro de la tarjeta */
     border-radius: 15px;
-    padding: 10px;
+    padding: 15px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); 
     transition: all 0.2s ease-in-out;
     cursor: pointer;
     border: 3px solid transparent; /* Borde base transparente */
     height: 100%; /* Que intenten llenar su celda */
-    max-height: 250px; /* 👈 Límite para que no sean gigantes en pantallas grandes */
+    /*max-height: 250px; /* 👈 Límite para que no sean gigantes en pantallas grandes */
 
     /* Evitar desbordamiento interno */
     box-sizing: border-box;
@@ -151,10 +153,14 @@ h1 {
 }
 
 .pictogram-image {
-    width: 70%; /* Las imágenes ocupan la mayor parte de la tarjeta */
-    height: 70%;
+    width: var(--dynamic-img-size, 70%) !important;
+    height: auto !important;
+    max-height: 100% !important;
+    flex: 1; /* 🔹 Toma el espacio disponible... */
+    min-height: 0; /* 🔹 ...pero permite encogerse si el texto empuja */
     object-fit: contain;
     filter: invert(10%) grayscale(100%); /* Simula iconos oscuros/negros */
+    transition: all 0.3s ease; /* Para que el cambio no sea brusco */
 }
 
 .pictogram-card.hovered .pictogram-image {
@@ -163,14 +169,18 @@ h1 {
 }
 
 .pictogram-name {
-    font-size: 1.2rem; /* Tamaño de letra relativo */
+    font-size: var(--dynamic-txt-size, 1.2rem) !important; 
     margin: 0;
     text-align: center;
     width: 100%;
     white-space: nowrap; /* Evita que el texto ocupe dos líneas si es posible */
-    overflow: hidden;
+    overflow: visible;
     text-overflow: ellipsis; /* Pone "..." si el texto es muy largo */
     color: #333;
+    font-weight: bold;
+    flex-shrink: 0; /* 🔹 Garantiza que el texto NUNCA se corte ni se aplaste */
+    line-height: 1.2;
+    transition: all 0.3s ease;
 }
 
 #cursor {
@@ -500,4 +510,183 @@ h1 {
   font-family: monospace;
   border: 1px solid #2ed573;
   animation: pulse 1s infinite;
+}
+
+/* --- BOTÓN DE CONFIGURACIÓN --- */
+.hud-settings-btn {
+  position: absolute;
+  right: 15px;      /* Distancia desde el borde derecho */
+  top: 50%;         /* Centrado vertical... */
+  transform: translateY(-50%); /* ...exacto al medio del texto */
+  
+  background: rgba(255, 255, 255, 0.05); /* Fondo sutil oscuro */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #aaa;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hud-settings-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.4);
+  /* 🔹 ARREGLO: Mantenemos el translateY y rotamos sobre su propio eje. 
+     Para que el brillo se vea bien, agregamos box-shadow */
+  transform: translateY(-50%); /* Quitamos el rotate para evitar problemas de centrado si el padre es raro */
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3); /* Brillo blanco */
+}
+
+/* Opcional: Rotar solo el icono por dentro para no romper la posición del botón */
+.hud-settings-btn:hover svg {
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+}
+
+.hud-settings-btn svg {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.2s ease;
+}
+
+/* ====================
+   📌 MODAL DE PERSONALIZACIÓN EXCLUSIVO (Eye Tracking)
+==================== */
+
+.eye-config-modal-content {
+  background: white; /* 🔹 Fondo blanco como en tu imagen */
+  padding: 30px;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 450px;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  animation: modalFadeIn 0.3s ease-out;
+  color: #333;
+}
+
+.eye-config-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #ff4d4d; /* 🔹 Botón rojo de la imagen */
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eye-config-modal-title {
+  margin-top: 0;
+  font-size: 1.4rem;
+  color: #333;
+  text-align: center;
+  margin-bottom: 25px;
+  font-weight: bold;
+}
+
+.eye-config-section {
+  margin-bottom: 20px;
+}
+
+.eye-config-label {
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.eye-config-segmented {
+  display: flex;
+  background: #f0f0f0; /* 🔹 Fondo gris claro */
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  overflow: hidden;
+}
+
+.eye-config-segmented .segment {
+  flex: 1;
+  padding: 10px 0;
+  text-align: center;
+  background: none;
+  border: none;
+  border-right: 1px solid #ddd;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #666;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.eye-config-segmented .segment:last-child {
+  border-right: none;
+}
+
+.eye-config-segmented .segment.active {
+  background: #007bff; /* 🔹 Azul brillante */
+  color: white;
+}
+
+/* Vista Previa usando las clases locales de la grilla */
+.eye-config-preview-box {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px dashed #ccc;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #fafafa;
+}
+
+.eye-config-preview-title {
+  margin: 0 0 15px 0;
+  font-size: 0.9rem;
+  color: #888;
+  font-weight: bold;
+}
+
+/* Tarjeta de prueba que hereda de EyeTrackingPage */
+.eye-config-preview-card {
+    background-color: #e9e9e9;
+    border-radius: 15px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); 
+    border: 3px solid transparent;    
+    width: 140px; 
+    min-height: 140px;
+    height: auto; 
+}
+.eye-config-save-btn {
+  width: 100%;
+  padding: 12px;
+  background: #222; /* 🔹 Negro como en tu imagen */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.eye-config-save-btn:hover {
+  background: #000;
 }

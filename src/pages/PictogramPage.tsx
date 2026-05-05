@@ -26,8 +26,13 @@ const PictogramPage: React.FC = () => {
   const [currentFolder, setCurrentFolder] = useState<any[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { playAudio, playPhrase } = useAudio();
-  
 
+  // Estados de Configuración de Accesibilidad (tamaño de letra y pictograma)
+  type SizeOption = "small" | "normal" | "large";
+  const [textSize, setTextSize] = useState<SizeOption>("normal");
+  const [imageSize, setImageSize] = useState<SizeOption>("normal");
+  const [isSizeModalOpen, setIsSizeModalOpen] = useState(false);
+  
   const lugaresContent = [
     { label: "Parque", image: "/pictograms/Lugares/parque.png", color: "#FF8000" },
     { label: "Pileta", image: "/pictograms/Lugares/piscina.png", color: "#FF8000" },
@@ -282,8 +287,25 @@ const PictogramPage: React.FC = () => {
     playPhrase(phrase.map(p => p.label));
   };
 
+  // Función para calcular los tamaños dinámicos
+  const getDynamicStyles = () => {
+    let imgSize = "55px"; // normal
+    if (imageSize === "small") imgSize = "40px";
+    if (imageSize === "large") imgSize = "75px";
+
+    let txtSize = "16px"; // normal
+    if (textSize === "small") txtSize = "13px";
+    if (textSize === "large") txtSize = "21px";
+
+    return {
+      "--dynamic-img-size": imgSize,
+      "--dynamic-txt-size": txtSize,
+      "--folder-display": textSize === "large" ? "none" : "inline-block",
+    } as React.CSSProperties;
+  };
+
   return (
-    <div className="pictogram-page">
+    <div className="pictogram-page" style={getDynamicStyles()}>
       {/* 🔹 Barra superior */}
       <div className="sentence-bar">
 
@@ -367,6 +389,18 @@ const PictogramPage: React.FC = () => {
                   />
                   Frases Compuestas
                 </label>
+                {/*Separador y botón de personalización */}
+                <hr className="dropdown-divider" />
+                <button 
+                  className="dropdown-action-btn"
+                  onClick={() => {
+                    setIsSettingsOpen(false);
+                    setIsSizeModalOpen(true);
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                  Personalizar Tamaño
+                </button>
               </div>
             )}
           </div>
@@ -424,6 +458,43 @@ const PictogramPage: React.FC = () => {
           />
         ))}
       </div>
+
+      {/* 🔹 MODAL DE ACCESIBILIDAD (HU 13) */}
+      {isSizeModalOpen && (
+        <div className="modal-overlay">
+          <div className="size-modal-content">
+            <button className="modal-close-btn" onClick={() => setIsSizeModalOpen(false)}>×</button>
+            <h2 className="size-modal-title">Personalización Visual</h2>
+            
+            <div className="size-section">
+              <p className="size-label">Tamaño de los Pictogramas (Imágenes)</p>
+              <div className="segmented-control">
+                <button className={`segment ${imageSize === "small" ? "active" : ""}`} onClick={() => setImageSize("small")}>Pequeño</button>
+                <button className={`segment ${imageSize === "normal" ? "active" : ""}`} onClick={() => setImageSize("normal")}>Normal</button>
+                <button className={`segment ${imageSize === "large" ? "active" : ""}`} onClick={() => setImageSize("large")}>Grande</button>
+              </div>
+            </div>
+
+            <div className="size-section">
+              <p className="size-label">Tamaño del Texto (Etiquetas)</p>
+              <div className="segmented-control">
+                <button className={`segment ${textSize === "small" ? "active" : ""}`} onClick={() => setTextSize("small")}>Pequeño</button>
+                <button className={`segment ${textSize === "normal" ? "active" : ""}`} onClick={() => setTextSize("normal")}>Normal</button>
+                <button className={`segment ${textSize === "large" ? "active" : ""}`} onClick={() => setTextSize("large")}>Grande</button>
+              </div>
+            </div>
+            
+            {/* Vista previa en tiempo real */}
+            <div className="size-preview">
+              <p className="preview-title">Vista Previa</p>
+              <div className="pictogram-tile preview-tile">
+                <img src="/pictograms/beber.png" alt="preview" className="picto-img" style={{ maxWidth: "var(--dynamic-img-size)", maxHeight: "var(--dynamic-img-size)" }}/>
+                <span className="label" style={{ fontSize: "var(--dynamic-txt-size)" }}>Ejemplo</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 🔹 MODAL: Aquí es donde ocurre la magia de la ventana emergente */}
       {/* No necesitas cambiar nada aquí si tu componente Modal ya tiene la lógica nueva */}

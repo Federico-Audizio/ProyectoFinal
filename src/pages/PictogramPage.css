@@ -256,13 +256,14 @@
 .pictogram-grid {
   display: grid;
   grid-template-columns: repeat(9, 1fr); /* 9 columnas exactas */
-  grid-template-rows: repeat(4, 1fr);    /* 4 filas exactas */
-  gap: 26px; /* menos espacio entre tiles */
+  grid-template-rows: repeat(4, minmax(min-content, 1fr));    /* 4 filas exactas */
+  gap: 12px; /* menos espacio entre tiles */
   flex: 1;
   height: 100%;
   min-height: 0;
   width: 99%;
-  padding-bottom: 6px;
+  padding-bottom: 15x;
+  overflow-y: auto;
 }
 
 .pictogram-tile {
@@ -272,7 +273,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 4px;            /* 👈 más chico */
   font-size: 14px;         /* 👈 letra más chica */
   font-weight: bold;
@@ -280,20 +281,30 @@
   transition: transform 0.2s, box-shadow 0.2s;
   width: 100%;
   height: 100%;
+  box-sizing: border-box;
   overflow: hidden;
 }
 
 .pictogram-tile .emoji,
 .pictogram-tile .picto-img {
-  max-width: 55px;   /* 👈 achicamos imágenes */
-  max-height: 55px;
-  margin-bottom: 6px; /* 👈 menos espacio con el texto */
+  /* Usamos la variable inyectada desde React, con 55px por defecto si falla */
+  max-width: var(--dynamic-img-size, 55px) !important;
+  max-height: var(--dynamic-img-size, 55px) !important;
+  margin-bottom: 4px;
+  flex-shrink: 0; /* 🔹 Evita que la imagen se aplaste si el texto necesita mucho espacio */
+  transition: all 0.3s ease; /* Transición suave al cambiar de tamaño */
 }
 
 .pictogram-tile .label {
-  font-size: 15px;   /* 👈 texto más compacto */
+  font-size: var(--dynamic-txt-size, 16px) !important;
   color: #333;
   text-align: center;
+  line-height: 1.1; /* 🔹 CAMBIO: Interlineado más apretado para que 2 o 3 líneas ocupen menos espacio */
+  word-wrap: break-word; /* Obliga a la palabra a bajar si es muy larga */
+  display: flex;
+  align-items: center;
+  flex: 1; /* Hace que el texto ocupe el resto del espacio disponible centrándose */
+  transition: all 0.3s ease;
 }
 
 .pictogram-tile .label {
@@ -433,4 +444,139 @@
   box-shadow: 0 0 20px 6px var(--picto-color, #28a745);
   transform: scale(1.1);
   transition: all 0.2s ease-in-out;
+}
+
+/* ====================
+   📌 ESTILOS DE ACCESIBILIDAD (TAMAÑOS)
+==================== */
+
+/* Divisor en el menú desplegable */
+.dropdown-divider {
+  border: 0;
+  border-top: 1px solid #e0e0e0;
+  margin: 10px 0;
+}
+
+/* Botón de personalización en el menú */
+.dropdown-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 15px;
+  font-weight: bold;
+  color: #007FFF;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.dropdown-action-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Modal de Tamaños */
+.size-modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 400px; /* Modal más angosto, tipo celular */
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+.size-modal-title {
+  margin-top: 0;
+  font-size: 22px;
+  color: #333;
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.size-section {
+  margin-bottom: 20px;
+}
+
+.size-label {
+  font-weight: bold;
+  color: #555;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+/* Segmented Control (Botones unidos estilo celular) */
+.segmented-control {
+  display: flex;
+  background: #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+.segmented-control .segment {
+  flex: 1;
+  padding: 10px 0;
+  text-align: center;
+  background: none;
+  border: none;
+  border-right: 1px solid #ddd;
+  font-size: 14px;
+  font-weight: bold;
+  color: #666;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.segmented-control .segment:last-child {
+  border-right: none;
+}
+
+.segmented-control .segment:hover {
+  background: #e6e6e6;
+}
+
+.segmented-control .segment.active {
+  background: #007FFF;
+  color: white;
+}
+
+/* Vista Previa */
+.size-preview {
+  margin-top: 30px;
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px dashed #ccc;
+}
+
+.preview-title {
+  margin: 0 0 15px 0;
+  font-size: 14px;
+  color: #888;
+  font-weight: bold;
+}
+
+.preview-tile {
+  width: 120px; /* Tamaño fijo para la tarjeta de muestra */
+  height: 120px;
+  cursor: default;
+}
+.preview-tile:hover {
+  transform: none; /* Quitamos la animación de hover para la preview */
+  box-shadow: none;
+}
+
+/* Control dinámico del emoji de la carpeta */
+.folder-emoji {
+  /* Escucha la variable, si no la encuentra usa inline-block por defecto */
+  display: var(--folder-display, inline-block);
+  margin-right: 4px; /* Un pequeño espacio para que no se pegue a la letra */
 }
