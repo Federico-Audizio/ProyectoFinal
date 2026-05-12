@@ -4,9 +4,9 @@ import { Outlet } from "react-router-dom";
 const Layout = () => {
   return (
     <div style={{ display: "flex" }}>
-      <Sidebar />                          {/* Sidebar fijo */}
+      <Sidebar />
       <div style={{ flex: 1 }}>
-        <Outlet />                         {/* Aquí se cargan las páginas */}
+        <Outlet />
       </div>
     </div>
   );

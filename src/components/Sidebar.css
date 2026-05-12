@@ -1,6 +1,6 @@
 .sidebar {
   /* Ancho inicial (colapsado) */
-  width: 60px; 
+  width: 60px;
   background-color: #1e1e1e;
   height: 100vh;
   display: flex;
@@ -13,8 +13,8 @@
   overflow: hidden; /* Importante: oculta el texto que no cabe mientras se cierra */
   
   /* Asegura que la barra esté por encima del contenido si se expande */
-  position: relative; 
-  z-index: 1000;
+  position: relative;
+  z-index: 4000;
   min-width: 60px;
 }
 
@@ -84,3 +84,90 @@
 .icon.active .sidebar-icon {
   filter: drop-shadow(0 0 5px #007bff);
 }
+
+/* ─── Grillas personalizadas ─────────────────────── */
+.sidebar-grids-icon {
+  position: relative;
+  color: #ccc;
+}
+
+.sidebar-grids-submenu {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  background: #252526;
+  border-radius: 0 10px 10px 10px;
+  min-width: 190px;
+  padding: 10px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 6px 6px 24px rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+}
+
+.sgs-title {
+  margin: 0 0 6px 0;
+  font-size: 11px;
+  font-weight: 800;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.sgs-empty {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: #666;
+}
+
+.sgs-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  padding: 8px 10px;
+  color: #ddd;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+  gap: 8px;
+  white-space: nowrap;
+}
+.sgs-item:hover {
+  background: rgba(0, 123, 255, 0.2);
+  border-color: rgba(0, 123, 255, 0.4);
+  color: #fff;
+}
+
+.sgs-item-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sgs-item-size {
+  font-size: 10px;
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+.sgs-new-btn {
+  margin-top: 4px;
+  width: 100%;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.sgs-new-btn:hover { background: #0062cc; }

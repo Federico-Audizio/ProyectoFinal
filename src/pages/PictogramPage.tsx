@@ -1,6 +1,7 @@
-import React, { lazy, useState } from "react";
+import React, { useState } from "react";
 import PictogramTile from "../components/PictogramTile";
 import PictogramModal from "../components/PictogramModal";
+import CustomGridEditor from "../components/CustomGridEditor";
 import "./PictogramPage.css";
 import { useAudio } from "../hooks/useAudio";
 
@@ -32,7 +33,8 @@ const PictogramPage: React.FC = () => {
   const [textSize, setTextSize] = useState<SizeOption>("normal");
   const [imageSize, setImageSize] = useState<SizeOption>("normal");
   const [isSizeModalOpen, setIsSizeModalOpen] = useState(false);
-  
+  const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
+
   const lugaresContent = [
     { label: "Parque", image: "/pictograms/Lugares/parque.png", color: "#FF8000" },
     { label: "Pileta", image: "/pictograms/Lugares/piscina.png", color: "#FF8000" },
@@ -391,7 +393,7 @@ const PictogramPage: React.FC = () => {
                 </label>
                 {/*Separador y botón de personalización */}
                 <hr className="dropdown-divider" />
-                <button 
+                <button
                   className="dropdown-action-btn"
                   onClick={() => {
                     setIsSettingsOpen(false);
@@ -400,6 +402,16 @@ const PictogramPage: React.FC = () => {
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
                   Personalizar Tamaño
+                </button>
+                <button
+                  className="dropdown-action-btn"
+                  onClick={() => {
+                    setIsSettingsOpen(false);
+                    setIsCustomizationOpen(true);
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                  Personalización de Grilla
                 </button>
               </div>
             )}
@@ -528,10 +540,13 @@ const PictogramPage: React.FC = () => {
             }
           }
           
-          setIsModalOpen(false); 
+          setIsModalOpen(false);
         }}
       />
-    </div> // 👈 Cierre del div className="pictogram-page"
+      {isCustomizationOpen && (
+        <CustomGridEditor onClose={() => setIsCustomizationOpen(false)} />
+      )}
+    </div>
   );
 };
 
