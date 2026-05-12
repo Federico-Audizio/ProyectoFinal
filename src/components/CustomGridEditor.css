@@ -1,0 +1,708 @@
+/* ══════════════════════════════════════════════════════
+   Custom Grid Editor — Estilos
+══════════════════════════════════════════════════════ */
+
+/* ─── Overlay (chooser / setup) ─────────────────────── */
+.cge-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  animation: cgeFadeIn 0.2s ease-out;
+}
+
+@keyframes cgeFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes cgeSlideUp {
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+/* ─── Modal base ─────────────────────────────────────── */
+.cge-modal {
+  background: white;
+  border-radius: 18px;
+  padding: 30px;
+  position: relative;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+  animation: cgeSlideUp 0.25s ease-out;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.cge-chooser {
+  width: 90%;
+  max-width: 500px;
+}
+
+.cge-setup {
+  width: 90%;
+  max-width: 520px;
+}
+
+/* ─── Botón X ────────────────────────────────────────── */
+.cge-x {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: background 0.2s;
+}
+.cge-x:hover { background: #cc0000; }
+
+/* ─── Título de modal ────────────────────────────────── */
+.cge-modal-title {
+  margin: 0 0 22px 0;
+  font-size: 22px;
+  color: #1c2e4a;
+  font-weight: 700;
+  padding-right: 42px;
+}
+
+/* ══════════════════════════════════════════════════════
+   CHOOSER — lista de grillas guardadas
+══════════════════════════════════════════════════════ */
+.cge-new-btn {
+  width: 100%;
+  margin-bottom: 18px;
+  font-size: 16px;
+}
+
+.cge-empty {
+  text-align: center;
+  color: #aaa;
+  font-size: 14px;
+  padding: 24px 0 8px;
+}
+
+.cge-grid-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cge-grid-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  background: #fafafa;
+}
+.cge-grid-card:hover {
+  border-color: #007bff;
+  background: #f0f7ff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.14);
+}
+
+/* Mini preview de la grilla */
+.cge-mini-grid {
+  display: grid;
+  gap: 3px;
+  width: 78px;
+  flex-shrink: 0;
+}
+.cge-mini-cell {
+  aspect-ratio: 1;
+  border: 1.5px solid #ccc;
+  border-radius: 3px;
+  background: #f5f5f5;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cge-mini-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.cge-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cge-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #222;
+}
+.cge-card-meta {
+  font-size: 12px;
+  color: #999;
+}
+
+/* ══════════════════════════════════════════════════════
+   SETUP — título + tamaño
+══════════════════════════════════════════════════════ */
+.cge-field {
+  margin-bottom: 22px;
+}
+
+.cge-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: #777;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.cge-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 16px;
+  color: #333;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+.cge-input:focus { border-color: #007bff; }
+
+/* Opciones de tamaño */
+.cge-size-grid {
+  display: flex;
+  gap: 12px;
+}
+
+.cge-size-card {
+  flex: 1;
+  padding: 14px 8px;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  background: #fafafa;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+.cge-size-card:hover {
+  border-color: #007bff;
+  background: #f0f7ff;
+}
+.cge-size-active {
+  border-color: #007bff !important;
+  background: #e8f2ff !important;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+.cge-size-dots {
+  display: grid;
+  gap: 3px;
+  width: 58px;
+}
+.cge-dot {
+  aspect-ratio: 1;
+  background: #d0d0d0;
+  border-radius: 2px;
+}
+.cge-size-active .cge-dot { background: #007bff; }
+
+.cge-size-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #888;
+}
+.cge-size-desc {
+  font-size: 11px;
+  color: #999;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* ══════════════════════════════════════════════════════
+   Botones globales
+══════════════════════════════════════════════════════ */
+.cge-btn {
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  font-family: inherit;
+}
+.cge-btn:active  { transform: scale(0.97); }
+.cge-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cge-btn-primary {
+  background: #007bff;
+  color: white;
+}
+.cge-btn-primary:hover:not(:disabled) {
+  background: #0062cc;
+  box-shadow: 0 4px 14px rgba(0, 123, 255, 0.4);
+}
+
+.cge-btn-danger {
+  background: #ff4d4d;
+  color: white;
+}
+.cge-btn-danger:hover {
+  background: #cc0000;
+  box-shadow: 0 4px 14px rgba(255, 77, 77, 0.4);
+}
+
+.cge-btn-save {
+  background: #28a745;
+  color: white;
+  padding: 10px 22px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.cge-btn-save:hover {
+  background: #218838;
+  box-shadow: 0 4px 14px rgba(40, 167, 69, 0.4);
+}
+
+/* ══════════════════════════════════════════════════════
+   USE — pantalla completa (modo uso de la grilla)
+══════════════════════════════════════════════════════ */
+.cge-use-fullscreen {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 60px;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #0e2a47 0%, #1c4e80 100%);
+  padding: 15px;
+  box-sizing: border-box;
+  z-index: 3000;
+  font-family: 'Inter', sans-serif;
+  animation: cgeFadeIn 0.2s ease-out;
+}
+
+/* ══════════════════════════════════════════════════════
+   EDITOR — pantalla completa
+══════════════════════════════════════════════════════ */
+.cge-editor-fullscreen {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 60px;
+  background: linear-gradient(180deg, #0e2a47 0%, #1c4e80 100%);
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  box-sizing: border-box;
+  animation: cgeFadeIn 0.2s ease-out;
+}
+
+/* Header del editor */
+.cge-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  padding: 12px 18px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+
+.cge-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.2s, color 0.2s;
+}
+.cge-back-btn:hover {
+  border-color: #007bff;
+  color: #007bff;
+}
+.cge-back-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.cge-editor-title {
+  margin: 0;
+  font-size: 20px;
+  color: #1c2e4a;
+  font-weight: 700;
+  flex: 1;
+  text-align: center;
+  padding: 0 12px;
+}
+
+/* Grilla editable */
+.cge-edit-grid {
+  display: grid;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow-y: auto;
+  grid-auto-rows: 130px;
+}
+
+.cge-cell {
+  background: white;
+  border: 2.5px solid #ddd;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  padding: 6px;
+  box-sizing: border-box;
+  overflow: hidden;
+  user-select: none;
+}
+.cge-cell:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.cge-cell-empty {
+  background: rgba(255, 255, 255, 0.82);
+  border-style: dashed;
+  border-color: #bbb !important;
+}
+.cge-cell-empty:hover { border-color: #007bff !important; }
+
+.cge-add-plus {
+  font-size: 30px;
+  color: #ccc;
+  line-height: 1;
+}
+.cge-cell-empty:hover .cge-add-plus { color: #007bff; }
+
+.cge-cell-filled  { border-style: solid; }
+
+.cge-cell-img {
+  width: 58%;
+  height: 58%;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.cge-cell-no-img {
+  font-size: 26px;
+  color: #ccc;
+}
+
+.cge-cell-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
+  margin-top: 4px;
+}
+
+/* ══════════════════════════════════════════════════════
+   MODAL EDITOR DE CELDA
+══════════════════════════════════════════════════════ */
+.cge-cell-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4000;
+  animation: cgeFadeIn 0.2s;
+}
+
+.cge-cell-modal {
+  background: white;
+  border-radius: 18px;
+  padding: 28px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 92vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+  animation: cgeSlideUp 0.25s ease-out;
+}
+
+.cge-cell-title {
+  margin: 0 0 22px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1c2e4a;
+  padding-right: 36px;
+}
+
+/* Color picker */
+.cge-color-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cge-color-input {
+  width: 48px;
+  height: 48px;
+  padding: 2px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  background: none;
+  flex-shrink: 0;
+}
+.cge-color-swatch {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  flex-shrink: 0;
+}
+.cge-color-hex {
+  font-size: 14px;
+  color: #888;
+  font-family: monospace;
+}
+
+/* Carga de imagen */
+.cge-upload-btn {
+  width: 100%;
+  padding: 11px 18px;
+  background: #f5f5f5;
+  border: 2px dashed #ccc;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #666;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  text-align: center;
+  box-sizing: border-box;
+}
+.cge-upload-btn:hover {
+  background: #e8f2ff;
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.cge-img-wrap {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cge-img-preview {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+.cge-remove-img {
+  background: none;
+  border: 1.5px solid #ff4d4d;
+  color: #ff4d4d;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.cge-remove-img:hover {
+  background: #ff4d4d;
+  color: white;
+}
+
+/* Vista previa del pictograma */
+.cge-cell-preview-area {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px dashed #ddd;
+  margin-bottom: 22px;
+}
+.cge-preview-label {
+  margin: 0 0 12px 0;
+  font-size: 11px;
+  color: #aaa;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.cge-preview-tile {
+  width: 100px;
+  height: 110px;
+  border: 2.5px solid #007bff;
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  box-sizing: border-box;
+  gap: 6px;
+  transition: border-color 0.2s;
+}
+.cge-preview-tile img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+.cge-preview-placeholder {
+  font-size: 34px;
+  color: #ddd;
+}
+.cge-preview-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+/* Acciones de la celda */
+.cge-cell-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* ─── Tiles de la vista de uso (custom, sin PictogramTile) ─── */
+
+.cge-use-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 3px solid #eee;
+  border-radius: 12px;
+  padding: 10px 8px;
+  box-sizing: border-box;
+  cursor: pointer;
+  gap: 8px;
+  min-height: 0;
+  overflow: hidden;
+  transition: transform 0.12s, box-shadow 0.12s;
+  text-align: center;
+}
+
+.cge-use-tile:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+}
+
+.cge-use-tile-img {
+  flex: var(--cge-img-flex, 1 1 0);
+  min-height: 0;
+  width: 100%;
+  max-height: var(--cge-img-max-h, none);
+  object-fit: contain;
+}
+
+.cge-use-tile-emoji {
+  flex: var(--cge-img-flex, 1 1 0);
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(28px, 5vw, 72px);
+}
+
+.cge-use-tile-label {
+  flex: none;
+  font-size: var(--cge-txt-size, clamp(11px, 1.4vw, 18px));
+  font-weight: 600;
+  color: #333;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+/* ─── Botones de tamaño en el dropdown de configuración ─── */
+.cge-size-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.cge-size-opt-btn {
+  flex: 1;
+  padding: 6px 4px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ccc;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.cge-size-opt-btn:hover {
+  border-color: rgba(0, 123, 255, 0.5);
+  color: #fff;
+}
+
+.cge-size-opt-active {
+  border-color: #007bff !important;
+  background: rgba(0, 123, 255, 0.25) !important;
+  color: #fff !important;
+}
+

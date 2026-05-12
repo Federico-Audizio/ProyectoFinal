@@ -192,6 +192,19 @@ class LSTMModel(nn.Module):
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(0.4)
         self.fc2 = nn.Linear(128, num_classes)
+        # Capa LSTM con 3 capas y dropout
+        self.lstm = nn.LSTM(
+            input_size=input_size, 
+            hidden_size=hidden_size, 
+            num_layers=num_layers, 
+            batch_first=True,
+            dropout=0.3
+        )
+        # Capas densas de salida
+        self.fc1 = nn.Linear(hidden_size, 128)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.4)
+        self.fc2 = nn.Linear(128, num_classes)
 
     def forward(self, x):
         # x shape: (batch, seq_len, input_size) -> (1, 30, 126)
@@ -199,6 +212,8 @@ class LSTMModel(nn.Module):
         
         # Tomamos solo la salida del último timestep
         out = out[:, -1, :]
+        
+        # Pasamos por las capas densas
         out = self.fc1(out)
         out = self.relu(out)
         out = self.dropout(out)

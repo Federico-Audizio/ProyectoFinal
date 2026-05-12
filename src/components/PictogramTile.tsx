@@ -32,7 +32,10 @@ const PictogramTile: React.FC<PictogramTileProps> = ({
           emoji || "❓"
         )}
       </div>
-      <div className="label">{isFolder ? `📂 ${label}` : label}</div>
+      <div className="label">
+        {isFolder && <span className="folder-emoji">📂 </span>}
+        {label}
+      </div>
     </div>
   );
 };
