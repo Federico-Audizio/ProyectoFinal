@@ -51,7 +51,7 @@ const PictogramPage: React.FC = () => {
     ...(commLevel === "composed" ? [
       { label: "Quiero", image: "/pictograms/Conectores/quiero.png", color: "#fa18c2" }, // Asegurá la ruta
       { label: "Conectores", isFolder: true, image: "/pictograms/Conectores/tengo.png", color: "#fa18c2", content: [
-        { label: "No quero", imagePath: "/public/pictograms/Conectores/no quiero.png", color: "#fa18c2" },
+        { label: "No quiero", imagePath: "/public/pictograms/Conectores/no quiero.png", color: "#fa18c2" },
         { label: "Tengo", imagePath: "/public/pictograms/Conectores/tengo.png", color: "#fa18c2" },
         { label: "Conn", imagePath: "/public/pictograms/Conectores/_con.png", color: "#fa18c2" },
         { label: "Estoy", imagePath: "/public/pictograms/Conectores/estoy.png", color: "#fa18c2" },
