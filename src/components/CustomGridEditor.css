@@ -159,7 +159,7 @@
    SETUP — título + tamaño
 ══════════════════════════════════════════════════════ */
 .cge-field {
-  margin-bottom: 22px;
+  margin-bottom: 14px;
 }
 
 .cge-label {
@@ -178,12 +178,14 @@
   border: 2px solid #ddd;
   border-radius: 10px;
   font-size: 16px;
-  color: #333;
+  color: #222;
+  background-color: white;
   outline: none;
   box-sizing: border-box;
   transition: border-color 0.2s;
   font-family: inherit;
 }
+.cge-input::placeholder { color: #aaa; }
 .cge-input:focus { border-color: #007bff; }
 
 /* Opciones de tamaño */
@@ -299,37 +301,25 @@
    USE — pantalla completa (modo uso de la grilla)
 ══════════════════════════════════════════════════════ */
 .cge-use-fullscreen {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 60px;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: linear-gradient(180deg, #0e2a47 0%, #1c4e80 100%);
   padding: 15px;
   box-sizing: border-box;
-  z-index: 3000;
   font-family: 'Inter', sans-serif;
-  animation: cgeFadeIn 0.2s ease-out;
 }
 
 /* ══════════════════════════════════════════════════════
    EDITOR — pantalla completa
 ══════════════════════════════════════════════════════ */
 .cge-editor-fullscreen {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 60px;
+  height: 100vh;
   background: linear-gradient(180deg, #0e2a47 0%, #1c4e80 100%);
-  z-index: 3000;
   display: flex;
   flex-direction: column;
   padding: 15px;
   box-sizing: border-box;
-  animation: cgeFadeIn 0.2s ease-out;
 }
 
 /* Header del editor */
@@ -465,7 +455,7 @@
 .cge-cell-modal {
   background: white;
   border-radius: 18px;
-  padding: 28px;
+  padding: 18px 20px;
   width: 90%;
   max-width: 400px;
   max-height: 92vh;
@@ -476,7 +466,7 @@
 }
 
 .cge-cell-title {
-  margin: 0 0 22px 0;
+  margin: 0 0 14px 0;
   font-size: 18px;
   font-weight: 700;
   color: #1c2e4a;
@@ -568,12 +558,12 @@
 .cge-cell-preview-area {
   background: #f8f9fa;
   border-radius: 12px;
-  padding: 16px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   border: 1px dashed #ddd;
-  margin-bottom: 22px;
+  margin-bottom: 12px;
 }
 .cge-preview-label {
   margin: 0 0 12px 0;
@@ -584,8 +574,8 @@
   letter-spacing: 0.6px;
 }
 .cge-preview-tile {
-  width: 100px;
-  height: 110px;
+  width: 85px;
+  height: 82px;
   border: 2.5px solid #007bff;
   border-radius: 10px;
   background: white;
@@ -593,14 +583,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px;
+  padding: 6px;
   box-sizing: border-box;
-  gap: 6px;
+  gap: 4px;
   transition: border-color 0.2s;
 }
 .cge-preview-tile img {
-  width: 60px;
-  height: 60px;
+  width: 46px;
+  height: 46px;
   object-fit: contain;
 }
 .cge-preview-placeholder {
@@ -649,7 +639,7 @@
 }
 
 .cge-use-tile-img {
-  flex: var(--cge-img-flex, 1 1 0);
+  flex: 1 1 0;
   min-height: 0;
   width: 100%;
   max-height: var(--cge-img-max-h, none);
@@ -657,7 +647,7 @@
 }
 
 .cge-use-tile-emoji {
-  flex: var(--cge-img-flex, 1 1 0);
+  flex: 1 1 0;
   min-height: 0;
   display: flex;
   align-items: center;

@@ -124,11 +124,14 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
   };
 
   const getDynamicStyles = (): React.CSSProperties => {
-    const imgFlex = imageSize === "large" ? "1 1 0" : "0 0 auto";
-    const imgMaxH = imageSize === "small" ? "70px" : imageSize === "normal" ? "130px" : "none";
+    const rows = grid?.rows ?? 4;
+    const imgMaxH = imageSize === "small"
+      ? `calc((100vh - 140px) / ${rows} * 0.42)`
+      : imageSize === "normal"
+      ? `calc((100vh - 140px) / ${rows} * 0.65)`
+      : "none";
     const txtSize = textSize === "small" ? "12px" : textSize === "large" ? "clamp(16px, 2vw, 26px)" : "clamp(11px, 1.4vw, 18px)";
     return {
-      "--cge-img-flex": imgFlex,
       "--cge-img-max-h": imgMaxH,
       "--cge-txt-size": txtSize,
     } as React.CSSProperties;
@@ -383,7 +386,7 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
                     Editar Grilla
                   </button>
                   <hr className="dropdown-divider" />
-                  <button className="dropdown-action-btn" style={{ color: "#ff4d4d" }} onClick={onClose}>
+                  <button className="dropdown-action-btn" style={{ color: "#ff4d4d" }} onClick={() => { setIsSettingsOpen(false); setStep("chooser"); }}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
                     Cerrar Grilla
                   </button>
