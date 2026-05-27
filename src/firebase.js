@@ -3,21 +3,22 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.FIREBASE_API_KEY,
-  authDomain: import.meta.env.FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.FIREBASE_APP_ID,
-  measurementId: import.meta.env.FIREBASE_MEASUREMENT_ID,
+  apiKey: "AIzaSyDc8jkXVnp-ARE_2xHqV8oy9r6oEpz8f80",
+  authDomain: "proyectofinal-78eb4.firebaseapp.com",
+  projectId: "proyectofinal-78eb4",
+  storageBucket: "proyectofinal-78eb4.firebasestorage.app",
+  messagingSenderId: "1001853852606",
+  appId: "1:1001853852606:web:7e0b0d3d2a7846ad60b7ef",
+  measurementId: "G-0PHTHXEQW9"
 };
 
-console.log(firebaseConfig.apiKey);
+//console.log(firebaseConfig.apiKey);
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 
 export const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ prompt: "select_account" });
 
 export const db = getFirestore(app);

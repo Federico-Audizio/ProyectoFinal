@@ -8,9 +8,11 @@ import EyeTrackingPage from './pages/EyeTrackingPage';
 import Home from "./pages/Home";
 import SenaPage from "./pages/SenaPage";
 import CustomGridEditor from "./components/CustomGridEditor";
+import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
   return (
+    <AuthProvider>
     <GridsProvider>
     <BrowserRouter>
       <Routes>
@@ -26,6 +28,7 @@ function App() {
       </Routes>
     </BrowserRouter>
     </GridsProvider>
+    </AuthProvider>
   );
 }
 

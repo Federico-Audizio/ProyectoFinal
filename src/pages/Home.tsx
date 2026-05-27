@@ -3,12 +3,14 @@ import { Link } from "react-router-dom";
 import "./Home.css";
 import { useAudio } from "../hooks/useAudio.js"; //[cite: 1]
 
-import { createUserWithEmailAndPassword, getAuth, GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
-import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
-//import { auth, provider, db } from "../firebase.js";
-import { initializeApp } from "firebase/app";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, provider, db } from "../firebase.js";
+//import { initializeApp } from "firebase/app";
+//import { getAnalytics } from "firebase/analytics";
+import { useAuth } from "../contexts/AuthContext.js";
 
-// Reemplaza esto con las credenciales de tu consola de Firebase
+/* Reemplaza esto con las credenciales de tu consola de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDc8jkXVnp-ARE_2xHqV8oy9r6oEpz8f80",
   authDomain: "proyectofinal-78eb4.firebaseapp.com",
@@ -17,15 +19,15 @@ const firebaseConfig = {
   messagingSenderId: "1001853852606",
   appId: "1:1001853852606:web:7e0b0d3d2a7846ad60b7ef",
   measurementId: "G-0PHTHXEQW9"
-};
+};*/
 
-const app = initializeApp(firebaseConfig);
+//const app = initializeApp(firebaseConfig);
+//const analytics = getAnalytics(app);
+//export const auth = getAuth(app);
 
-export const auth = getAuth(app);
+//export const provider = new GoogleAuthProvider();
 
-export const provider = new GoogleAuthProvider();
-
-export const db = getFirestore(app);
+//export const db = getFirestore(app);
 
 interface Pictogram {
   text: string;
@@ -51,6 +53,7 @@ const Home: React.FC = () => {
   const { preloadAudio } = useAudio(); //[cite: 1]
   const [pictograms, setPictograms] = useState<Pictogram[]>([]); //[cite: 1]
 
+  const {login} = useAuth(); //[cite: 1]
   // --- Estados para el Modal de Login ---
   const [showModal, setShowModal] = useState(true); // Se muestra al entrar por defecto
   const [isRegistering, setIsRegistering] = useState(false);
@@ -98,6 +101,15 @@ const Home: React.FC = () => {
       const userRef = doc(db, "usuarios", result.user.uid);
       const docSnap = await getDoc(userRef);
 
+      const token = await result.user.getIdToken();
+      login({
+        id: result.user.uid,
+        email: result.user.email || "",
+        nombre: result.user.displayName || "",
+        token: token,
+      });
+      setShowModal(false);
+
       // Si el usuario no existe en la base de datos, lo creamos
       if (!docSnap.exists()) {
         await setDoc(userRef, {
@@ -108,8 +120,7 @@ const Home: React.FC = () => {
         });
       }
 
-      setUser(result.user);
-      setShowModal(false);
+      
     } catch (error: any) {
       console.error("Error con Google:", error);
       setAuthError("Error al iniciar sesión con Google.");
@@ -132,11 +143,13 @@ const Home: React.FC = () => {
           configuraciones: {} 
         });
         
-        setUser(result.user);
+        const token = await result.user.getIdToken();
+        login({ id: result.user.uid, email: result.user.email || "", nombre: result.user.email?.split("@")[0] || "", token });
       } else {
         // Iniciar sesión con usuario existente
         const result = await signInWithEmailAndPassword(auth, email, password);
-        setUser(result.user);
+        const token = await result.user.getIdToken();
+        login({ id: result.user.uid, email: result.user.email || "", nombre: result.user.displayName || "", token });
       }
       setShowModal(false);
     } catch (error: any) {
@@ -154,7 +167,7 @@ const Home: React.FC = () => {
 
   // --- LÓGICA DE INVITADO ---
   const handleGuest = () => {
-    setUser("guest");
+    login({ id: "guest", email: "", nombre: "Invitado", token: "" });
     setShowModal(false);
   };
 
@@ -251,3 +264,5 @@ const Home: React.FC = () => {
 };
 
 export default Home; //[cite: 1]
+
+

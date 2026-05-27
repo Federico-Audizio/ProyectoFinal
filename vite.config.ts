@@ -15,6 +15,11 @@ export default defineConfig({
       // Permitir servir archivos desde node_modules
       allow: ['..'],
     },
+    headers: {
+      // Esto le permite a tu servidor local interactuar con ventanas de otros orígenes (como Google)
+      'Cross-Origin-Opener-Policy': "same-origin-allow-popups",
+      'Cross-Origin-Embedder-Policy': "unsafe-none",
+    },
   },
   optimizeDeps: {
     include: ['eyegestures'],
