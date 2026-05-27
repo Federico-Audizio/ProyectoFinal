@@ -22,7 +22,7 @@ const Sidebar: React.FC = () => {
         <span className="link-text">Pictogramas</span>
       </NavLink>
 
-      {/* 5. Grillas personalizadas */}
+      {/* Grillas personalizadas */}
       <div
         className={`icon sidebar-grids-icon${isGridsOpen ? " sgi-open" : ""}`}
         onMouseEnter={() => setIsGridsOpen(true)}
@@ -81,10 +81,9 @@ const Sidebar: React.FC = () => {
 
       {/* 4. Link SEÑAS */}
       <NavLink to="/sena" className="icon">
-        <img src="/icons/mano.png" alt="Señas" className="sidebar-icon" />
+        <img src="/icons/lenguajedesenas.png" alt="Señas" className="sidebar-icon" />
         <span className="link-text">Señas</span>
       </NavLink>
-
     </div>
   );
 };

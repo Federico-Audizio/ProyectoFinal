@@ -14,7 +14,6 @@
   
   /* Asegura que la barra esté por encima del contenido si se expande */
   position: relative;
-  z-index: 4000;
   min-width: 60px;
 }
 
@@ -103,7 +102,7 @@
   flex-direction: column;
   gap: 6px;
   box-shadow: 6px 6px 24px rgba(0, 0, 0, 0.5);
-  z-index: 2000;
+  z-index: 99999;
 }
 
 .sgs-title {
