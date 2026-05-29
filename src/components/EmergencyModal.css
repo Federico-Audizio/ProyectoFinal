@@ -1,0 +1,108 @@
+@keyframes flashRed {
+  0%, 100% { opacity: 0; }
+  50%       { opacity: 0.45; }
+}
+
+.emergency-flash {
+  position: fixed;
+  inset: 0;
+  background: #ff0000;
+  animation: flashRed 0.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 4500;
+}
+
+.emergency-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+}
+
+.emergency-modal {
+  background: #1a1a1a;
+  border: 3px solid #ff2222;
+  border-radius: 20px;
+  padding: 36px 40px 32px;
+  width: 90%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 0 40px rgba(255, 0, 0, 0.5);
+  animation: emergenceIn 0.2s ease-out;
+}
+
+@keyframes emergenceIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.emergency-title {
+  font-size: 28px;
+  font-weight: 900;
+  color: #ff2222;
+  margin: 0;
+  text-align: center;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.emergency-subtitle {
+  font-size: 15px;
+  color: #ccc;
+  margin: 0;
+  text-align: center;
+}
+
+.emergency-toggle-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  border: none;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.emergency-toggle-btn.inactive {
+  background: #ff2222;
+  color: white;
+}
+.emergency-toggle-btn.inactive:hover {
+  background: #cc0000;
+  transform: scale(1.02);
+}
+
+.emergency-toggle-btn.active-alarm {
+  background: #333;
+  color: #aaa;
+  border: 2px solid #555;
+}
+.emergency-toggle-btn.active-alarm:hover {
+  background: #444;
+}
+
+.emergency-close-btn {
+  background: none;
+  border: 1px solid #555;
+  color: #888;
+  border-radius: 8px;
+  padding: 10px 28px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.emergency-close-btn:hover {
+  border-color: #999;
+  color: #ccc;
+}

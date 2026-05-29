@@ -171,3 +171,37 @@
   transition: background 0.15s;
 }
 .sgs-new-btn:hover { background: #0062cc; }
+
+/* ─── Botón de emergencia ────────────────────────────── */
+.emergency-sidebar-btn {
+  margin-top: auto;
+  padding: 15px 0;
+  padding-left: 14px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background: none;
+  border: none;
+  border-top: 1px solid rgba(255, 50, 50, 0.25);
+  color: #ff4444;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+  font-family: inherit;
+}
+
+.emergency-sidebar-btn:hover {
+  background: rgba(255, 50, 50, 0.15);
+}
+
+.emergency-sidebar-btn .sidebar-icon {
+  color: #ff4444;
+  flex-shrink: 0;
+}
+
+.emergency-sidebar-btn .link-text {
+  color: #ff4444;
+  font-size: 16px;
+  font-weight: 600;
+}
