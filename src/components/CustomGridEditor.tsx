@@ -3,6 +3,9 @@ import { useSearchParams } from "react-router-dom";
 import "./CustomGridEditor.css";
 import { useGrids } from "../contexts/GridsContext";
 import type { CustomGrid, CustomCell } from "../contexts/GridsContext";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { storage } from "../firebase";
+import { useAuth } from "../contexts/AuthContext";
 
 interface SelectedPicto {
   label: string;
@@ -33,6 +36,7 @@ type Step = "chooser" | "setup" | "use" | "editor";
 const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
   // ── Saved grids (compartido vía context)
   const { savedGrids, setSavedGrids } = useGrids();
+  const { user } = useAuth();
 
   // ── If URL has ?id=X, open that grid directly (skip chooser)
   const [searchParams] = useSearchParams();
@@ -180,11 +184,31 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
     setEditingCell(null);
   };
 
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user || user.id === "guest") return;
+ 
     const reader = new FileReader();
-    reader.onload = ev => setCellImage(ev.target?.result as string);
+    reader.onload = async (ev) => {
+      const base64 = ev.target?.result as string;
+      setIsUploadingImage(true);
+      try {
+        // Ruta única por usuario y celda: grillas/{userId}/{timestamp}.jpg
+        const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const storageRef = ref(storage, `grillas/${user.id}/${fileName}`);
+        await uploadString(storageRef, base64, "data_url");
+        const url = await getDownloadURL(storageRef);
+        setCellImage(url); // guardamos la URL, no el base64
+      } catch (err) {
+        console.error("Error subiendo imagen a Storage:", err);
+        // Fallback: si falla Storage, usamos el base64 localmente
+        setCellImage(base64);
+      } finally {
+        setIsUploadingImage(false);
+      }
+    };
     reader.readAsDataURL(file);
     e.target.value = "";
   };

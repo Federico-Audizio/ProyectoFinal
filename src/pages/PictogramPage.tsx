@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PictogramTile from "../components/PictogramTile";
 import PictogramModal from "../components/PictogramModal";
 import CustomGridEditor from "../components/CustomGridEditor";
 import "./PictogramPage.css";
 import { useAudio } from "../hooks/useAudio";
-
+import { useAuth } from "../contexts/AuthContext";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "../firebase";
 
 interface SelectedPicto {
   label: string;
@@ -35,6 +37,9 @@ const PictogramPage: React.FC = () => {
   const [isSizeModalOpen, setIsSizeModalOpen] = useState(false);
   const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
 
+  const [isConfigLoaded, setIsConfigLoaded] = useState(false);
+
+  const { user } = useAuth();
   const lugaresContent = [
     { label: "Parque", image: "/pictograms/Lugares/parque.png", color: "#FF8000" },
     { label: "Pileta", image: "/pictograms/Lugares/piscina.png", color: "#FF8000" },
@@ -58,7 +63,7 @@ const PictogramPage: React.FC = () => {
     ...(commLevel === "composed" ? [
       { label: "Quiero", image: "/pictograms/Conectores/quiero.png", color: "#fa18c2" }, // Asegurá la ruta
       { label: "Conectores", isFolder: true, image: "/pictograms/Conectores/tengo.png", color: "#fa18c2", content: [
-        { label: "No quero", imagePath: "/public/pictograms/Conectores/no quiero.png", color: "#fa18c2" },
+        { label: "No quiero", imagePath: "/public/pictograms/Conectores/no quiero.png", color: "#fa18c2" },
         { label: "Tengo", imagePath: "/public/pictograms/Conectores/tengo.png", color: "#fa18c2" },
         { label: "Conn", imagePath: "/public/pictograms/Conectores/_con.png", color: "#fa18c2" },
         { label: "Estoy", imagePath: "/public/pictograms/Conectores/estoy.png", color: "#fa18c2" },
@@ -235,6 +240,68 @@ const PictogramPage: React.FC = () => {
      },
     { label: "Triste", image: "/pictograms/Estado/triste.png", color: "#007FFF" },
   ];
+
+  const saveConfigurations = async () => {
+    if (!user || user.id === "guest") return;
+
+    try {
+      await setDoc(
+        doc(db, "usuarios", user.id),
+        {
+          configuraciones: {
+            imageSize,
+            textSize,
+            commLevel,
+          }
+        },
+        { merge: true }
+      );
+      console.log("Configuración guardada exitosamente");
+    } catch (error) {
+      console.error("Error guardando configuración:", error);
+    }
+  };
+
+ // Carga de configuración desde Firestore al montar el componente
+  useEffect(() => {
+    const loadConfigurations = async () => {
+      if (!user || user.id === "guest") {
+        setIsConfigLoaded(true); // Si es invitado, permitimos que la app avance
+        return;
+      }
+
+      try {
+        const userRef = doc(db, "usuarios", user.id);
+        const docSnap = await getDoc(userRef);
+
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+
+          if (userData && userData.configuraciones) {
+            const { imageSize: imgSz, textSize: txtSz, commLevel: lvl } = userData.configuraciones;
+            
+            if (imgSz !== undefined) setImageSize(imgSz);
+            if (txtSz !== undefined) setTextSize(txtSz);
+            if (lvl !== undefined) setCommLevel(lvl);
+          }
+        }
+      } catch (error) {
+        console.error("Error cargando configuración:", error);
+      } finally {
+        setIsConfigLoaded(true); // ¡Fundamental! Avisamos que ya terminó de cargar
+      }
+    };
+    
+    loadConfigurations();
+  }, [user]);
+
+
+  useEffect(() => {
+    // Evita guardar si no hay usuario, es invitado, o si aún no se descargó la config inicial
+    if (!user || user.id === "guest" || !isConfigLoaded) return;
+
+    saveConfigurations();
+  }, [imageSize, textSize, commLevel, isConfigLoaded]); // Agrega isConfigLoaded a las dependencias
 
   // Manejador centralizado para cuando se hace clic en un pictograma (principal o modal)
   const handlePictogramSelect = (pic: any) => {

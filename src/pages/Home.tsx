@@ -1,8 +1,33 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./Home.css";
-import { useAudio } from "../hooks/useAudio.js";
-import { preload } from "react-dom";
+import { useAudio } from "../hooks/useAudio.js"; //[cite: 1]
+
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, provider, db } from "../firebase.js";
+//import { initializeApp } from "firebase/app";
+//import { getAnalytics } from "firebase/analytics";
+import { useAuth } from "../contexts/AuthContext.js";
+
+/* Reemplaza esto con las credenciales de tu consola de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyDc8jkXVnp-ARE_2xHqV8oy9r6oEpz8f80",
+  authDomain: "proyectofinal-78eb4.firebaseapp.com",
+  projectId: "proyectofinal-78eb4",
+  storageBucket: "proyectofinal-78eb4.firebasestorage.app",
+  messagingSenderId: "1001853852606",
+  appId: "1:1001853852606:web:7e0b0d3d2a7846ad60b7ef",
+  measurementId: "G-0PHTHXEQW9"
+};*/
+
+//const app = initializeApp(firebaseConfig);
+//const analytics = getAnalytics(app);
+//export const auth = getAuth(app);
+
+//export const provider = new GoogleAuthProvider();
+
+//export const db = getFirestore(app);
 
 interface Pictogram {
   text: string;
@@ -23,97 +48,214 @@ interface SignResponse {
   }[];
 }
 
-const Home: React.FC = () => {
-  const { preloadAudio } = useAudio();
 
-  const [pictograms, setPictograms] = useState<Pictogram[]>([]);
+const Home: React.FC = () => {
+  const { preloadAudio } = useAudio(); //[cite: 1]
+  const [pictograms, setPictograms] = useState<Pictogram[]>([]); //[cite: 1]
+
+  const {login} = useAuth(); //[cite: 1]
+  // --- Estados para el Modal de Login ---
+  const [showModal, setShowModal] = useState(true); // Se muestra al entrar por defecto
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [user, setUser] = useState<any>(null); // Aquí guardarás el usuario de Firebase o 'guest'
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Tu lógica de precarga intacta[cite: 1]
     const preload = async () => {
       try {
-        const pictoPath = await fetch("/AudioGenerator/pictograms.json");
-        const pictoData: PictogramResponse = await pictoPath.json();
-        const signPath = await fetch("/AudioGenerator/sign.json");
-        const signData: SignResponse = await signPath.json();
+        const pictoPath = await fetch("/AudioGenerator/pictograms.json"); //[cite: 1]
+        const pictoData: PictogramResponse = await pictoPath.json(); //[cite: 1]
+        const signPath = await fetch("/AudioGenerator/sign.json"); //[cite: 1]
+        const signData: SignResponse = await signPath.json(); //[cite: 1]
 
-
-        const PictoPromises = pictoData.pictograms.map(p => {
-          const audioPicto = `/AudioGenerator/audio/es/${p.file}`;
-          return preloadAudio(audioPicto);
+        const PictoPromises = pictoData.pictograms.map((p) => { //[cite: 1]
+          const audioPicto = `/AudioGenerator/audio/es/${p.file}`; //[cite: 1]
+          return preloadAudio(audioPicto); //[cite: 1]
         });
 
-        const SignPromises = signData.sign.map(p => {
-          const audioSign = `/AudioGenerator/audio/es/${p.file}`;
-          return preloadAudio(audioSign);
+        const SignPromises = signData.sign.map((p) => { //[cite: 1]
+          const audioSign = `/AudioGenerator/audio/es/${p.file}`; //[cite: 1]
+          return preloadAudio(audioSign); //[cite: 1]
         });
 
-        console.log("Audios listos y decodificados.");
-
-        /* 3. Precarga de Imágenes (Mejorado con Promesas)
-        const imagePromises = data.pictograms.map(p => {
-          return new Promise((resolve, reject) => {
-            const img = new Image();
-            // Asumimos que las imágenes están en /pictograms/
-            img.src = `/pictograms/${p.image}`; 
-            img.onload = () => resolve(img.src);
-            img.onerror = () => {
-              console.warn(`No se pudo cargar la imagen: ${p.image}`);
-              // Resolvemos aunque falle para no detener toda la carga
-              resolve(null); 
-            };
-          });
-        });*/
-
-        // 4. Esperamos a que TODO (audios e imágenes) termine
-        await Promise.all([...SignPromises, ...PictoPromises]);
-
-        console.log("Todos los audios e imágenes han sido precargados correctamente.");
-      } catch (error) {
-        console.error("Error precargando recursos:", error);
+        await Promise.all([...SignPromises, ...PictoPromises]); //[cite: 1]
+        console.log("Todos los audios e imágenes han sido precargados."); //[cite: 1]
+      } catch (error) { //[cite: 1]
+        console.error("Error precargando recursos:", error); //[cite: 1]
       }
     };
 
-    preload();
-  }, [preloadAudio]);
+    preload(); //[cite: 1]
+  }, [preloadAudio]); //[cite: 1]
+
+  // --- Funciones de Autenticación ---
+  const handleGoogleLogin = async () => {
+    try {
+      setAuthError(null);
+      const result = await signInWithPopup(auth, provider);
+      
+      // Referencia al documento del usuario en Firestore
+      const userRef = doc(db, "usuarios", result.user.uid);
+      const docSnap = await getDoc(userRef);
+
+      const token = await result.user.getIdToken();
+      login({
+        id: result.user.uid,
+        email: result.user.email || "",
+        nombre: result.user.displayName || "",
+        token: token,
+      });
+      setShowModal(false);
+
+      // Si el usuario no existe en la base de datos, lo creamos
+      if (!docSnap.exists()) {
+        await setDoc(userRef, {
+          email: result.user.email,
+          nombre: result.user.displayName,
+          fechaCreacion: new Date(),
+          configuraciones: {} // Aquí guardarás preferencias de pictogramas, sensibilidad de cámara, etc.
+        });
+      }
+
+      
+    } catch (error: any) {
+      console.error("Error con Google:", error);
+      setAuthError("Error al iniciar sesión con Google.");
+    }
+  };
+
+  // --- LÓGICA DE CORREO Y CONTRASEÑA ---
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    try {
+      if (isRegistering) {
+        // Registrar nuevo usuario
+        const result = await createUserWithEmailAndPassword(auth, email, password);
+        
+        // Crear su documento en la base de datos no relacional
+        await setDoc(doc(db, "usuarios", result.user.uid), {
+          email: result.user.email,
+          fechaCreacion: new Date(),
+          configuraciones: {} 
+        });
+        
+        const token = await result.user.getIdToken();
+        login({ id: result.user.uid, email: result.user.email || "", nombre: result.user.email?.split("@")[0] || "", token });
+      } else {
+        // Iniciar sesión con usuario existente
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        const token = await result.user.getIdToken();
+        login({ id: result.user.uid, email: result.user.email || "", nombre: result.user.displayName || "", token });
+      }
+      setShowModal(false);
+    } catch (error: any) {
+      console.error("Error de autenticación:", error);
+      // Manejo básico de errores de Firebase
+      if (error.code === 'auth/email-already-in-use') {
+        setAuthError("El correo ya está registrado.");
+      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+        setAuthError("Correo o contraseña incorrectos.");
+      } else {
+        setAuthError("Error al autenticar. Verifica tus datos.");
+      }
+    }
+  };
+
+  // --- LÓGICA DE INVITADO ---
+  const handleGuest = () => {
+    login({ id: "guest", email: "", nombre: "Invitado", token: "" });
+    setShowModal(false);
+  };
 
   return (
     <div className="home-container">
-      <h1 className="home-title">BIENVENIDOS</h1>
+      {/* MODAL EMERGENTE */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>{isRegistering ? "Crear Cuenta" : "Iniciar Sesión"}</h2>
+            
+            <button className="google-btn" onClick={handleGoogleLogin}>
+              Continuar con Google
+            </button>
 
-      <div className="menu-list">
-        <div className="menu-item">
-          <div className="icon-circle">
-            <span>😶</span>
+            <div className="divider">o</div>
+
+            <form onSubmit={handleEmailAuth} className="auth-form">
+              <input
+                type="email"
+                placeholder="Correo electrónico"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <input
+                type="password"
+                placeholder="Contraseña"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button type="submit" className="submit-btn">
+                {isRegistering ? "Registrarse" : "Ingresar"}
+              </button>
+            </form>
+
+            <button 
+              className="toggle-auth-btn" 
+              onClick={() => setIsRegistering(!isRegistering)}
+            >
+              {isRegistering ? "¿Ya tienes cuenta? Inicia sesión" : "¿No tienes cuenta? Regístrate"}
+            </button>
+
+            <button className="guest-btn" onClick={handleGuest}>
+              Continuar como Invitado (Sin guardar config.)
+            </button>
           </div>
-          <Link to="/camera" className="nav-button">
-            Reconocimiento de Emociones
+        </div>
+      )}
+
+      {/* CONTENIDO ORIGINAL DE HOME */}
+      <h1 className="home-title">BIENVENIDOS</h1> {/*[cite: 1] */}
+
+      <div className="menu-list"> {/*[cite: 1] */}
+        <div className="menu-item"> {/*[cite: 1] */}
+          <div className="icon-circle"> {/*[cite: 1] */}
+            <span>😶</span> {/*[cite: 1] */}
+          </div>
+          <Link to="/camera" className="nav-button"> {/*[cite: 1] */}
+            Reconocimiento de Emociones {/*[cite: 1] */}
           </Link>
         </div>
 
-        <div className="menu-item">
-          <div className="icon-circle">
-            <span>🖼️</span>
+        <div className="menu-item"> {/*[cite: 1] */}
+          <div className="icon-circle"> {/*[cite: 1] */}
+            <span>🖼️</span> {/*[cite: 1] */}
           </div>
-          <Link to="/pictograms" className="nav-button">
-            Pictogramas
+          <Link to="/pictograms" className="nav-button"> {/*[cite: 1] */}
+            Pictogramas {/*[cite: 1] */}
           </Link>
         </div>
 
-        <div className="menu-item">
-          <div className="icon-circle">
-            <span>👁️</span>
+        <div className="menu-item"> {/*[cite: 1] */}
+          <div className="icon-circle"> {/*[cite: 1] */}
+            <span>👁️</span> {/*[cite: 1] */}
           </div>
-          <Link to="/eyetracking" className="nav-button">
-            Seguimiento Visual
+          <Link to="/eyetracking" className="nav-button"> {/*[cite: 1] */}
+            Seguimiento Visual {/*[cite: 1] */}
           </Link>
         </div>
 
-        <div className="menu-item">
-          <div className="icon-circle">
-            <span>🤟</span>
+        <div className="menu-item"> {/*[cite: 1] */}
+          <div className="icon-circle"> {/*[cite: 1] */}
+            <span>🤟</span> {/*[cite: 1] */}
           </div>
-          <Link to="/sena" className="nav-button">
-            Detector de Señas
+          <Link to="/sena" className="nav-button"> {/*[cite: 1] */}
+            Detector de Señas {/*[cite: 1] */}
           </Link>
         </div>
       </div>
@@ -121,4 +263,6 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;
+export default Home; //[cite: 1]
+
+
