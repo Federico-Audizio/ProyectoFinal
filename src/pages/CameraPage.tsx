@@ -3,31 +3,31 @@ import CameraCapture from "../components/CameraCapture";
 import "./CameraPage.css"; // 🔥 Estilos externos
 
 // Define un mapeo de emociones a un array de rutas de pictogramas
-const emotionPictogramMap: { [key: string]: { src: string; label: string }[] } = {
+const emotionPictogramMap: { [key: string]: { src: string; label: string; color: string }[] } = {
   neutral: [],
   happy: [
-    { src: "/public/pictograms/happy/amor.webp", label: "Amor" },
-    { src: "/public/pictograms/happy/deporte.webp", label: "Deporte" },
-    { src: "/public/pictograms/happy/orgulloso.webp", label: "Orgulloso" },
-    { src: "/public/pictograms/happy/emocionado.webp", label: "Emocionado" },
-    { src: "/public/pictograms/happy/me-gusta-eso.webp", label: "Me gusta eso" },
-    { src: "/public/pictograms/happy/música.webp", label: "Música" },
+    { src: "/public/pictograms/happy/amor.webp",        label: "Amor",         color: "#28a745" },
+    { src: "/public/pictograms/happy/deporte.webp",     label: "Deporte",      color: "#28a745" },
+    { src: "/public/pictograms/happy/orgulloso.webp",   label: "Orgulloso",    color: "#28a745" },
+    { src: "/public/pictograms/happy/emocionado.webp",  label: "Emocionado",   color: "#28a745" },
+    { src: "/public/pictograms/happy/me-gusta-eso.webp",label: "Me gusta eso", color: "#28a745" },
+    { src: "/public/pictograms/happy/música.webp",      label: "Música",       color: "#28a745" },
   ],
   sad: [
-    { src: "/public/pictograms/sad/dolor.webp", label: "Dolor" },
-    { src: "/public/pictograms/sad/incómodo.png", label: "Incómodo" },
-    { src: "/public/pictograms/sad/me molesta el ruido.png", label: "Molesta el ruido" },
-    { src: "/public/pictograms/sad/miedo.png", label: "Miedo" },
-    { src: "/public/pictograms/sad/dolor de pierna.png", label: "Dolor de pierna" },
-    { src: "/public/pictograms/sad/solo.png", label: "Solo" },
+    { src: "/public/pictograms/sad/dolor.webp",                label: "Dolor",           color: "#007FFF" },
+    { src: "/public/pictograms/sad/incómodo.png",              label: "Incómodo",        color: "#007FFF" },
+    { src: "/public/pictograms/sad/me molesta el ruido.png",   label: "Molesta el ruido",color: "#007FFF" },
+    { src: "/public/pictograms/sad/miedo.png",                 label: "Miedo",           color: "#007FFF" },
+    { src: "/public/pictograms/sad/dolor de pierna.png",       label: "Dolor de pierna", color: "#007FFF" },
+    { src: "/public/pictograms/sad/solo.png",                  label: "Solo",            color: "#007FFF" },
   ],
   angry: [
-    { src: "/public/pictograms/angry/aburrimiento.png", label: "Aburrimiento" },
-    { src: "/public/pictograms/angry/agobiado.png", label: "Agobiado" },
-    { src: "/public/pictograms/angry/déjame solo.png", label: "Déjame solo" },
-    { src: "/public/pictograms/angry/furioso.png", label: "Furioso" },
-    { src: "/public/pictograms/angry/no me gusta eso.png", label: "No me gusta eso" },
-    { src: "/public/pictograms/angry/ansioso.png", label: "Ansioso" },
+    { src: "/public/pictograms/angry/aburrimiento.png",    label: "Aburrimiento",    color: "#CC0000" },
+    { src: "/public/pictograms/angry/agobiado.png",        label: "Agobiado",        color: "#CC0000" },
+    { src: "/public/pictograms/angry/déjame solo.png",     label: "Déjame solo",     color: "#CC0000" },
+    { src: "/public/pictograms/angry/furioso.png",         label: "Furioso",         color: "#CC0000" },
+    { src: "/public/pictograms/angry/no me gusta eso.png", label: "No me gusta eso", color: "#CC0000" },
+    { src: "/public/pictograms/angry/ansioso.png",         label: "Ansioso",         color: "#CC0000" },
   ],
 };
 
@@ -88,42 +88,31 @@ const CameraPage: React.FC = () => {
     <div className="camera-page">
       {/* ---- Panel Izquierdo ---- */}
       <div className="left-panel">
-          {/* 1. Cámara: Ocupa todo el espacio superior */}
-          <div className="camera-wrapper">
-             <CameraCapture isStreaming={isStreaming} onEmotionDetected={handleEmotionDetected} />
+        <div className="camera-wrapper">
+          <CameraCapture isStreaming={isStreaming} onEmotionDetected={handleEmotionDetected} />
+
+          {/* Selector de modelo — badge discreto esquina superior derecha */}
+          <div className="camera-model-badge">
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+            >
+              <option value="keras">Keras</option>
+              <option value="yolo">YOLO</option>
+            </select>
           </div>
 
-          {/* 2. Controles: Alineados abajo */}
-          <div className="controls-footer">
-            {/* Botón Unificado */}
-            <button 
-                className={`toggle-btn ${isStreaming ? "stop" : "start"}`} 
-                onClick={toggleStreaming}
-            >
-                {isStreaming ? (
-                    <>
-                        {/* Icono de Stop (cuadrado) o Fin */}
-                        <div className="icon-square">■</div> 
-                        Fin
-                    </>
-                ) : (
-                    <>
-                        {/* Icono de Play (triángulo) */}
-                        <div className="icon-play">▶</div> 
-                        Iniciar
-                    </>
-                )}
-            </button>
-
-            {/* Selector de Modelo */}
-            <select
-                className="model-select"
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-            >
-                <option value="keras">Modelo Keras</option>
-                <option value="yolo">Modelo YOLO</option>
-            </select>
+          {/* Botón play/stop — overlay centrado abajo */}
+          <button
+            className={`camera-toggle-btn ${isStreaming ? "stop" : "start"}`}
+            onClick={toggleStreaming}
+          >
+            {isStreaming ? (
+              <><div className="icon-square">■</div> Detener</>
+            ) : (
+              <><div className="icon-play">▶</div> Iniciar</>
+            )}
+          </button>
         </div>
       </div>
 
@@ -134,11 +123,12 @@ const CameraPage: React.FC = () => {
             <div className="camera-pictogram-grid"> 
             {currentPictograms.length > 0 ? (
                 currentPictograms.map((p, index) => (
-                <div 
-                    key={index} 
+                <div
+                    key={index}
                     className="camera-pictogram-item"
+                    style={{ borderColor: p.color }}
                 >
-                    <img src={p.src} alt={p.label} className="camera-pictogram" loading="lazy"/> 
+                    <img src={p.src} alt={p.label} className="camera-pictogram" loading="lazy"/>
                     <p>{p.label}</p>
                 </div>
                 ))

@@ -4,7 +4,7 @@
 .camera-page {
   display: flex;
   height: 100vh;
-  background: linear-gradient(180deg, #0e2a47 0%, #1c4e80 100%); /* un gris más oscuro que el sidebar */
+  background: linear-gradient(180deg, #0e2a47 0%, #1c4e80 100%);
   padding: 20px;
   gap: 20px;
   box-sizing: border-box;
@@ -12,7 +12,7 @@
 }
 
 /* ====================
-   📌 Panel Izquierdo (cámara + controles)
+   📌 Panel Izquierdo
 ==================== */
 .left-panel {
   flex: 3;
@@ -21,86 +21,107 @@
   height: 100%;
 }
 
-/* Contenedor de la cámara */
+/* Contenedor de la cámara — ocupa todo el panel */
 .camera-wrapper {
   flex: 1;
   background: #000;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
   position: relative;
-  margin-bottom: 20px; /* Espacio antes de los botones */
-  border: 2px solid #2c3e50;
+  border: 2px solid rgba(255,255,255,0.1);
   transform: scaleX(-1);
 }
 
-/* Ajuste del componente interno */
-.camera-wrapper > div, 
+.camera-wrapper > div,
 .camera-wrapper video {
-    width: 100%;
-    height: 100%;
-    object-fit: contain; /* Para ver todo el cuadro de video */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
+
+/* Badge del modelo — esquina superior derecha, des-espejado */
+.camera-model-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  transform: scaleX(-1); /* contra-espejo */
+}
+
+.camera-model-badge select {
+  appearance: none;
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  padding: 5px 28px 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  outline: none;
+  transition: background 0.2s, border-color 0.2s;
+  /* flecha personalizada */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.6)'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.camera-model-badge select:hover {
+  background-color: rgba(0, 0, 0, 0.65);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.camera-model-badge select option {
+  background: #1c2e4a;
+  color: white;
+}
+
+/* Botón play/stop — centrado en la parte inferior, des-espejado */
+.camera-toggle-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(-1); /* centrado + contra-espejo */
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 32px;
+  border: none;
+  border-radius: 50px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.camera-toggle-btn.start {
+  background: #007bff;
+  color: white;
+}
+.camera-toggle-btn.start:hover {
+  background: #0056b3;
+  transform: translateX(-50%) scaleX(-1) scale(1.05);
+  box-shadow: 0 6px 24px rgba(0, 123, 255, 0.5);
+}
+
+.camera-toggle-btn.stop {
+  background: rgba(108, 117, 125, 0.85);
+  color: white;
+  backdrop-filter: blur(4px);
+}
+.camera-toggle-btn.stop:hover {
+  background: #545b62;
+  transform: translateX(-50%) scaleX(-1) scale(1.05);
+}
+
+.icon-play { font-size: 20px; line-height: 1; }
+.icon-square { font-size: 16px; line-height: 1; }
 
 /* ====================
-   📌 Controles Inferiores (Izquierda)
-==================== */
-.controls-footer {
-    height: 80px; /* Altura FIJA */
-    display: flex;
-    gap: 15px;
-}
-
-/* BOTÓN UNIFICADO */
-.toggle-btn {
-    flex: 1; /* Ocupa la mitad */
-    border: none;
-    border-radius: 10px;
-    font-size: 24px;
-    font-weight: bold;
-    color: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    transition: all 0.2s;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-}
-
-/* Estilo Iniciar (Azul) */
-.toggle-btn.start {
-    background-color: #007bff; /* Azul vibrante */
-}
-.toggle-btn.start:hover {
-    background-color: #0056b3;
-}
-
-/* Estilo Fin (Gris) */
-.toggle-btn.stop {
-    background-color: #6c757d; /* Gris */
-}
-.toggle-btn.stop:hover {
-    background-color: #545b62;
-}
-
-/* Iconos hechos con CSS para no depender de imágenes */
-.icon-play { font-size: 28px; line-height: 1; }
-.icon-square { font-size: 22px; line-height: 1; margin-top: -2px;}
-
-/* Selector de Modelo */
-.model-select {
-    flex: 1; /* Ocupa la otra mitad */
-    border-radius: 10px;
-    border: 2px solid #ccc;
-    font-size: 20px;
-    font-weight: 500;
-    padding: 0 15px;
-    background-color: white;
-    cursor: pointer;
-}
-
-/* ====================
-   📌 Panel Derecho (pictogramas + emoción)
+   📌 Panel Derecho
 ==================== */
 .right-panel {
   flex: 2;
@@ -109,64 +130,73 @@
   height: 100%;
 }
 
-/* Contenedor Grilla (maneja el scroll y el fondo) */
 .pictogram-grid-container {
-    flex: 1; 
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    overflow-y: auto; 
-    margin-bottom: 20px; 
-    padding: 10px;
-    border: 1px solid rgba(255,255,255,0.1);
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
-/* 🔥 LA CUADRÍCULA (GRID) - CLASE ÚNICA 🔥 */
-.camera-pictogram-grid { /* ¡Clase renombrada! */
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 10px; 
-    width: 100%;
-    grid-auto-rows: min-content; 
+.camera-pictogram-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+  grid-auto-rows: min-content;
 }
 
-/* Contenedor individual del pictograma - CLASE ÚNICA */
-.camera-pictogram-item { /* ¡Clase renombrada! */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+.camera-pictogram-item {
+  background: white;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 6px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.camera-pictogram-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .camera-pictogram-item p {
-    color: white;
-    margin-top: 5px;
-    font-weight: 500;
-    text-align: center;
+  color: #333;
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.2;
+  word-wrap: break-word;
 }
 
-/* 🔥 LA IMAGEN DEL PICTOGRAMA (EL CUADRADO) - CLASE ÚNICA 🔥 */
-.camera-pictogram { /* ¡Clase renombrada! */
-  width: 100%; 
-  aspect-ratio: 1 / 1; /* Se mantiene el cuadrado perfecto */
-  background: white;
-  border-radius: 8px;
+.camera-pictogram {
+  width: 100%;
+  aspect-ratio: 1 / 1;
   object-fit: contain;
-  padding: 5px;
-  box-sizing: border-box; 
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  border-radius: 4px;
 }
 
-/* Estilos de la caja de emoción (footer) */
 .emotion-box-footer {
-  height: 80px; 
+  height: 70px;
   background: white;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: bold;
   color: #333;
   box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  flex-shrink: 0;
 }
 
 /* ====================
@@ -177,27 +207,9 @@
     flex-direction: column;
     height: auto;
   }
-
   .left-panel,
   .right-panel {
     flex: 1;
     width: 100%;
   }
 }
-
-/* ====================
-   📌 Iconos 
-==================== */
-.picto-img {
-  width: 60px;   /* ajusta el tamaño según quieras */
-  height: 60px;
-  object-fit: contain;
-}
-
-.btn-icon {
-  width: 30px;   /* ajusta según tamaño */
-  height: 30px;
-  margin-right: 8px; /* espacio entre ícono y texto */
-  vertical-align: middle;
-}
-

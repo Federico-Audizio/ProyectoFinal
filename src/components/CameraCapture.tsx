@@ -174,7 +174,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ isStreaming, onEmotionDet
 
   return (
     
-      <div className="camera-container" style={{ position: "relative", width: "100%", maxWidth: "640px", display: "inline-block" }}>
+      <div className="camera-container" style={{ position: "relative", width: "100%", height: "100%" }}>
       {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
       <video 
         ref={videoRef} 

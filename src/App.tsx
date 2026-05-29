@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useSearchParams, useNavigate } from "react-router-dom";
 import { GridsProvider } from "./contexts/GridsContext";
 import Layout from "./components/Layout";
 import CameraPage from "./pages/CameraPage";
@@ -8,6 +8,13 @@ import EyeTrackingPage from './pages/EyeTrackingPage';
 import Home from "./pages/Home";
 import SenaPage from "./pages/SenaPage";
 import CustomGridEditor from "./components/CustomGridEditor";
+
+const CustomGridEditorRoute: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const id = searchParams.get("id") ?? "new";
+  return <CustomGridEditor key={id} onClose={() => navigate(-1)} />;
+};
 
 function App() {
   return (
@@ -18,7 +25,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route path="camera" element={<CameraPage />} />
           <Route path="pictograms" element={<PictogramPage />} />
-          <Route path="custom-editor" element={<CustomGridEditor onClose={() => {}} />} />
+          <Route path="custom-editor" element={<CustomGridEditorRoute />} />
           <Route path="eyetracking" element={<EyeTrackingPage />} />
           <Route path="eyegestures" element={<EyeTrackingPage />} />
           <Route path="sena" element={<SenaPage />} />

@@ -14,6 +14,7 @@
   
   /* Asegura que la barra esté por encima del contenido si se expande */
   position: relative;
+  z-index: 4000;
   min-width: 60px;
 }
 
