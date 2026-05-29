@@ -37,6 +37,8 @@ const PictogramPage: React.FC = () => {
   const [isSizeModalOpen, setIsSizeModalOpen] = useState(false);
   const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
 
+  const [isConfigLoaded, setIsConfigLoaded] = useState(false);
+
   const { user } = useAuth();
   const lugaresContent = [
     { label: "Parque", image: "/pictograms/Lugares/parque.png", color: "#FF8000" },
@@ -240,7 +242,7 @@ const PictogramPage: React.FC = () => {
   ];
 
   const saveConfigurations = async () => {
-    if (!user || user.id === "guest_id") return;
+    if (!user || user.id === "guest") return;
 
     try {
       await setDoc(
@@ -260,39 +262,46 @@ const PictogramPage: React.FC = () => {
     }
   };
 
-  // Carga de configuración desde Firestore al montar el componente
+ // Carga de configuración desde Firestore al montar el componente
   useEffect(() => {
     const loadConfigurations = async () => {
-      if (!user || user.id === "guest_id") return;
+      if (!user || user.id === "guest") {
+        setIsConfigLoaded(true); // Si es invitado, permitimos que la app avance
+        return;
+      }
 
-        try {
-          const userRef = doc(db, "usuarios", user.id);
-          const docSnap = await getDoc(userRef);
+      try {
+        const userRef = doc(db, "usuarios", user.id);
+        const docSnap = await getDoc(userRef);
 
-          if (docSnap.exists()) {
-            const userData = docSnap.data();
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
 
-            if (userData && userData.configuraciones) {
-              const { imageSize: imgSz, textSize: txtSz, commLevel: lvl } = userData.configuraciones;
-              
-              if (imgSz !== undefined) setImageSize(imgSz);
-              if (txtSz !== undefined) setTextSize(txtSz);
-              if (lvl !== undefined) setCommLevel(lvl);
-            }
+          if (userData && userData.configuraciones) {
+            const { imageSize: imgSz, textSize: txtSz, commLevel: lvl } = userData.configuraciones;
+            
+            if (imgSz !== undefined) setImageSize(imgSz);
+            if (txtSz !== undefined) setTextSize(txtSz);
+            if (lvl !== undefined) setCommLevel(lvl);
           }
-        } catch (error) {
-          console.error("Error cargando configuración:", error);
         }
-      };
-      loadConfigurations();
+      } catch (error) {
+        console.error("Error cargando configuración:", error);
+      } finally {
+        setIsConfigLoaded(true); // ¡Fundamental! Avisamos que ya terminó de cargar
+      }
+    };
+    
+    loadConfigurations();
   }, [user]);
 
 
   useEffect(() => {
-  if (!user || user.id === "guest_id") return;
+    // Evita guardar si no hay usuario, es invitado, o si aún no se descargó la config inicial
+    if (!user || user.id === "guest" || !isConfigLoaded) return;
 
     saveConfigurations();
-  }, [imageSize, textSize, commLevel]);
+  }, [imageSize, textSize, commLevel, isConfigLoaded]); // Agrega isConfigLoaded a las dependencias
 
   // Manejador centralizado para cuando se hace clic en un pictograma (principal o modal)
   const handlePictogramSelect = (pic: any) => {
