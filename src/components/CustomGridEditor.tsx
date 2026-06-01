@@ -65,6 +65,9 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
   const [imageSize, setImageSize] = useState<SizeOption>("normal");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  // ── Confirmar eliminación
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
   // ── Editor de celda
   const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null);
   const [cellLabel, setCellLabel]     = useState("");
@@ -79,6 +82,11 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
     setCommLevel("simple");
     const hasContent = g.cells.flat().some(cell => cell !== null);
     setStep(hasContent ? "use" : "editor");
+  };
+
+  const deleteGrid = (id: string) => {
+    setSavedGrids(prev => prev.filter(g => g.id !== id));
+    setConfirmDeleteId(null);
   };
 
   const startNew = () => {
@@ -215,6 +223,7 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
 
   // ─── Render: Chooser ─────────────────────────────────────────────────────────
   if (step === "chooser") {
+    const pendingGrid = savedGrids.find(g => g.id === confirmDeleteId);
     return (
       <div className="cge-overlay">
         <div className="cge-modal cge-chooser">
@@ -251,11 +260,42 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
                     <span className="cge-card-title">{g.title}</span>
                     <span className="cge-card-meta">{g.cols} × {g.rows}</span>
                   </div>
+                  <button
+                    className="cge-card-delete-btn"
+                    onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(g.id); }}
+                    title="Eliminar grilla"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                      <path d="M10 11v6M14 11v6"/>
+                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                    </svg>
+                  </button>
                 </div>
               ))}
             </div>
           )}
         </div>
+
+        {confirmDeleteId && (
+          <div className="cge-confirm-overlay">
+            <div className="cge-confirm-modal">
+              <h3 className="cge-confirm-title">Eliminar grilla</h3>
+              <p className="cge-confirm-text">
+                Vas a eliminar <strong>"{pendingGrid?.title}"</strong>. Esta accion no se puede deshacer.
+              </p>
+              <div className="cge-confirm-actions">
+                <button className="cge-btn" style={{ background: "#eee", color: "#555" }} onClick={() => setConfirmDeleteId(null)}>
+                  Cancelar
+                </button>
+                <button className="cge-btn cge-btn-danger" onClick={() => deleteGrid(confirmDeleteId)}>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

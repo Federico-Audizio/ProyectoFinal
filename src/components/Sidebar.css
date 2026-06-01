@@ -172,6 +172,110 @@
 }
 .sgs-new-btn:hover { background: #0062cc; }
 
+.sgs-item-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sgs-item-row .sgs-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.sgs-delete-btn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 80, 80, 0.3);
+  background: rgba(255, 80, 80, 0.08);
+  color: #ff6666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  padding: 0;
+}
+.sgs-delete-btn:hover {
+  background: #e53e3e;
+  border-color: #e53e3e;
+  color: white;
+}
+.sgs-delete-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ─── Modal de confirmación (portal) ─── */
+.sgs-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 6000;
+}
+
+.sgs-confirm-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 28px 28px 22px;
+  width: 90%;
+  max-width: 360px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+.sgs-confirm-title {
+  margin: 0 0 10px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1c2e4a;
+}
+
+.sgs-confirm-text {
+  margin: 0 0 22px;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.sgs-confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.sgs-confirm-cancel {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #eee;
+  color: #555;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.sgs-confirm-cancel:hover { background: #ddd; }
+
+.sgs-confirm-delete {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #e53e3e;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.sgs-confirm-delete:hover { background: #c53030; }
+
 /* ─── Botón de emergencia ────────────────────────────── */
 .emergency-sidebar-btn {
   margin-top: auto;
