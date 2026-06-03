@@ -27,6 +27,7 @@ const PictogramPage: React.FC = () => {
   const [selected, setSelected] = useState<SelectedPicto | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentFolder, setCurrentFolder] = useState<any[]>([]);
+  const [currentFolderLabel, setCurrentFolderLabel] = useState("");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { playAudio, playPhrase } = useAudio();
 
@@ -508,7 +509,8 @@ const PictogramPage: React.FC = () => {
                     playAudio(pic.label);
                   }
                 if(pic.content) {
-                  setCurrentFolder(pic.content); 
+                  setCurrentFolder(pic.content);
+                  setCurrentFolderLabel(pic.label);
                   setIsModalOpen(true);
                 }
                 return; // CAMBIO 2: ¡Importante! Cortamos acá para que la carpeta no suba a la barra
@@ -581,6 +583,8 @@ const PictogramPage: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         pictograms={currentFolder}
+        folderLabel={currentFolderLabel}
+        userId={user?.id ?? null}
         onSelect={(pic) => {
           // 🔊 Solo reproducimos el audio automáticamente en nivel simple
           if (commLevel === "simple") {

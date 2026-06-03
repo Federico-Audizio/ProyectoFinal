@@ -168,6 +168,13 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
+.camera-pictogram-item.selected {
+  transform: scale(1.08);
+  box-shadow: 0 0 18px 5px var(--picto-color, #28a745);
+  border-width: 3px;
+  transition: all 0.2s ease-in-out;
+}
+
 .camera-pictogram-item p {
   color: #333;
   margin: 4px 0 0;

@@ -391,26 +391,27 @@
 /* Botón X para cerrar */
 .modal-close-btn {
   position: absolute;
-  top: 20px;
-  right: 20px;
-  background: #ff4d4d;
-  color: white;
-  border: none;
-  border-radius: 50%;
+  top: 16px;
+  right: 16px;
+  background: white;
+  color: #e53e3e;
+  border: 2px solid #e53e3e;
+  border-radius: 8px;
   width: 36px;
   height: 36px;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
+  transition: background 0.2s, color 0.2s;
   z-index: 10;
 }
 
 .modal-close-btn:hover {
-  background: #cc0000;
+  background: #e53e3e;
+  color: white;
 }
 
 /* Ajuste para pantallas pequeñas */
@@ -572,6 +573,200 @@
 .preview-tile:hover {
   transform: none; /* Quitamos la animación de hover para la preview */
   box-shadow: none;
+}
+
+/* ====================
+   📌 MODAL DE CARPETA MEJORADO
+==================== */
+.pm-modal-content {
+  width: 92vw !important;
+  max-width: 900px !important;
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  padding-bottom: 20px;
+}
+
+/* Título con nombre de la carpeta */
+.pm-folder-title {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1c2e4a;
+  margin: 0 0 18px 0;
+  padding: 0 80px; /* espacio para el X y el edit btn */
+  flex-shrink: 0;
+}
+
+/* Botón editar — posicionado igual que el X pero a la izquierda */
+.pm-edit-toggle {
+  position: absolute;
+  top: 16px;
+  right: 60px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 2px solid #ccc;
+  background: white;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 10;
+}
+.pm-edit-toggle:hover { border-color: #007bff; color: #007bff; }
+.pm-edit-toggle.active {
+  background: #28a745;
+  border-color: #28a745;
+  color: white;
+}
+
+/* Grid cuadrado y scrollable */
+.pm-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding: 4px 2px 8px 2px;
+}
+
+.pm-tile-wrapper {
+  position: relative;
+}
+
+.pm-tile {
+  aspect-ratio: 1;
+  background: white;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  overflow: hidden;
+  gap: 6px;
+}
+.pm-tile:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+
+.pm-tile-img {
+  width: var(--dynamic-img-size, 55px);
+  height: var(--dynamic-img-size, 55px);
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.pm-tile-emoji {
+  font-size: 40px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Tile custom en modo edición: gris */
+.pm-tile-custom-editing {
+  filter: grayscale(70%);
+  opacity: 0.55;
+}
+
+.pm-tile-label {
+  font-size: var(--dynamic-txt-size, 14px);
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  line-height: 1.1;
+  word-break: break-word;
+  flex-shrink: 0;
+}
+
+/* Badge de ocultar/mostrar */
+.pm-badge-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 0.1s;
+  flex-shrink: 0;
+  padding: 0;
+  line-height: 1;
+}
+.pm-badge-btn:hover { transform: scale(1.15); }
+
+.pm-badge-hide {
+  background: rgba(0,0,0,0.6);
+  color: white;
+}
+.pm-badge-show {
+  background: #28a745;
+  color: white;
+}
+.pm-badge-delete {
+  background: #e53e3e;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Tile de agregar */
+.pm-add-tile {
+  border: 2px dashed #ccc !important;
+  background: #fafafa !important;
+  cursor: pointer;
+}
+.pm-add-tile:hover { border-color: #007bff !important; background: #f0f7ff !important; }
+
+.pm-add-plus {
+  font-size: 36px;
+  color: #ccc;
+  line-height: 1;
+}
+.pm-add-tile:hover .pm-add-plus { color: #007bff; }
+
+/* Mini editor overlay */
+.pm-add-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+
+.pm-add-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 380px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+
+.pm-add-title {
+  margin: 0 0 18px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1c2e4a;
 }
 
 /* Control dinámico del emoji de la carpeta */

@@ -515,15 +515,15 @@ h1 {
 /* --- BOTÓN DE CONFIGURACIÓN --- */
 .hud-settings-btn {
   position: absolute;
-  right: 15px;      /* Distancia desde el borde derecho */
-  top: 50%;         /* Centrado vertical... */
-  transform: translateY(-50%); /* ...exacto al medio del texto */
-  
-  background: rgba(255, 255, 255, 0.05); /* Fondo sutil oscuro */
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #aaa;
-  width: 40px;
-  height: 40px;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  background: rgba(255, 255, 255, 0.18);
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  color: #fff;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -533,25 +533,16 @@ h1 {
 }
 
 .hud-settings-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border-color: rgba(255, 255, 255, 0.4);
-  /* 🔹 ARREGLO: Mantenemos el translateY y rotamos sobre su propio eje. 
-     Para que el brillo se vea bien, agregamos box-shadow */
-  transform: translateY(-50%); /* Quitamos el rotate para evitar problemas de centrado si el padre es raro */
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3); /* Brillo blanco */
-}
-
-/* Opcional: Rotar solo el icono por dentro para no romper la posición del botón */
-.hud-settings-btn:hover svg {
-    transform: rotate(45deg);
-    transition: transform 0.2s ease;
+  background: rgba(255, 255, 255, 0.3);
+  border-color: white;
+  transform: translateY(-50%);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
 }
 
 .hud-settings-btn svg {
-  width: 20px;
-  height: 20px;
-  transition: transform 0.2s ease;
+  width: 24px;
+  height: 24px;
+  stroke: #fff;
 }
 
 /* ====================

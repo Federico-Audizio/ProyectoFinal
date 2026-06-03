@@ -48,22 +48,18 @@ const CameraPage: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState("keras");
   const [isStreaming, setIsStreaming] = useState(false);
   const [emotion, setEmotion] = useState("Esperando detección...");
-   const [currentPictograms, setCurrentPictograms] = useState<
-    { src: string; label: string }[]
+  const [currentPictograms, setCurrentPictograms] = useState<
+    { src: string; label: string; color: string }[]
   >([]);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   // 📌 Manejador de emociones: se ejecuta cuando CameraCapture detecta una emoción
   const handleEmotionDetected = (detectedEmotion: string) => {
     setEmotion(detectedEmotion);
-    
-    // Normaliza la emoción (ej: "alegria" -> "happy")
     const normalizedKey = emotionMap[detectedEmotion.toLowerCase()] || "neutral";
-
-    // Busca las rutas en el mapa y actualiza el estado
-    // Si no encuentra la clave, usa "neutral" por defecto
     const pictogramPaths = emotionPictogramMap[normalizedKey] || [];
-    
     setCurrentPictograms(pictogramPaths);
+    setSelectedIndex(null);
   };
 
   // 👇 2. AGREGA ESTO: Expone la función a la ventana global del navegador
@@ -125,8 +121,9 @@ const CameraPage: React.FC = () => {
                 currentPictograms.map((p, index) => (
                 <div
                     key={index}
-                    className="camera-pictogram-item"
-                    style={{ borderColor: p.color }}
+                    className={`camera-pictogram-item${selectedIndex === index ? " selected" : ""}`}
+                    style={{ borderColor: p.color, "--picto-color": p.color } as React.CSSProperties}
+                    onClick={() => setSelectedIndex(selectedIndex === index ? null : index)}
                 >
                     <img src={p.src} alt={p.label} className="camera-pictogram" loading="lazy"/>
                     <p>{p.label}</p>
