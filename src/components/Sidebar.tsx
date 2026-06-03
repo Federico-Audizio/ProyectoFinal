@@ -4,17 +4,33 @@ import { NavLink, useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 import { useGrids } from "../contexts/GridsContext";
 import EmergencyModal from "./EmergencyModal";
+import { useAuth } from "../contexts/AuthContext";
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const { savedGrids, setSavedGrids } = useGrids();
+  
   const [isGridsOpen, setIsGridsOpen] = useState(false);
   const [isEmergencyOpen, setIsEmergencyOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const deleteGrid = (id: string) => {
     setSavedGrids(prev => prev.filter(g => g.id !== id));
     setConfirmDeleteId(null);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setIsProfileOpen(false);
+    navigate("/");
+  };
+
+  const getInitials = (name: string) => {
+    const parts = name.trim().split(" ");
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
   };
 
   const pendingGrid = savedGrids.find(g => g.id === confirmDeleteId);
@@ -90,6 +106,26 @@ const Sidebar: React.FC = () => {
           <span className="link-text">Señas</span>
         </NavLink>
 
+        {/* ── Perfil de usuario (siempre al fondo del sidebar) ── */}
+        {user && (
+          <button
+            className="sidebar-user-btn"
+            onClick={() => setIsProfileOpen(true)}
+            title={user.nombre}
+          >
+            {user.photo ? (
+              <img src={user.photo} alt={user.nombre} className="sidebar-user-avatar" />
+            ) : (
+              <div className="sidebar-user-initials">
+                {getInitials(user.nombre || user.email || "?")}
+              </div>
+            )}
+            <span className="link-text sidebar-user-name">
+              {user.id === "guest" ? "Invitado" : user.nombre.split(" ")[0]}
+            </span>
+          </button>
+        )}
+
         {/* Botón de emergencia */}
         <button className="emergency-sidebar-btn" onClick={() => setIsEmergencyOpen(true)}>
           <svg className="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -114,6 +150,48 @@ const Sidebar: React.FC = () => {
               <button className="sgs-confirm-cancel" onClick={() => setConfirmDeleteId(null)}>Cancelar</button>
               <button className="sgs-confirm-delete" onClick={() => deleteGrid(confirmDeleteId)}>Eliminar</button>
             </div>
+          </div>
+        </div>,
+        document.body
+      )}
+ 
+      {/* ── Popup de perfil ── */}
+      {isProfileOpen && user && ReactDOM.createPortal(
+        <div className="profile-overlay" onClick={() => setIsProfileOpen(false)}>
+          <div className="profile-modal" onClick={e => e.stopPropagation()}>
+            <button className="profile-close" onClick={() => setIsProfileOpen(false)}>✕</button>
+ 
+            <div className="profile-header">
+              {user.photo ? (
+                <img src={user.photo} alt={user.nombre} className="profile-avatar" />
+              ) : (
+                <div className="profile-initials-large">
+                  {getInitials(user.nombre || user.email || "?")}
+                </div>
+              )}
+              <div className="profile-info">
+                <p className="profile-name">
+                  {user.id === "guest" ? "Invitado" : user.nombre}
+                </p>
+                {user.id !== "guest" && (
+                  <p className="profile-email">{user.email}</p>
+                )}
+                {user.id === "guest" && (
+                  <p className="profile-guest-note">
+                    Las configuraciones no se guardan en modo invitado
+                  </p>
+                )}
+              </div>
+            </div>
+ 
+            <button className="profile-logout-btn" onClick={handleLogout}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Cerrar sesión
+            </button>
           </div>
         </div>,
         document.body

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./Home.css";
 import { useAudio } from "../hooks/useAudio.js"; //[cite: 1]
 
@@ -53,7 +53,9 @@ const Home: React.FC = () => {
   const { preloadAudio } = useAudio(); //[cite: 1]
   const [pictograms, setPictograms] = useState<Pictogram[]>([]); //[cite: 1]
 
-  const {login} = useAuth(); //[cite: 1]
+  const {login, loading} = useAuth(); //[cite: 1]
+  const navigate = useNavigate(); //[cite: 1]
+
   // --- Estados para el Modal de Login ---
   const [showModal, setShowModal] = useState(true); // Se muestra al entrar por defecto
   const [isRegistering, setIsRegistering] = useState(false);
@@ -61,6 +63,14 @@ const Home: React.FC = () => {
   const [password, setPassword] = useState("");
   const [user, setUser] = useState<any>(null); // Aquí guardarás el usuario de Firebase o 'guest'
   const [authError, setAuthError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/");
+    } else if (!loading && !user) {
+      setShowModal(true);
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     // Tu lógica de precarga intacta[cite: 1]
@@ -108,6 +118,7 @@ const Home: React.FC = () => {
         nombre: result.user.displayName || "",
         token: token,
       });
+      navigate("/");
       setShowModal(false);
 
       // Si el usuario no existe en la base de datos, lo creamos
@@ -151,6 +162,7 @@ const Home: React.FC = () => {
         const token = await result.user.getIdToken();
         login({ id: result.user.uid, email: result.user.email || "", nombre: result.user.displayName || "", token });
       }
+      navigate("/");
       setShowModal(false);
     } catch (error: any) {
       console.error("Error de autenticación:", error);
@@ -169,6 +181,7 @@ const Home: React.FC = () => {
   const handleGuest = () => {
     login({ id: "guest", email: "", nombre: "Invitado", token: "" });
     setShowModal(false);
+    navigate("/");
   };
 
   return (
