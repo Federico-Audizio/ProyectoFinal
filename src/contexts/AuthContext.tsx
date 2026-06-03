@@ -1,4 +1,6 @@
+import { onAuthStateChanged } from "firebase/auth";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { auth } from "../firebase";
 
 // 1. Define una interfaz real para tu usuario (cambia los campos según tu backend)
 export interface User {
@@ -6,7 +8,7 @@ export interface User {
   email: string;
   nombre: string;
   token: string;
-  // rol?: string;
+  photo?: string;
 }
 
 interface AuthContextType {
@@ -31,13 +33,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const storedUser = localStorage.getItem("auth_user");
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser.id === "guest"){
+          setUser(parsedUser);
+          setLoading(false);
+          return;
+        }
       } catch (error) {
         console.error("Error al parsear el usuario del localStorage", error);
         localStorage.removeItem("auth_user");
       }
     }
     setLoading(false);
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const token = await firebaseUser.getIdToken();
+        setUser({
+          id: firebaseUser.uid,
+          email: firebaseUser.email || "",
+          nombre: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "",
+          token,
+          photo: firebaseUser.photoURL || undefined,
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+ 
+    return unsubscribe; // Limpia el listener al desmontar
   }, []);
 
   // 3. Abstraemos el login para que guarde en estado y en almacenamiento al mismo tiempo
