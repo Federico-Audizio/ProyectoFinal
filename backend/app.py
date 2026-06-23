@@ -20,7 +20,7 @@ import io
 # Configuración de Google Vision
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = \
     "../src/hooks/google-vision.json"
-vision_client = vision.ImageAnnotatorClient()
+
 
 def check_image_safety(image_bytes):
 
@@ -44,6 +44,9 @@ app = Flask(__name__)
 CORS(app)  # 🔥 Habilita CORS para todas las rutas
 CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 PICTOGRAMS_DIR = "ProyectoFinal/public/pictograms"
+
+vision_client = vision.ImageAnnotatorClient()
+
 #PICTOGRAMS_DIR = os.path.join(os.getcwd(), "public", "pictograms")
 # -----------------------------
 # 🔹 MODELO 1 (Keras .keras)
@@ -273,6 +276,24 @@ except Exception as e:
 sequence = []
 
 # Google Vision API para seguridad de imágenes
+def check_image_safety(image_bytes):
+
+    image = vision.Image(content=image_bytes)
+
+    response = vision_client.safe_search_detection(
+        image=image
+    )
+
+    safe = response.safe_search_annotation
+
+    return {
+        "adult": safe.adult.name,
+        "violence": safe.violence.name,
+        "medical": safe.medical.name,
+        "racy": safe.racy.name,
+        "spoof": safe.spoof.name
+    }
+
 @app.route('/validate-image', methods=['POST'])
 def validate_image():
 
@@ -288,6 +309,10 @@ def validate_image():
         image_bytes = file.read()
 
         result = check_image_safety(image_bytes)
+
+        print("===== SAFE SEARCH =====")
+        print(result)
+        print("=======================")
 
         blocked_levels = [
             "LIKELY",
@@ -306,6 +331,8 @@ def validate_image():
         })
 
     except Exception as e:
+        print("ERROR SAFESEARCH:", e)
+
         return jsonify({
             "error": str(e)
         }), 500

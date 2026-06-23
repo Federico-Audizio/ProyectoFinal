@@ -155,6 +155,9 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
     setCellColor(cell?.color ?? "#007bff");
     setCellImage(cell?.image ?? null);
     setEditingCell({ row, col });
+
+    setUploadMessage("");
+    setUploadStatus("");
   };
 
   const saveCell = () => {
@@ -206,12 +209,20 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
     }
   );
 
-  const data = await response.json();
+  if (!response.ok) {
+    throw new Error("Error validando imagen");
+  }
 
-  return data;
-  };
+  return await response.json();
+};
 
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("");
+  const [uploadStatus, setUploadStatus] = useState<
+  "success" | "error" | "loading" | ""
+  >("");
+
+  
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -223,16 +234,27 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
 
   try {
 
-    // VALIDACIÓN CON GOOGLE VISION
-    const validation = await validateImage(file);
+    setUploadStatus("loading");
+
+    setUploadMessage(
+      "Validando imagen con el servidor..."
+    );
+
+    const validation =
+      await validateImage(file);
+
+    console.log(
+      "Resultado SafeSearch:",
+      validation
+    );
 
     if (!validation.safe) {
 
-      alert(
-        "La imagen contiene contenido no permitido."
-      );
+      setUploadStatus("error");
 
-      console.log(validation.details);
+      setUploadMessage(
+        "La imagen fue rechazada por contener contenido no permitido."
+      );
 
       return;
     }
@@ -267,6 +289,12 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
 
         setCellImage(url);
 
+        setUploadStatus("success");
+
+        setUploadMessage(
+          "Imagen validada y subida correctamente."
+        );
+
       } catch (err) {
 
         console.error(
@@ -274,7 +302,11 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
           err
         );
 
-        setCellImage(base64);
+        setUploadStatus("error");
+
+        setUploadMessage(
+          "Error al subir la imagen."
+        );
       }
     };
 
@@ -283,12 +315,14 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
   } catch (error) {
 
     console.error(
-      "Error validando imagen",
+      "Error validando imagen:",
       error
     );
 
-    alert(
-      "No se pudo validar la imagen."
+    setUploadStatus("error");
+
+    setUploadMessage(
+      "No fue posible conectar con el servidor de validación."
     );
 
   } finally {
@@ -297,7 +331,7 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
 
     e.target.value = "";
   }
-  };
+};
 
   // ─── Render: Chooser ─────────────────────────────────────────────────────────
   if (step === "chooser") {
@@ -674,6 +708,33 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
                         : "Cargar imagen"
                   }
                 </button>
+                {uploadMessage && (
+                  <div
+                    style={{
+                      marginTop: "10px",
+                      padding: "10px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      background:
+                        uploadStatus === "success"
+                          ? "#e8f5e9"
+                          : uploadStatus === "error"
+                          ? "#ffebee"
+                          : "#fff8e1",
+                      color:
+                        uploadStatus === "success"
+                          ? "#2e7d32"
+                          : uploadStatus === "error"
+                          ? "#c62828"
+                          : "#ef6c00"
+                    }}
+                  >
+                    {uploadStatus === "loading" && "⏳ "}
+                    {uploadStatus === "success" && "✅ "}
+                    {uploadStatus === "error" && "❌ "}
+                    {uploadMessage}
+                  </div>
+                )}
                 {cellImage && (
                   <div className="cge-img-wrap">
                     <img src={cellImage} alt="preview" className="cge-img-preview" />
