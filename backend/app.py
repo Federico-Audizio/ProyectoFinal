@@ -124,6 +124,21 @@ def predict():
 YOLO_PATH = "model/best.pt"
 yolo_model = YOLO(YOLO_PATH)
 
+# CLAHE creado una sola vez (mismo config que Roboflow: Adaptive Equalization)
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+
+def preprocess_for_yolo(image_bgr: np.ndarray) -> np.ndarray:
+    """
+    Replica el pipeline de Roboflow usado en entrenamiento:
+      1. Escala de grises
+      2. CLAHE (Auto-Adjust Contrast: Adaptive Equalization)
+      3. Vuelve a 3 canales (YOLO internamente espera 3 canales)
+    El resize a 320x320 lo hace YOLO con imgsz=320.
+    """
+    gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    equalized = clahe.apply(gray)
+    return cv2.cvtColor(equalized, cv2.COLOR_GRAY2BGR)
+
 @app.route('/predict-yolo', methods=['POST'])
 def predict_yolo():
     try:
@@ -133,19 +148,39 @@ def predict_yolo():
 
         npimg = np.frombuffer(file.read(), np.uint8)
         image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+        if image is None:
+            return jsonify({"error": "No se pudo decodificar la imagen"}), 400
 
-        results = yolo_model.predict(image, conf=0.5)
+        # Aplicar mismo preprocesamiento que en entrenamiento
+        image_processed = preprocess_for_yolo(image)
+
+        results = yolo_model.predict(
+            image_processed,
+            conf=0.35,     # umbral bajo para no perder caras con poca confianza
+            iou=0.45,      # NMS para eliminar cajas duplicadas
+            imgsz=320,     # coincide con el tamaño de entrenamiento (320x320)
+            verbose=False,
+        )
 
         detections = []
         for r in results:
             for box in r.boxes:
+                x1, y1, x2, y2 = [float(v) for v in box.xyxy[0]]
                 detections.append({
                     "class": yolo_model.names[int(box.cls)],
-                    "confidence": float(box.conf),
-                    "bbox": box.xyxy[0].tolist()
+                    "confidence": round(float(box.conf) * 100, 1),
+                    "bbox": [x1, y1, x2, y2],
                 })
 
-        return jsonify({"detections": detections})
+        if not detections:
+            return jsonify({"detections": [], "best": None})
+
+        best = max(detections, key=lambda d: d["confidence"])
+
+        return jsonify({
+            "detections": detections,
+            "best": best,
+        })
 
     except Exception as e:
         print("❌ Error YOLO", e)
