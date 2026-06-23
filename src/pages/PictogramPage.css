@@ -603,13 +603,13 @@
 .pm-edit-toggle {
   position: absolute;
   top: 16px;
-  right: 60px;
+  right: 72px;
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  border: 2px solid #ccc;
+  border: 2px solid #007bff;
   background: white;
-  color: #666;
+  color: #007bff;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -617,7 +617,10 @@
   transition: all 0.2s;
   z-index: 10;
 }
-.pm-edit-toggle:hover { border-color: #007bff; color: #007bff; }
+.pm-edit-toggle:hover {
+  background: #007bff;
+  color: white;
+}
 .pm-edit-toggle.active {
   background: #28a745;
   border-color: #28a745;
@@ -767,6 +770,50 @@
   font-size: 18px;
   font-weight: 700;
   color: #1c2e4a;
+}
+
+/* ====================
+   📌 MODO OCULTAR PICTOGRAMAS
+==================== */
+
+/* Wrapper de cada celda en la grilla principal */
+.picto-slot {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Badge de ocultar/mostrar sobre cada tile */
+.picto-hide-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+  transition: transform 0.1s;
+}
+.picto-hide-badge:hover { transform: scale(1.15); }
+
+.picto-hide-badge-hide {
+  background: rgba(0, 0, 0, 0.55);
+  color: white;
+}
+.picto-hide-badge-show {
+  background: #28a745;
+  color: white;
+}
+
+/* Botón confirmar en la barra superior (modo ocultar) */
+.hide-confirm-btn {
+  animation: fadeIn 0.2s ease-out;
 }
 
 /* Control dinámico del emoji de la carpeta */

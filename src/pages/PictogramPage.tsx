@@ -39,6 +39,8 @@ const PictogramPage: React.FC = () => {
   const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
 
   const [isConfigLoaded, setIsConfigLoaded] = useState(false);
+  const [hiddenPictos, setHiddenPictos] = useState<string[]>([]);
+  const [isHideModeActive, setIsHideModeActive] = useState(false);
 
   const { user } = useAuth();
   const lugaresContent = [
@@ -253,6 +255,7 @@ const PictogramPage: React.FC = () => {
             imageSize,
             textSize,
             commLevel,
+            hiddenPictos,
           }
         },
         { merge: true }
@@ -279,11 +282,12 @@ const PictogramPage: React.FC = () => {
           const userData = docSnap.data();
 
           if (userData && userData.configuraciones) {
-            const { imageSize: imgSz, textSize: txtSz, commLevel: lvl } = userData.configuraciones;
-            
+            const { imageSize: imgSz, textSize: txtSz, commLevel: lvl, hiddenPictos: hp } = userData.configuraciones;
+
             if (imgSz !== undefined) setImageSize(imgSz);
             if (txtSz !== undefined) setTextSize(txtSz);
             if (lvl !== undefined) setCommLevel(lvl);
+            if (hp !== undefined) setHiddenPictos(hp);
           }
         }
       } catch (error) {
@@ -302,7 +306,7 @@ const PictogramPage: React.FC = () => {
     if (!user || user.id === "guest" || !isConfigLoaded) return;
 
     saveConfigurations();
-  }, [imageSize, textSize, commLevel, isConfigLoaded]); // Agrega isConfigLoaded a las dependencias
+  }, [imageSize, textSize, commLevel, hiddenPictos, isConfigLoaded]);
 
   // Manejador centralizado para cuando se hace clic en un pictograma (principal o modal)
   const handlePictogramSelect = (pic: any) => {
@@ -355,6 +359,12 @@ const PictogramPage: React.FC = () => {
 
   const playFullPhrase = async () => {
     playPhrase(phrase.map(p => p.label));
+  };
+
+  const toggleHidePicto = (label: string) => {
+    setHiddenPictos(prev =>
+      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
+    );
   };
 
   // Función para calcular los tamaños dinámicos
@@ -429,6 +439,13 @@ const PictogramPage: React.FC = () => {
             </div>
           )}
 
+          {/* Botón confirmar modo ocultar */}
+          {isHideModeActive && (
+            <button className="control-btn btn-success hide-confirm-btn" onClick={() => setIsHideModeActive(false)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </button>
+          )}
+
           {/* Botón de Configuración (Dropdown) */}
           <div className="settings-wrapper">
             <button 
@@ -475,6 +492,16 @@ const PictogramPage: React.FC = () => {
                   className="dropdown-action-btn"
                   onClick={() => {
                     setIsSettingsOpen(false);
+                    setIsHideModeActive(true);
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  Ocultar Pictogramas
+                </button>
+                <button
+                  className="dropdown-action-btn"
+                  onClick={() => {
+                    setIsSettingsOpen(false);
                     setIsCustomizationOpen(true);
                   }}
                 >
@@ -489,55 +516,71 @@ const PictogramPage: React.FC = () => {
 
       {/* 🔹 Grilla principal */}
       <div className="pictogram-grid">
-        {pictograms.map((pic, idx) => (
-          <PictogramTile
-            key={idx}
-            label={pic.label}
-            //emoji={(pic as any).emoji}
-            image={pic.image}
-            color={pic.color}
-            isFolder={pic.isFolder}
-            // CAMBIO 1: Validamos contra el array 'phrase' (si es simple, mira el primer elemento)
-            isSelected={commLevel === "simple" && phrase[0]?.label === pic.label}
-            onClick={() => {
-              if (!pic.isFolder) {
-                if (commLevel === "simple") {
-                  playAudio(pic.label);
-                }
-              } else {
-                  if(commLevel === "simple"){
-                    playAudio(pic.label);
+        {pictograms.map((pic, idx) => {
+          const isHidden = hiddenPictos.includes(pic.label);
+          return (
+            <div
+              key={idx}
+              className="picto-slot"
+              style={{
+                visibility: isHidden && !isHideModeActive ? 'hidden' : 'visible',
+                opacity: isHideModeActive && isHidden ? 0.35 : 1,
+              }}
+            >
+              <PictogramTile
+                label={pic.label}
+                image={pic.image}
+                color={pic.color}
+                isFolder={pic.isFolder}
+                isSelected={commLevel === "simple" && phrase[0]?.label === pic.label}
+                onClick={() => {
+                  if (isHideModeActive) {
+                    toggleHidePicto(pic.label);
+                    return;
                   }
-                if(pic.content) {
-                  setCurrentFolder(pic.content);
-                  setCurrentFolderLabel(pic.label);
-                  setIsModalOpen(true);
-                }
-                return; // CAMBIO 2: ¡Importante! Cortamos acá para que la carpeta no suba a la barra
-              }
-
-              // CAMBIO 3: En vez de setSelected, armamos el objeto y usamos setPhrase
-              const newSelected = {
-                label: pic.label,
-                emoji: (pic as any).emoji,
-                image: pic.image || (pic as any).imagePath, // Cubrimos image e imagePath por las dudas
-                color: pic.color,
-              };
-
-              if (commLevel === "simple") {
-                setPhrase([newSelected]); // Modo simple: pisa lo que había y deja solo este
-              } else {
-                if (phrase.length < 7) {
-                  setPhrase((prev) => [...prev, newSelected]); // Modo compuesto: lo suma al final de la frase
-                }
-                else if (phrase.length >= 7) {
-                  console.log("Límite de 7 pictogramas alcanzado. No se pueden agregar más.");
-                  return;
-                }
-              }
-            }}
-          />
-        ))}
+                  if (!pic.isFolder) {
+                    if (commLevel === "simple") playAudio(pic.label);
+                  } else {
+                    if (commLevel === "simple") playAudio(pic.label);
+                    if (pic.content) {
+                      setCurrentFolder(pic.content);
+                      setCurrentFolderLabel(pic.label);
+                      setIsModalOpen(true);
+                    }
+                    return;
+                  }
+                  const newSelected = {
+                    label: pic.label,
+                    emoji: (pic as any).emoji,
+                    image: pic.image || (pic as any).imagePath,
+                    color: pic.color,
+                  };
+                  if (commLevel === "simple") {
+                    setPhrase([newSelected]);
+                  } else {
+                    if (phrase.length < 7) {
+                      setPhrase((prev) => [...prev, newSelected]);
+                    } else if (phrase.length >= 7) {
+                      return;
+                    }
+                  }
+                }}
+              />
+              {isHideModeActive && (
+                <button
+                  className={`picto-hide-badge ${isHidden ? 'picto-hide-badge-show' : 'picto-hide-badge-hide'}`}
+                  onClick={(e) => { e.stopPropagation(); toggleHidePicto(pic.label); }}
+                >
+                  {isHidden ? (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" width="12" height="12"><line x1="1" y1="1" x2="23" y2="23"/><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/></svg>
+                  )}
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* 🔹 MODAL DE ACCESIBILIDAD (HU 13) */}
