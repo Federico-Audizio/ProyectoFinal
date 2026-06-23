@@ -192,33 +192,111 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
     setEditingCell(null);
   };
 
+  // Validación de imagen con backend (Google Vision API)
+  const validateImage = async (file: File) => {
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const response = await fetch(
+    "http://TU_IP_VM:5000/validate-image",
+    {
+      method: "POST",
+      body: formData
+    }
+  );
+
+  const data = await response.json();
+
+  return data;
+  };
+
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user || user.id === "guest") return;
- 
+
+  if (!file || !user || user.id === "guest")
+    return;
+
+  setIsUploadingImage(true);
+
+  try {
+
+    // VALIDACIÓN CON GOOGLE VISION
+    const validation = await validateImage(file);
+
+    if (!validation.safe) {
+
+      alert(
+        "La imagen contiene contenido no permitido."
+      );
+
+      console.log(validation.details);
+
+      return;
+    }
+
     const reader = new FileReader();
+
     reader.onload = async (ev) => {
-      const base64 = ev.target?.result as string;
-      setIsUploadingImage(true);
+
+      const base64 =
+        ev.target?.result as string;
+
       try {
-        // Ruta única por usuario y celda: grillas/{userId}/{timestamp}.jpg
-        const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        const storageRef = ref(storage, `grillas/${user.id}/${fileName}`);
-        await uploadString(storageRef, base64, "data_url");
-        const url = await getDownloadURL(storageRef);
-        setCellImage(url); // guardamos la URL, no el base64
+
+        const fileName =
+          `${Date.now()}_${Math.random()
+            .toString(36)
+            .slice(2)}`;
+
+        const storageRef = ref(
+          storage,
+          `grillas/${user.id}/${fileName}`
+        );
+
+        await uploadString(
+          storageRef,
+          base64,
+          "data_url"
+        );
+
+        const url =
+          await getDownloadURL(storageRef);
+
+        setCellImage(url);
+
       } catch (err) {
-        console.error("Error subiendo imagen a Storage:", err);
-        // Fallback: si falla Storage, usamos el base64 localmente
+
+        console.error(
+          "Error subiendo imagen:",
+          err
+        );
+
         setCellImage(base64);
-      } finally {
-        setIsUploadingImage(false);
       }
     };
+
     reader.readAsDataURL(file);
+
+  } catch (error) {
+
+    console.error(
+      "Error validando imagen",
+      error
+    );
+
+    alert(
+      "No se pudo validar la imagen."
+    );
+
+  } finally {
+
+    setIsUploadingImage(false);
+
     e.target.value = "";
+  }
   };
 
   // ─── Render: Chooser ─────────────────────────────────────────────────────────
@@ -587,8 +665,14 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
                   style={{ display: "none" }}
                   onChange={handleImageUpload}
                 />
-                <button className="cge-upload-btn" onClick={() => fileRef.current?.click()}>
-                  {cellImage ? "Cambiar imagen" : "Cargar imagen"}
+                <button className="cge-upload-btn" disabled={isUploadingImage} onClick={() => fileRef.current?.click()}>
+                  {
+                    isUploadingImage
+                      ? "Validando..."
+                      : cellImage
+                        ? "Cambiar imagen"
+                        : "Cargar imagen"
+                  }
                 </button>
                 {cellImage && (
                   <div className="cge-img-wrap">

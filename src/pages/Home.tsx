@@ -10,24 +10,7 @@ import { auth, provider, db } from "../firebase.js";
 //import { getAnalytics } from "firebase/analytics";
 import { useAuth } from "../contexts/AuthContext.js";
 
-/* Reemplaza esto con las credenciales de tu consola de Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyDc8jkXVnp-ARE_2xHqV8oy9r6oEpz8f80",
-  authDomain: "proyectofinal-78eb4.firebaseapp.com",
-  projectId: "proyectofinal-78eb4",
-  storageBucket: "proyectofinal-78eb4.firebasestorage.app",
-  messagingSenderId: "1001853852606",
-  appId: "1:1001853852606:web:7e0b0d3d2a7846ad60b7ef",
-  measurementId: "G-0PHTHXEQW9"
-};*/
 
-//const app = initializeApp(firebaseConfig);
-//const analytics = getAnalytics(app);
-//export const auth = getAuth(app);
-
-//export const provider = new GoogleAuthProvider();
-
-//export const db = getFirestore(app);
 
 interface Pictogram {
   text: string;
