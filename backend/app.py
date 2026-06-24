@@ -127,6 +127,16 @@ yolo_model = YOLO(YOLO_PATH)
 # CLAHE creado una sola vez (mismo config que Roboflow: Adaptive Equalization)
 clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
 
+def expand_bbox(x1, y1, x2, y2, img_w, img_h, pad=0.20):
+    """Expande el bbox un % hacia afuera para cubrir frente y mentón."""
+    bw = x2 - x1
+    bh = y2 - y1
+    x1 = max(0,     x1 - bw * pad)
+    y1 = max(0,     y1 - bh * pad * 1.5)  # más arriba (frente)
+    x2 = min(img_w, x2 + bw * pad)
+    y2 = min(img_h, y2 + bh * pad * 0.5)  # menos abajo (mentón ya entra)
+    return x1, y1, x2, y2
+
 def preprocess_for_yolo(image_bgr: np.ndarray) -> np.ndarray:
     """
     Replica el pipeline de Roboflow usado en entrenamiento:
@@ -138,6 +148,8 @@ def preprocess_for_yolo(image_bgr: np.ndarray) -> np.ndarray:
     gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
     equalized = clahe.apply(gray)
     return cv2.cvtColor(equalized, cv2.COLOR_GRAY2BGR)
+
+CONF_THRESHOLD = 0.35  # umbral mínimo para reportar una emoción
 
 @app.route('/predict-yolo', methods=['POST'])
 def predict_yolo():
@@ -151,35 +163,72 @@ def predict_yolo():
         if image is None:
             return jsonify({"error": "No se pudo decodificar la imagen"}), 400
 
-        # Aplicar mismo preprocesamiento que en entrenamiento
+        h_img, w_img = image.shape[:2]
         image_processed = preprocess_for_yolo(image)
 
+        # Una sola pasada con conf muy bajo y NMS por clase:
+        # YOLO devuelve una caja por emoción para cada cara → usamos eso como distribución
         results = yolo_model.predict(
             image_processed,
-            conf=0.35,     # umbral bajo para no perder caras con poca confianza
-            iou=0.45,      # NMS para eliminar cajas duplicadas
-            imgsz=320,     # coincide con el tamaño de entrenamiento (320x320)
+            conf=0.001,          # casi sin filtro para capturar todos los scores
+            iou=0.45,            # NMS por clase (agnostic_nms=False por defecto)
+            imgsz=320,
             verbose=False,
         )
 
-        detections = []
+        all_boxes = []
         for r in results:
             for box in r.boxes:
                 x1, y1, x2, y2 = [float(v) for v in box.xyxy[0]]
-                detections.append({
+                all_boxes.append({
                     "class": yolo_model.names[int(box.cls)],
-                    "confidence": round(float(box.conf) * 100, 1),
-                    "bbox": [x1, y1, x2, y2],
+                    "raw_conf": float(box.conf),
+                    "bbox_raw": [x1, y1, x2, y2],
                 })
 
-        if not detections:
-            return jsonify({"detections": [], "best": None})
+        if not all_boxes:
+            return jsonify({"best": None, "emotion_distribution": {}, "threshold": CONF_THRESHOLD * 100})
 
-        best = max(detections, key=lambda d: d["confidence"])
+        # La detección principal es la de mayor confianza
+        main = max(all_boxes, key=lambda d: d["raw_conf"])
+        mx1, my1, mx2, my2 = main["bbox_raw"]
+
+        # Agrupar todas las cajas que se solapan con la cara principal (misma cara, distinta emoción)
+        def iou(a, b):
+            ix1, iy1 = max(a[0], b[0]), max(a[1], b[1])
+            ix2, iy2 = min(a[2], b[2]), min(a[3], b[3])
+            inter = max(0, ix2 - ix1) * max(0, iy2 - iy1)
+            ua = (a[2]-a[0])*(a[3]-a[1]) + (b[2]-b[0])*(b[3]-b[1]) - inter
+            return inter / ua if ua > 0 else 0
+
+        face_scores = {}
+        for d in all_boxes:
+            if iou(main["bbox_raw"], d["bbox_raw"]) > 0.2:
+                cls = d["class"]
+                # Quedarse con el score más alto si la misma clase aparece varias veces
+                if cls not in face_scores or d["raw_conf"] > face_scores[cls]:
+                    face_scores[cls] = d["raw_conf"]
+
+        # Normalizar como porcentaje relativo
+        total = sum(face_scores.values())
+        emotion_distribution = {
+            k: round(v / total * 100, 1)
+            for k, v in sorted(face_scores.items(), key=lambda x: -x[1])
+        }
+
+        # Aplicar padding y devolver resultado
+        x1, y1, x2, y2 = expand_bbox(mx1, my1, mx2, my2, w_img, h_img, pad=0.20)
+        main_conf_pct = round(main["raw_conf"] * 100, 1)
 
         return jsonify({
-            "detections": detections,
-            "best": best,
+            "best": {
+                "class": main["class"],
+                "confidence": main_conf_pct,
+                "bbox": [x1, y1, x2, y2],
+                "above_threshold": main["raw_conf"] >= CONF_THRESHOLD,
+            },
+            "emotion_distribution": emotion_distribution,  # % relativo de cada emoción
+            "threshold": round(CONF_THRESHOLD * 100, 0),   # umbral actual en %
         })
 
     except Exception as e:
