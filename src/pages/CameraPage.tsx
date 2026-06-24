@@ -44,16 +44,27 @@ const emotionMap: Record<string, string> = {
   "esperando detección...": "neutral",
 };
 
+// Color por emoción para las barras
+const emotionBarColor = (emotion: string): string => {
+  const e = emotion.toLowerCase();
+  if (e.includes("happy") || e.includes("alegr") || e.includes("feli")) return "#28a745";
+  if (e.includes("sad") || e.includes("trist")) return "#007FFF";
+  if (e.includes("angry") || e.includes("enoj") || e.includes("furios")) return "#CC0000";
+  if (e.includes("fear") || e.includes("miedo")) return "#6f42c1";
+  if (e.includes("surpris") || e.includes("sorpr")) return "#fd7e14";
+  return "#6c757d";
+};
+
 const CameraPage: React.FC = () => {
-  const [selectedModel, setSelectedModel] = useState("keras");
+  const [selectedModel, setSelectedModel] = useState<"keras" | "yolo">("keras");
   const [isStreaming, setIsStreaming] = useState(false);
   const [emotion, setEmotion] = useState("Esperando detección...");
   const [currentPictograms, setCurrentPictograms] = useState<
     { src: string; label: string; color: string }[]
   >([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [emotionDistribution, setEmotionDistribution] = useState<Record<string, number>>({});
 
-  // 📌 Manejador de emociones: se ejecuta cuando CameraCapture detecta una emoción
   const handleEmotionDetected = (detectedEmotion: string) => {
     setEmotion(detectedEmotion);
     const normalizedKey = emotionMap[detectedEmotion.toLowerCase()] || "neutral";
@@ -85,13 +96,18 @@ const CameraPage: React.FC = () => {
       {/* ---- Panel Izquierdo ---- */}
       <div className="left-panel">
         <div className="camera-wrapper">
-          <CameraCapture isStreaming={isStreaming} onEmotionDetected={handleEmotionDetected} />
+          <CameraCapture
+            isStreaming={isStreaming}
+            selectedModel={selectedModel}
+            onEmotionDetected={handleEmotionDetected}
+            onDistributionUpdate={setEmotionDistribution}
+          />
 
           {/* Selector de modelo — badge discreto esquina superior derecha */}
           <div className="camera-model-badge">
             <select
               value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
+              onChange={(e) => setSelectedModel(e.target.value as "keras" | "yolo")}
             >
               <option value="keras">Keras</option>
               <option value="yolo">YOLO</option>
@@ -137,7 +153,25 @@ const CameraPage: React.FC = () => {
             </div>
         </div>
 
-        {/* 2. Caja Emoción: Alineada abajo (misma altura que controles) */}
+        {/* 2. Distribución de emociones (solo YOLO) */}
+        {selectedModel === "yolo" && Object.keys(emotionDistribution).length > 0 && (
+          <div className="emotion-distribution-panel">
+            {Object.entries(emotionDistribution).map(([em, pct]) => (
+              <div key={em} className="emotion-bar-row">
+                <span className="emotion-bar-label">{em}</span>
+                <div className="emotion-bar-track">
+                  <div
+                    className="emotion-bar-fill"
+                    style={{ width: `${pct}%`, background: emotionBarColor(em) }}
+                  />
+                </div>
+                <span className="emotion-bar-pct">{pct}%</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 3. Caja Emoción */}
         <div className="emotion-box-footer">
           <span>Emoción: {emotion}</span>
         </div>

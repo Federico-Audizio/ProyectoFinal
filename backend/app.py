@@ -255,8 +255,9 @@ def predict_yolo():
                 "bbox": [x1, y1, x2, y2],
                 "above_threshold": main["raw_conf"] >= CONF_THRESHOLD,
             },
-            "emotion_distribution": emotion_distribution,  # % relativo de cada emoción
-            "threshold": round(CONF_THRESHOLD * 100, 0),   # umbral actual en %
+            "emotion_distribution": emotion_distribution,
+            "threshold": round(CONF_THRESHOLD * 100, 0),
+            "image_size": [w_img, h_img],
         })
 
     except Exception as e:
