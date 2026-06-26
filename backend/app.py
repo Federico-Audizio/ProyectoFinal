@@ -8,6 +8,8 @@ import os
 from ultralytics import YOLO  # ✅ Importamos YOLO
 import torch
 import torch.nn.functional as F
+from google.cloud import vision
+import io
 
 
 #BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # /proyecto/backend
@@ -15,10 +17,36 @@ import torch.nn.functional as F
 #PUBLIC_DIR = os.path.join(PROJECT_DIR, "public")       # /proyecto/public
 #PICTOGRAMS_DIR = os.path.join(PUBLIC_DIR, "pictograms")
 
+# Configuración de Google Vision
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = \
+    "../src/hooks/google-vision.json"
+
+
+def check_image_safety(image_bytes):
+
+    image = vision.Image(content=image_bytes)
+
+    response = vision_client.safe_search_detection(
+        image=image
+    )
+
+    safe = response.safe_search_annotation
+
+    return {
+        "adult": safe.adult.name,
+        "violence": safe.violence.name,
+        "medical": safe.medical.name,
+        "racy": safe.racy.name,
+        "spoof": safe.spoof.name
+    }
+
 app = Flask(__name__)
 CORS(app)  # 🔥 Habilita CORS para todas las rutas
 CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 PICTOGRAMS_DIR = "ProyectoFinal/public/pictograms"
+
+vision_client = vision.ImageAnnotatorClient()
+
 #PICTOGRAMS_DIR = os.path.join(os.getcwd(), "public", "pictograms")
 # -----------------------------
 # 🔹 MODELO 1 (Keras .keras)
@@ -330,6 +358,70 @@ except Exception as e:
     print(f"❌ Error cargando modelo LSA64: {e}")
 
 sequence = []
+
+# Google Vision API para seguridad de imágenes
+def check_image_safety(image_bytes):
+
+    image = vision.Image(content=image_bytes)
+
+    response = vision_client.safe_search_detection(
+        image=image
+    )
+
+    safe = response.safe_search_annotation
+
+    return {
+        "adult": safe.adult.name,
+        "violence": safe.violence.name,
+        "medical": safe.medical.name,
+        "racy": safe.racy.name,
+        "spoof": safe.spoof.name
+    }
+
+@app.route('/validate-image', methods=['POST'])
+def validate_image():
+
+    try:
+
+        file = request.files.get('image')
+
+        if file is None:
+            return jsonify({
+                "error": "No se recibió imagen"
+            }), 400
+
+        image_bytes = file.read()
+
+        result = check_image_safety(image_bytes)
+
+        print("===== SAFE SEARCH =====")
+        print(result)
+        print("=======================")
+
+        blocked_levels = [
+            "LIKELY",
+            "VERY_LIKELY"
+        ]
+
+        is_safe = (
+            result["adult"] not in blocked_levels and
+            result["violence"] not in blocked_levels and
+            result["racy"] not in blocked_levels
+        )
+
+        return jsonify({
+            "safe": is_safe,
+            "details": result
+        })
+
+    except Exception as e:
+        print("ERROR SAFESEARCH:", e)
+
+        return jsonify({
+            "error": str(e)
+        }), 500
+
+
 
 @app.route('/predict-lsa', methods=['POST'])
 def predict_lsa():

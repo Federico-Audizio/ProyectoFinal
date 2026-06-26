@@ -16,6 +16,8 @@ const Sidebar: React.FC = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+  const [showEmergencyBtn, setShowEmergencyBtn] = useState(true);
+
   const deleteGrid = (id: string) => {
     setSavedGrids(prev => prev.filter(g => g.id !== id));
     setConfirmDeleteId(null);
@@ -37,7 +39,82 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      <div className="sidebar" style={isGridsOpen ? { overflow: "visible", width: "220px" } : undefined}>
+      <div className="sidebar" style={isGridsOpen || isProfileOpen ? { overflow: "visible" } : undefined}>
+        {/* ── Perfil de usuario (siempre arriba del sidebar) ── */}
+        {user && (
+          <div
+            className={`sidebar-user-icon${isProfileOpen ? " sui-open" : ""}`}
+            //onMouseEnter={() => setIsProfileOpen(true)}
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+          >
+            {user.photo ? (
+              <img 
+                src={user.photo} 
+                alt={user.nombre} 
+                className="sidebar-icon sidebar-user-avatar" 
+              />
+            ) : (
+              <div className="sidebar-icon sidebar-user-initials">
+                {getInitials(user.nombre || user.email || "?")}
+              </div>
+            )}
+            <span className="link-text">
+              {user.id === "guest" ? "Invitado" : user.nombre.split(" ")[0]}
+            </span>
+
+            {user &&isProfileOpen && (
+              <div className="sidebar-profile-submenu" onClick={e => e.stopPropagation()}>
+                <p className="sgs-title">Mi cuenta</p>
+ 
+                <div className="profile-header">
+                  {user.photo ? (
+                    <img src={user.photo} alt={user.nombre} className="profile-avatar" />
+                  ) : (
+                    <div className="profile-initials-large">
+                      {getInitials(user.nombre || user.email || "?")}
+                    </div>
+                  )}
+                  <div className="profile-info">
+                    <p className="profile-name">
+                      {user.id === "guest" ? "Invitado" : user.nombre}
+                    </p>
+                    {user.id !== "guest" && (
+                      <p className="profile-email">{user.email}</p>
+                    )}
+                    {user.id === "guest" && (
+                      <p className="profile-guest-note">
+                        Las configuraciones no se guardan en modo invitado
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* NUEVO: Fila con el Toggle Switch para ocultar/mostrar la emergencia */}
+                <div className="profile-toggle-row">
+                  <span className="toggle-label">Botón Emergencia</span>
+                  <label className="switch">
+                    <input 
+                      type="checkbox" 
+                      checked={showEmergencyBtn} 
+                      onChange={() => setShowEmergencyBtn(!showEmergencyBtn)} 
+                    />
+                    <span className="slider round"></span>
+                  </label>
+                </div>
+ 
+                <button className="profile-logout-btn" onClick={handleLogout}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                  Cerrar sesión
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 1. Link CÁMARA */}
         <NavLink to="/camera" className="icon">
           <img src="/icons/emocion.png" alt="Cámara" className="sidebar-icon" />
@@ -106,28 +183,10 @@ const Sidebar: React.FC = () => {
           <span className="link-text">Señas</span>
         </NavLink>
 
-        {/* ── Perfil de usuario (siempre al fondo del sidebar) ── */}
-        {user && (
-          <button
-            className="sidebar-user-btn"
-            onClick={() => setIsProfileOpen(true)}
-            title={user.nombre}
-          >
-            {user.photo ? (
-              <img src={user.photo} alt={user.nombre} className="sidebar-user-avatar" />
-            ) : (
-              <div className="sidebar-user-initials">
-                {getInitials(user.nombre || user.email || "?")}
-              </div>
-            )}
-            <span className="link-text sidebar-user-name">
-              {user.id === "guest" ? "Invitado" : user.nombre.split(" ")[0]}
-            </span>
-          </button>
-        )}
 
         {/* Botón de emergencia */}
-        <button className="emergency-sidebar-btn" onClick={() => setIsEmergencyOpen(true)}>
+        {showEmergencyBtn && (
+          <button className="emergency-sidebar-btn" onClick={() => setIsEmergencyOpen(true)}>
           <svg className="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
             <line x1="12" y1="9" x2="12" y2="13"/>
@@ -135,6 +194,7 @@ const Sidebar: React.FC = () => {
           </svg>
           <span className="link-text">Emergencia</span>
         </button>
+        )}
 
         {isEmergencyOpen && <EmergencyModal onClose={() => setIsEmergencyOpen(false)} />}
       </div>
@@ -155,7 +215,7 @@ const Sidebar: React.FC = () => {
         document.body
       )}
  
-      {/* ── Popup de perfil ── */}
+      {/* ── Popup de perfil ── 
       {isProfileOpen && user && ReactDOM.createPortal(
         <div className="profile-overlay" onClick={() => setIsProfileOpen(false)}>
           <div className="profile-modal" onClick={e => e.stopPropagation()}>
@@ -195,7 +255,7 @@ const Sidebar: React.FC = () => {
           </div>
         </div>,
         document.body
-      )}
+      )}*/}
     </>
   );
 };
