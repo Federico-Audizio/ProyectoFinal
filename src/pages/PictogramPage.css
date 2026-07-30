@@ -257,13 +257,20 @@
   display: grid;
   grid-template-columns: repeat(9, 1fr); /* 9 columnas exactas */
   grid-template-rows: repeat(4, minmax(min-content, 1fr));    /* 4 filas exactas */
-  gap: 12px; /* menos espacio entre tiles */
+  gap: 12px;
   flex: 1;
   height: 100%;
   min-height: 0;
   width: 99%;
-  padding-bottom: 15x;
+  padding: 8px;                /* espacio para que el scale no se corte en los bordes */
+  box-sizing: border-box;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.pictogram-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .pictogram-tile {
@@ -274,15 +281,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 4px;            /* 👈 más chico */
-  font-size: 14px;         /* 👈 letra más chica */
+  padding: 4px;
+  font-size: 14px;
   font-weight: bold;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  overflow: hidden;
 }
 
 .pictogram-tile .emoji,
@@ -313,8 +319,8 @@
 }
 
 .pictogram-tile:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+  border-color: #999;
 }
 
 /* Carpeta */
@@ -442,8 +448,9 @@
    📌 Retroalimentación visual
 ==================== */
 .pictogram-tile.selected {
-  box-shadow: 0 0 20px 6px var(--picto-color, #28a745);
-  transform: scale(1.1);
+  outline: 3px solid var(--picto-color, #28a745);
+  outline-offset: 3px;
+  box-shadow: 0 0 16px 4px var(--picto-color, #28a745);
   transition: all 0.2s ease-in-out;
 }
 

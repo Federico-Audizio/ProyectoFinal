@@ -268,98 +268,137 @@ def predict_yolo():
 # 🔹 MODELO 3 (LSA64)
 # -----------------------------
 
-# cargar modelo
-#modelLSA = LSTMModel()
-#modelLSA.load_state_dict(torch.load("lsa64_model.pth", map_location=torch.device('cpu')))
-#modelLSA.eval()
-import torch.nn as nn
+# ================================================================
+# 🔹 MODELO 3 — LSA64 (reemplazá el bloque existente en app.py)
+# ================================================================
+# CAMBIOS RESPECTO AL ORIGINAL:
+#   - LSTMModel definida UNA sola vez (sin duplicados)
+#   - input_size=252  (posición 126 + velocidad 126, igual al entrenamiento)
+#   - SEQUENCE_LENGTH=50 (igual al entrenamiento, no 30)
+#   - Velocidad reactivada y normalización igual al Colab
+#   - Validación de shape corregida a (50, 126) → luego pasa a (50, 252)
+# ================================================================
 
-# --- MODELO LSA64 (LSTM) ---
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
+
+SEQUENCE_LENGTH_LSA = 50   # ← debe coincidir con el entrenamiento
+
 class LSTMModel(nn.Module):
-    def __init__(self, input_size=126, hidden_size=256, num_layers=3, num_classes=64): # Ajustá num_classes si es 20 o 64
+    def __init__(self, input_size=252, hidden_size=256, num_layers=3, num_classes=64):
         super().__init__()
-        # Capa LSTM con 3 capas y dropout
         self.lstm = nn.LSTM(
-            input_size=input_size, 
-            hidden_size=hidden_size, 
-            num_layers=num_layers, 
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
             batch_first=True,
             dropout=0.3
         )
-        # Capas densas de salida
-        self.fc1 = nn.Linear(hidden_size, 128)
-        self.relu = nn.ReLU()
+        self.fc1     = nn.Linear(hidden_size, 128)
+        self.relu    = nn.ReLU()
         self.dropout = nn.Dropout(0.4)
-        self.fc2 = nn.Linear(128, num_classes)
-        # Capa LSTM con 3 capas y dropout
-        self.lstm = nn.LSTM(
-            input_size=input_size, 
-            hidden_size=hidden_size, 
-            num_layers=num_layers, 
-            batch_first=True,
-            dropout=0.3
-        )
-        # Capas densas de salida
-        self.fc1 = nn.Linear(hidden_size, 128)
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(0.4)
-        self.fc2 = nn.Linear(128, num_classes)
-        # Capa LSTM con 3 capas y dropout
-        self.lstm = nn.LSTM(
-            input_size=input_size, 
-            hidden_size=hidden_size, 
-            num_layers=num_layers, 
-            batch_first=True,
-            dropout=0.3
-        )
-        # Capas densas de salida
-        self.fc1 = nn.Linear(hidden_size, 128)
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(0.4)
-        self.fc2 = nn.Linear(128, num_classes)
+        self.fc2     = nn.Linear(128, num_classes)
 
     def forward(self, x):
-        # x shape: (batch, seq_len, input_size) -> (1, 30, 126)
         out, _ = self.lstm(x)
-        
-        # Tomamos solo la salida del último timestep
-        out = out[:, -1, :]
-        
-        # Pasamos por las capas densas
+        out = out[:, -1, :]          # último timestep
         out = self.fc1(out)
         out = self.relu(out)
         out = self.dropout(out)
-        out = self.fc2(out)
+        return self.fc2(out)
 
-        return out
 
-# 2. Función de preprocesamiento dentro de predict_lsa
-#def preprocess_sequence(seq):
- #   seq = np.array(seq) # (50, 126)
-    
-    # Calcular velocidad (diff) como en Colab
-  #  velocity = np.diff(seq, axis=0)
-   # velocity = np.vstack([np.zeros((1, 126)), velocity])
-    
-    # Concatenar posición + velocidad = 252
-    #full_seq = np.concatenate([seq, velocity], axis=1)
-    
-    # Normalización estadística (Z-score)
-    #full_seq = (full_seq - np.mean(full_seq)) / (np.std(full_seq) + 1e-8)
-    
-    #return torch.tensor(full_seq, dtype=torch.float32).unsqueeze(0)
+def preprocess_lsa_sequence(raw_sequence_np):
+    """
+    Recibe:   np.array de shape (50, 126)  — keypoints crudos por frame
+    Devuelve: torch.Tensor de shape (1, 50, 252) listo para el modelo
 
-modelLSA = LSTMModel()
+    Pipeline idéntico al entrenamiento (señas64.py):
+      1. Normalización por frame (Z-score, reshape a (-1,3))
+      2. Velocidad = diff entre frames, con padding de ceros al inicio
+      3. Concatenar posición + velocidad → 252 features
+    """
+    seq_norm = []
+    for frame in raw_sequence_np:                  # frame: (126,)
+        f = frame.reshape(-1, 3)                   # (42, 3)
+        f = f - np.mean(f, axis=0)
+        f = f / (np.std(f, axis=0) + 1e-8)
+        seq_norm.append(f.flatten())
+
+    seq_norm = np.array(seq_norm)                  # (50, 126)
+
+    velocity = np.diff(seq_norm, axis=0)           # (49, 126)
+    velocity = np.vstack([np.zeros((1, 126)), velocity])  # (50, 126)
+
+    final = np.concatenate([seq_norm, velocity], axis=1)  # (50, 252)
+
+    return torch.tensor(final, dtype=torch.float32).unsqueeze(0)  # (1, 50, 252)
+
+
+# Cargar modelo
+modelLSA = LSTMModel(input_size=252, num_classes=64)
 try:
-    modelLSA.load_state_dict(torch.load("model/lsa64_model.pth", map_location=torch.device("cpu")))
+    modelLSA.load_state_dict(
+        torch.load("model/lsa64_model.pth", map_location=torch.device("cpu"))
+    )
     modelLSA.eval()
     print("✅ Modelo LSA64 cargado")
 except Exception as e:
     print(f"❌ Error cargando modelo LSA64: {e}")
 
-sequence = []
 
+# ── RUTA ──────────────────────────────────────────────────────
+@app.route('/predict-lsa', methods=['POST'])
+def predict_lsa():
+    try:
+        data = request.json
+        full_sequence = data.get("sequence", [])
+
+        # Validar longitud: el frontend debe enviar 50 frames × 126 keypoints
+        if not full_sequence or len(full_sequence) != SEQUENCE_LENGTH_LSA:
+            return jsonify({
+                "error": f"Secuencia incompleta. Se esperaban {SEQUENCE_LENGTH_LSA} frames, llegaron {len(full_sequence)}"
+            }), 400
+
+        sequence_np = np.array(full_sequence, dtype=np.float32)
+
+        if sequence_np.shape != (SEQUENCE_LENGTH_LSA, 126):
+            return jsonify({
+                "error": f"Shape incorrecto. Esperado ({SEQUENCE_LENGTH_LSA}, 126), llegó {sequence_np.shape}"
+            }), 400
+
+        if np.isnan(sequence_np).any():
+            return jsonify({"error": "La secuencia contiene NaN"}), 400
+
+        # Preprocesar igual que en el entrenamiento
+        input_tensor = preprocess_lsa_sequence(sequence_np)  # (1, 50, 252)
+
+        with torch.no_grad():
+            output = modelLSA(input_tensor)
+            probs  = F.softmax(output, dim=1).squeeze().numpy()
+
+        top5_idx = probs.argsort()[-5:][::-1]
+        top5 = [
+            {"class": int(i) + 1, "prob": round(float(probs[i]) * 100, 2)}
+            for i in top5_idx
+        ]
+
+        return jsonify({
+            "prediction": top5[0]["class"],   # clase 1-indexada (como el dataset)
+            "confidence": top5[0]["prob"],
+            "top5": top5
+        })
+
+    except Exception as e:
+        print(f"❌ Error en /predict-lsa: {e}")
+        return jsonify({"error": str(e)}), 500
+    
+
+##############################################
 # Google Vision API para seguridad de imágenes
+##############################################
 def check_image_safety(image_bytes):
 
     image = vision.Image(content=image_bytes)
@@ -423,28 +462,28 @@ def validate_image():
 
 
 
-@app.route('/predict-lsa', methods=['POST'])
-def predict_lsa():
-    try:
-        data = request.json
-        full_sequence = data.get("sequence", [])
+# @app.route('/predict-lsa', methods=['POST'])
+#def predict_lsa():
+#    try:
+#        data = request.json
+#        full_sequence = data.get("sequence", [])
 
-        if not full_sequence or len(full_sequence) != 30:
-            return jsonify({"error": "Secuencia incompleta o no recibida"}), 400
+#        if not full_sequence or len(full_sequence) != 30:
+#            return jsonify({"error": "Secuencia incompleta o no recibida"}), 400
 
         # 1. Convertir a Array de NumPy (50, 126)
-        sequence_np = np.array(full_sequence)
+#        sequence_np = np.array(full_sequence)
 
-        if sequence_np.shape != (30, 126):
-            return jsonify({"error": f"Formato incorrecto. Se esperaba (30,126) y llegó {sequence_np.shape}"}), 400
+#        if sequence_np.shape != (30, 126):
+#            return jsonify({"error": f"Formato incorrecto. Se esperaba (30,126) y llegó {sequence_np.shape}"}), 400
         
-        if np.isnan(sequence_np).any():
-            return jsonify({"error": "NaN en la secuencia"}), 400
+#        if np.isnan(sequence_np).any():
+#            return jsonify({"error": "NaN en la secuencia"}), 400
         
-        mean = sequence_np.mean(axis=1, keepdims=True)
-        std = sequence_np.std(axis=1, keepdims=True)
-        std[std == 0] = 1
-        sequence_np = (sequence_np - mean) / std
+#        mean = sequence_np.mean(axis=1, keepdims=True)
+#        std = sequence_np.std(axis=1, keepdims=True)
+#        std[std == 0] = 1
+#        sequence_np = (sequence_np - mean) / std
         # 2. Calcular Velocidad (Igual que en Colab)
         # Calculamos la diferencia entre frames
         #velocity = np.diff(sequence_np, axis=0)
@@ -459,30 +498,30 @@ def predict_lsa():
         #final_input = (final_input - np.mean(final_input)) / (np.std(final_input) + 1e-8)
 
         # 5. Convertir a Tensor y Predecir
-        input_tensor = torch.tensor(sequence_np, dtype=torch.float32).unsqueeze(0)
+#        input_tensor = torch.tensor(sequence_np, dtype=torch.float32).unsqueeze(0)
  
-        with torch.no_grad():
-            output = modelLSA(input_tensor)
+#        with torch.no_grad():
+#            output = modelLSA(input_tensor)
 
-            probs = F.softmax(output, dim=1).squeeze().numpy()  # convertir a probabilidades    
+#            probs = F.softmax(output, dim=1).squeeze().numpy()  # convertir a probabilidades    
 
             # obtener top 5
-            top5_idx = probs.argsort()[-5:][::-1]
+#            top5_idx = probs.argsort()[-5:][::-1]
 
-            top5 = [
-                {"class": int(i), "prob": float(probs[i])}
-                for i in top5_idx
-            ]
+#            top5 = [
+#                {"class": int(i), "prob": float(probs[i])}
+#                for i in top5_idx
+#            ]
 
-            predicted_class = int(top5[0]["class"])
+#            predicted_class = int(top5[0]["class"])
 
-        return jsonify({
-            "prediction": predicted_class,
-            "top5": top5
-        })
+#        return jsonify({
+#            "prediction": predicted_class,
+#            "top5": top5
+#        })
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+ #   except Exception as e:
+#        return jsonify({"error": str(e)}), 500
     
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
