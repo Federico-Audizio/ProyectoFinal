@@ -1,302 +1,504 @@
-/* SenaPage.css */
+/* SenaPage.css — ABCDario: reconocimiento de letras por señas */
 
-/* 1. CONTENEDOR PRINCIPAL */
-/* Usa el mismo fondo oscuro de EyeTrackingPage */
+/* ── Contenedor principal ─────────────────────────────────────────────── */
 .sena-tracking-container {
-    width: 100%;
-    height: 100vh;
-    margin: 0;
-    padding: 15px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: linear-gradient(180deg, #0e2a47 0%, #1c4e80 100%);
-    font-family: 'Inter', sans-serif;
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 15px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: linear-gradient(180deg, #0e2a47 0%, #1c4e80 100%);
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
-/* 2. ÁREA DE LA CÁMARA (Main View) */
-/* Ocupa todo el espacio disponible arriba */
+/* ── Área de cámara ───────────────────────────────────────────────────── */
 .sena-camera-area {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 15px;
-    min-height: 0; /* Para evitar problemas de flexbox con el contenido */
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 14px;
+  min-height: 0;
 }
-
-/* Contenedor del video para mantener la proporción */
-.sena-video-wrapper {
-    position: relative;
-    height: 100%;
-    width: auto; /* Tamaño máximo para que no se deforme en monitores gigantes */
-    aspect-ratio: 4 / 3; /* Proporción estándar de la cámara */
-    max-width: 100%;
-    max-height: 100%;
-    background: #000;
-    border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-    overflow: hidden;
-    /* Borde sutil azul tecnológico */
-    border: 2px solid rgba(0, 150, 255, 0.3);
-    margin: 0 auto;
-}
-
-/* El video y el canvas se superponen exactamente igual */
-.sena-video-element,
-.sena-canvas-element {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    transform: scaleX(-1); /* Espejado horizontal que ya tenías */
-}
-
-/* El canvas debe estar encima del video */
-.sena-canvas-element {
-    z-index: 10;
-}
-
-/* 3. PANEL INFERIOR DE RESULTADOS */
-/* Similar al .status-bar de EyeTrackingPage */
-.sena-bottom-panel {
-    flex-shrink: 0;
-    background-color: #f8f9fa; /* Blanco grisáceo limpio */
-    border-radius: 15px;
-    padding: 15px 30px;
-    min-height: 100px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.2);
-    z-index: 30;
-}
-
-.sena-title {
-    margin: 0 0 10px 0;
-    color: #555;
-    font-size: 1.2rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.sena-results-area {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Texto de la predicción */
-.sena-prediction-display {
-    font-size: 2rem;
-    font-weight: bold;
-    text-align: center;
-    transition: color 0.3s ease;
-}
-
-/* Estados de color para la predicción */
-.sena-prediction-display.waiting {
-    color: #444; /* Gris oscuro para cargando/capturando */
-}
-
-.sena-prediction-display.success {
-    color: #28a745; /* Verde brillante cuando detecta la seña */
-    text-shadow: 0 2px 5px rgba(40, 167, 69, 0.2);
-}
-
-/* Mensaje de error (rojo) */
-.sena-error-message {
-    background-color: #fee;
-    color: #c0392b;
-    padding: 10px 20px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    text-align: center;
-    width: 100%;
-    border: 1px solid #f5c6cb;
-}
-
-/* =========================================
-   HUD TÉCNICO (Estética extra para la cámara)
-   ========================================= */
-.sena-tech-hud {
-    position: absolute;
-    inset: 20px; /* Margen interno */
-    pointer-events: none;
-    z-index: 20;
-}
-
-.corner {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    border: 4px solid rgba(0, 204, 255, 0.6);
-    border-radius: 2px;
-}
-.top-left { top: 0; left: 0; border-right: 0; border-bottom: 0; }
-.top-right { top: 0; right: 0; border-left: 0; border-bottom: 0; }
-.bottom-left { bottom: 0; left: 0; border-right: 0; border-top: 0; }
-.bottom-right { bottom: 0; right: 0; border-left: 0; border-top: 0; }
-
-.scan-line {
-    position: absolute;
-    width: 100%;
-    height: 2px;
-    background: rgba(0, 204, 255, 0.3);
-    box-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
-    top: 0;
-    animation: senaScan 3s linear infinite;
-}
-
-@keyframes senaScan {
-    0% { top: 0; opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { top: 100%; opacity: 0; }
-}
-
-/* =========================================
-    INDICADOR DE SEÑA ACTIVA (Pequeño punto que brilla cuando se detecta movimiento)
-========================================= */
 
 .sena-video-wrapper {
   position: relative;
-}
-
-.sign-indicator {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: gray;
-  transition: 0.3s;
-}
-
-.sign-indicator.active {
-  background: #00ff88;
-  box-shadow: 0 0 10px #00ff88;
-}
-
-.frame-counter {
-  position: absolute;
-  bottom: 15px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60%;
-  text-align: center;
-  color: white;
-  font-weight: bold;
-}
-
-.frame-text {
-  margin-bottom: 6px;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 10px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 10px;
+  height: 100%;
+  width: auto;
+  aspect-ratio: 4 / 3;
+  max-width: 100%;
+  max-height: 100%;
+  background: #000;
+  border-radius: 18px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
   overflow: hidden;
+  border: 2px solid rgba(0, 150, 255, 0.3);
+  margin: 0 auto;
 }
 
-.progress-fill {
-  height: 100%;
-  background: #00ff88;
-  transition: width 0.1s linear;
-}
-
-/* CONTENEDOR DEL TOP 5 */
-.top5-container {
-  margin-top: 20px;
-  width: 100%;
-  max-width: 420px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* CADA FILA */
-.top5-item {
-  display: flex;
-  flex-direction: column;
-  font-size: 14px;
-  color: #333;
-}
-
-/* TEXTO DE LA PREDICCION */
-.top5-label {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 3px;
-  font-weight: 500;
-}
-
-/* BARRA BASE */
-.top5-bar {
-  width: 100%;
-  height: 10px;
-  background: #e6e6e6;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-/* BARRA DE PROBABILIDAD */
-.top5-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #00c6ff, #0072ff);
-  border-radius: 6px;
-  transition: width 0.4s ease;
-}
-
-/* Contenedor que ocupa el lugar de la cámara antes de iniciar */
-.sena-placeholder-overlay {
+.sena-video-element {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #1a1a1a; /* Fondo oscuro simulando cámara apagada */
-  border-radius: 8px;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+/* ── HUD técnico ─────────────────────────────────────────────────────── */
+.sena-tech-hud {
+  position: absolute;
+  inset: 16px;
+  pointer-events: none;
   z-index: 10;
 }
 
-/* El botón de activación */
+.corner {
+  position: absolute;
+  width: 20px; height: 20px;
+  border: 3px solid rgba(0, 204, 255, 0.65);
+  border-radius: 2px;
+}
+.top-left    { top: 0;    left: 0;   border-right: 0; border-bottom: 0; }
+.top-right   { top: 0;    right: 0;  border-left: 0;  border-bottom: 0; }
+.bottom-left { bottom: 0; left: 0;   border-right: 0; border-top: 0;    }
+.bottom-right{ bottom: 0; right: 0;  border-left: 0;  border-top: 0;    }
+
+.scan-line {
+  position: absolute;
+  width: 100%; height: 2px;
+  background: rgba(0, 204, 255, 0.3);
+  box-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
+  top: 0;
+  animation: senaScan 3s linear infinite;
+}
+@keyframes senaScan {
+  0%   { top: 0%;   opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* ── Overlay de progreso (esquina inferior del video) ─────────────────── */
+.sena-progress-overlay {
+  position: absolute;
+  bottom: 14px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  width: 65%;
+  pointer-events: none;
+}
+
+.sena-buffer-widget {
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 10px;
+  padding: 6px 10px;
+  backdrop-filter: blur(4px);
+}
+
+.sena-buffer-label {
+  display: flex;
+  justify-content: space-between;
+  color: rgba(255,255,255,0.85);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.sena-buffer-count { color: #00cfff; }
+
+.sena-buffer-bar {
+  width: 100%; height: 6px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.sena-buffer-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00cfff, #007bff);
+  border-radius: 6px;
+  transition: width 0.15s ease;
+}
+
+/* ── Badge de letra agregada (cooldown) ──────────────────────────────── */
+.sena-cooldown-badge {
+  background: rgba(40, 167, 69, 0.9);
+  border-radius: 10px;
+  padding: 7px 14px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  backdrop-filter: blur(4px);
+  animation: badgePop 0.25s ease-out;
+}
+.cooldown-tick { margin-right: 6px; font-size: 1rem; }
+
+@keyframes badgePop {
+  from { transform: scale(0.8); opacity: 0.5; }
+  to   { transform: scale(1);   opacity: 1;   }
+}
+
+/* ── Letra actual — overlay grande sobre el video ─────────────────────── */
+.sena-letter-overlay {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 72px; height: 72px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: #fff;
+  z-index: 20;
+  pointer-events: none;
+  animation: letterPop 0.2s ease-out;
+}
+.sena-letter-overlay.high {
+  background: rgba(40, 167, 69, 0.88);
+  box-shadow: 0 0 20px rgba(40, 167, 69, 0.6);
+}
+.sena-letter-overlay.low {
+  background: rgba(255, 193, 7, 0.85);
+  box-shadow: 0 0 16px rgba(255, 193, 7, 0.45);
+}
+.sena-letter-conf {
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.9;
+  line-height: 1;
+}
+
+@keyframes letterPop {
+  from { transform: scale(0.7) translateY(-4px); opacity: 0.4; }
+  to   { transform: scale(1)   translateY(0);    opacity: 1;   }
+}
+
+/* ── Placeholder ─────────────────────────────────────────────────────── */
+.sena-placeholder-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #111d2b;
+  border-radius: 16px;
+  gap: 10px;
+}
+
 .btn-activate-camera {
-  padding: 15px 30px;
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: white;
-  background-color: #007bff;
+  padding: 14px 30px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  background: #007bff;
   border: none;
   border-radius: 50px;
   cursor: pointer;
-  transition: transform 0.2s, background-color 0.2s;
-  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+  transition: background 0.2s, transform 0.15s;
+  box-shadow: 0 4px 16px rgba(0, 123, 255, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn-activate-camera:hover { background: #0056b3; transform: scale(1.04); }
+.btn-activate-camera .icon { font-size: 1.5rem; }
+.btn-subtitle {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* ── Error ───────────────────────────────────────────────────────────── */
+.sena-error-message {
+  background: #fee;
+  color: #c0392b;
+  padding: 8px 16px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  border: 1px solid #f5c6cb;
+}
+
+/* ── Panel inferior ──────────────────────────────────────────────────── */
+.sena-bottom-panel {
+  flex-shrink: 0;
+  background: #f1f4f8;
+  border-radius: 16px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Área de texto escrito ───────────────────────────────────────────── */
+.abc-text-area {
+  background: #fff;
+  border-radius: 12px;
+  border: 2px solid rgba(0, 123, 255, 0.2);
+  padding: 10px 14px;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.abc-text-display {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #1a3a5c;
+  letter-spacing: 0.12em;
+  word-break: break-all;
+  flex: 1;
+}
+
+.abc-placeholder {
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: #aab;
+  font-style: italic;
+  letter-spacing: 0;
+}
+
+.abc-cursor {
+  display: inline-block;
+  margin-left: 2px;
+  color: #007bff;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ── Fila de controles ───────────────────────────────────────────────── */
+.abc-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.abc-btn {
+  flex: 1;
+  min-width: 80px;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.abc-btn:disabled { opacity: 0.4; cursor: default; }
+.abc-btn:not(:disabled):active { transform: scale(0.96); }
+.btn-icon { font-size: 1rem; }
+
+.abc-btn-play {
+  background: #007bff; color: #fff;
+  box-shadow: 0 3px 10px rgba(0,123,255,0.3);
+}
+.abc-btn-play:not(:disabled):hover { background: #0056b3; }
+.abc-btn-play.speaking { background: #6c757d; box-shadow: none; }
+
+.abc-btn-space {
+  background: #17a2b8; color: #fff;
+  box-shadow: 0 3px 10px rgba(23,162,184,0.3);
+}
+.abc-btn-space:hover { background: #117a8b; }
+
+.abc-btn-delete {
+  background: #e53e3e; color: #fff;
+  box-shadow: 0 3px 10px rgba(229,62,62,0.25);
+}
+.abc-btn-delete:not(:disabled):hover { background: #c53030; }
+
+.abc-btn-clear {
+  background: #ff6b00; color: #fff;
+  box-shadow: 0 3px 10px rgba(255,107,0,0.25);
+}
+.abc-btn-clear:not(:disabled):hover { background: #cc5500; }
+
+/* ── Top-5 predicciones ─────────────────────────────────────────────── */
+.abc-top5 {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.abc-top5-title {
+  margin: 0 0 3px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #667;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.top5-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.top5-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.top5-letter {
+  font-weight: 700;
+  color: #1a3a5c;
+  font-size: 0.9rem;
+  min-width: 20px;
+}
+.top5-first {
+  color: #007bff;
+  font-size: 1.05rem;
+}
+.top5-prob {
+  color: #555;
+  font-size: 0.75rem;
+}
+
+.top5-bar {
+  position: relative;
+  width: 100%;
+  height: 7px;
+  background: #dde;
+  border-radius: 6px;
+  overflow: visible;
+}
+.top5-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+.top5-threshold {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: #e53e3e;
+  border-radius: 2px;
+  z-index: 1;
+}
+
+/* ── Badge "sin manos" ───────────────────────────────────────────────── */
+.sena-no-hands-badge {
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 10px;
+  padding: 6px 14px;
+  backdrop-filter: blur(4px);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  letter-spacing: 0.02em;
+}
+
+/* ── Botón Pausar / Reanudar (esquina superior izquierda del video) ─── */
+.sena-pause-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 25;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.2s, transform 0.1s;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+}
+.sena-pause-btn:hover {
+  background: rgba(0, 0, 0, 0.75);
+  transform: scale(1.04);
+}
+.sena-pause-btn.paused {
+  background: rgba(0, 123, 255, 0.75);
+  border-color: rgba(0, 123, 255, 0.5);
+}
+.sena-pause-btn.paused:hover {
+  background: rgba(0, 86, 179, 0.9);
+}
+
+/* ── Overlay semitransparente cuando está pausado ──────────────────── */
+.sena-paused-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 20;
+  border-radius: 16px;
+  pointer-events: none;
+}
+.sena-paused-icon {
+  font-size: 3rem;
+  opacity: 0.8;
+}
+.sena-paused-text {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* ── Widget de racha (predicciones consecutivas) ─────────────────────── */
+.sena-streak-widget {
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 10px;
+  padding: 6px 12px;
+  backdrop-filter: blur(4px);
+  display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.btn-activate-camera:hover {
-  background-color: #0056b3;
-  transform: scale(1.05);
+.streak-label {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-.btn-activate-camera .icon {
-  font-size: 2rem;
+.streak-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.streak-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.streak-dot.filled {
+  background: #00cfff;
+  border-color: #00cfff;
+  transform: scale(1.2);
+  box-shadow: 0 0 8px rgba(0, 207, 255, 0.7);
 }
