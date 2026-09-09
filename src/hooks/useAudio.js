@@ -101,67 +101,44 @@ export const useAudio = () => {
   };
     
 
+  // Reproduce texto con TTS (Web Speech API). Devuelve una Promise que resuelve al terminar.
+  const speakTTS = (text) => {
+    return new Promise((resolve) => {
+      if (!window.speechSynthesis) { resolve(); return; }
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = "es-ES";
+      utt.rate = playbackSpeedRef.current < 1 ? 0.85 : 1.0;
+      utt.onend = resolve;
+      utt.onerror = resolve;
+      window.speechSynthesis.speak(utt);
+    });
+  };
+
   const playAudio = (textOrPath) => {
     if (!audioContext || !unlockedRef.current) {
       return;
     }
 
-    //Intentar resumir si se quedó suspendido
     if (audioContext.state === "suspended") {
       audioContext.resume();
     }
 
-    // --- LÓGICA PARA EVITAR SOLAPAMIENTO ---
-    // Si hay un audio sonando, lo detenemos inmediatamente
     if (currentSourceRef.current) {
-      try {
-        currentSourceRef.current.stop();
-      } catch (e) {
-        // Ignorar si ya había terminado
-      }
+      try { currentSourceRef.current.stop(); } catch (e) {}
     }
 
     const finalSrc = getCleanPath(textOrPath);
 
-
-
-    /*if (audioBuffers[finalSrc]) {
-      const source = audioContext.createBufferSource();
-      source.buffer = audioBuffers[finalSrc];
-      source.connect(audioContext.destination);
-      source.start(0);
-    } else {
-      // Si no estaba precargado (fallback), lo descarga y reproduce
-      console.warn(`Audio no precargado: ${finalSrc}. Cargando ahora...`);
-      preloadAudio(finalSrc).then((path) => {
-        if (path && audioBuffers[path]) {
-          const source = audioContext.createBufferSource();
-          source.buffer = audioBuffers[path];
-          source.connect(audioContext.destination);
-          source.start(0);
-        }
-      });
-    }*/
     const startPlayback = (buffer) => {
       const source = audioContext.createBufferSource();
       source.buffer = buffer;
-      
-      // --- LÓGICA PARA VELOCIDAD ---
-      // Ajustamos la velocidad de reproducción
       source.playbackRate.value = playbackSpeedRef.current;
-      
       source.connect(audioContext.destination);
-      
-      // Guardamos la referencia actual para poder detenerla luego
       currentSourceRef.current = source;
-      
       source.start(0);
-
-      // Limpiar la referencia cuando el audio termine de sonar naturalmente
       source.onended = () => {
-        if (currentSourceRef.current === source) {
-          currentSourceRef.current = null;
-        }
+        if (currentSourceRef.current === source) currentSourceRef.current = null;
       };
     };
 
@@ -171,6 +148,12 @@ export const useAudio = () => {
       preloadAudio(finalSrc).then((path) => {
         if (path && audioBuffers[path]) {
           startPlayback(audioBuffers[path]);
+        } else {
+          // Sin archivo de audio → TTS con el texto del label
+          const label = textOrPath.endsWith(".mp3")
+            ? textOrPath.replace(/^.*\//, "").replace(".mp3", "")
+            : textOrPath;
+          speakTTS(label);
         }
       });
     }
@@ -192,14 +175,9 @@ export const useAudio = () => {
           source.buffer = buffer;
           source.playbackRate.value = playbackSpeedRef.current;
           source.connect(audioContext.destination);
-
           currentSourceRef.current = source;
-
           source.start(0);
-
-          source.onended = () => {
-            resolve(); // 👈 espera a que termine antes de seguir
-          };
+          source.onended = resolve;
         };
 
         if (audioBuffers[finalSrc]) {
@@ -209,7 +187,8 @@ export const useAudio = () => {
             if (path && audioBuffers[path]) {
               startPlayback(audioBuffers[path]);
             } else {
-              resolve();
+              // Sin archivo de audio → TTS con el texto del label
+              speakTTS(item).then(resolve);
             }
           });
         }

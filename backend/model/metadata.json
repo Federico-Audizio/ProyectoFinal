@@ -1,0 +1,169 @@
+{
+  "classes": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+    "Ñ"
+  ],
+  "letter_properties": {
+    "A": {
+      "motion": 0,
+      "face": 0
+    },
+    "B": {
+      "motion": 0,
+      "face": 0
+    },
+    "C": {
+      "motion": 0,
+      "face": 0
+    },
+    "D": {
+      "motion": 0,
+      "face": 0
+    },
+    "E": {
+      "motion": 0,
+      "face": 1
+    },
+    "F": {
+      "motion": 0,
+      "face": 0
+    },
+    "G": {
+      "motion": 0,
+      "face": 0
+    },
+    "H": {
+      "motion": 1,
+      "face": 1
+    },
+    "I": {
+      "motion": 0,
+      "face": 1
+    },
+    "J": {
+      "motion": 1,
+      "face": 1
+    },
+    "K": {
+      "motion": 0,
+      "face": 0
+    },
+    "L": {
+      "motion": 0,
+      "face": 0
+    },
+    "M": {
+      "motion": 0,
+      "face": 0
+    },
+    "N": {
+      "motion": 0,
+      "face": 0
+    },
+    "Ñ": {
+      "motion": 0,
+      "face": 0
+    },
+    "O": {
+      "motion": 0,
+      "face": 0
+    },
+    "P": {
+      "motion": 0,
+      "face": 0
+    },
+    "Q": {
+      "motion": 0,
+      "face": 0
+    },
+    "R": {
+      "motion": 0,
+      "face": 0
+    },
+    "S": {
+      "motion": 0,
+      "face": 1
+    },
+    "T": {
+      "motion": 0,
+      "face": 1
+    },
+    "U": {
+      "motion": 0,
+      "face": 0
+    },
+    "V": {
+      "motion": 0,
+      "face": 0
+    },
+    "W": {
+      "motion": 0,
+      "face": 0
+    },
+    "X": {
+      "motion": 0,
+      "face": 0
+    },
+    "Y": {
+      "motion": 0,
+      "face": 1
+    },
+    "Z": {
+      "motion": 1,
+      "face": 0
+    }
+  },
+  "sequence_length": 30,
+  "features_per_frame": 248,
+  "outputs": {
+    "letter": "letter_output",
+    "motion": "motion_output",
+    "face": "face_output"
+  },
+  "feature_config": {
+    "face_indices": {
+      "left_eye": 33,
+      "right_eye": 263,
+      "nose": 1,
+      "mouth_left": 61,
+      "mouth_right": 291,
+      "chin": 152
+    },
+    "pose_indices": {
+      "left_shoulder": 11,
+      "right_shoulder": 12,
+      "left_elbow": 13,
+      "right_elbow": 14
+    }
+  },
+  "training_environment": {
+    "tensorflow": "2.20.0",
+    "keras": "3.12.4",
+    "target_backend_python": "3.10"
+  }
+}

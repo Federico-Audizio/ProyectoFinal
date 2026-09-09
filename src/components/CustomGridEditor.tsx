@@ -6,6 +6,7 @@ import type { CustomGrid, CustomCell } from "../contexts/GridsContext";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { storage } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
+import { useAudio } from "../hooks/useAudio";
 
 interface SelectedPicto {
   label: string;
@@ -37,6 +38,7 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
   // ── Saved grids (compartido vía context)
   const { savedGrids, setSavedGrids } = useGrids();
   const { user } = useAuth();
+  const { playAudio, playPhrase } = useAudio();
 
   // ── If URL has ?id=X, open that grid directly (skip chooser)
   const [searchParams] = useSearchParams();
@@ -120,6 +122,7 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
 
     if (commLevel === "simple") {
       setPhrase([newSelected]);
+      playAudio(cell.label);
     } else {
       if (phrase.length < 7) {
         setPhrase(prev => [...prev, newSelected]);
@@ -133,6 +136,15 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
 
   const clearPhrase = () => {
     setPhrase([]);
+  };
+
+  const playFullPhrase = () => {
+    if (phrase.length === 0) return;
+    if (commLevel === "simple") {
+      playAudio(phrase[0].label);
+    } else {
+      playPhrase(phrase.map(p => p.label));
+    }
   };
 
   const getDynamicStyles = (): React.CSSProperties => {
@@ -506,7 +518,7 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
                 <button className="control-btn btn-danger" onClick={removeLast} title="Borrar último">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
                 </button>
-                <button className="control-btn btn-success" onClick={clearPhrase} title="Reproducir">
+                <button className="control-btn btn-success" onClick={playFullPhrase} title="Reproducir">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
                 </button>
                 <button className="control-btn btn-danger" onClick={clearPhrase} title="Borrar todo">
