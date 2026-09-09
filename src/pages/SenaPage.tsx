@@ -183,8 +183,7 @@ const SenaPage = () => {
           {!hasStarted ? (
             <div className="sena-placeholder-overlay">
               <button className="btn-activate-camera" onClick={() => setHasStarted(true)}>
-                <span className="icon">🤟</span>
-                Iniciar ABCDario
+                Iniciar reconociemiento de señas
               </button>
               <p className="btn-subtitle">Reconocimiento de letras A–Z</p>
             </div>
