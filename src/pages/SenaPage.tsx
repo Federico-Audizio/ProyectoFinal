@@ -3,8 +3,9 @@ import alphabetImg from "../assets/Alfabeto-Manual-Argentino-LSA-CAS-680x962.png
 import "./SenaPage.css";
 
 const CONFIDENCE_THRESHOLD = 45;
-const CAPTURE_INTERVAL_MS  = 100;   // 30 frames × 100ms = ~3s
-const COOLDOWN_MS          = 2000;  // pausa entre señas
+const CAPTURE_INTERVAL_MS  = 100;    // 30 frames × 100ms = ~3s
+const COOLDOWN_MS          = 2000;   // pausa entre señas
+const HANDS_GRACE_MS       = 1500;   // tiempo sin manos para abortar captura
 
 type Phase = "idle" | "capturing" | "processing" | "cooldown";
 
@@ -13,8 +14,10 @@ const SenaPage = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const setTypedRef = useRef<React.Dispatch<React.SetStateAction<string>> | null>(null);
-  const pausedRef   = useRef(false);
+  const setTypedRef   = useRef<React.Dispatch<React.SetStateAction<string>> | null>(null);
+  const pausedRef     = useRef(false);
+  const textareaRef   = useRef<HTMLTextAreaElement>(null);
+  const isSpeakingRef = useRef(false);
 
   const [hasStarted,     setHasStarted]     = useState(false);
   const [isPaused,       setIsPaused]       = useState(false);
@@ -29,7 +32,40 @@ const SenaPage = () => {
   const [error,          setError]           = useState<string | null>(null);
   const [isSpeaking,     setIsSpeaking]      = useState(false);
 
-  setTypedRef.current = setTypedText;
+  setTypedRef.current    = setTypedText;
+  isSpeakingRef.current  = isSpeaking;
+
+  // ── Helpers de edición con cursor ────────────────────────────────────────
+  const insertAtCursor = (text: string) => {
+    const ta = textareaRef.current;
+    if (!ta) { setTypedText(p => p + text); return; }
+    const s = ta.selectionStart, e = ta.selectionEnd;
+    setTypedText(prev => prev.slice(0, s) + text + prev.slice(e));
+    requestAnimationFrame(() => ta.setSelectionRange(s + text.length, s + text.length));
+  };
+
+  const deleteAtCursor = () => {
+    const ta = textareaRef.current;
+    if (!ta) { setTypedText(p => p.slice(0, -1)); return; }
+    const s = ta.selectionStart, e = ta.selectionEnd;
+    if (s !== e) {
+      setTypedText(prev => prev.slice(0, s) + prev.slice(e));
+      requestAnimationFrame(() => ta.setSelectionRange(s, s));
+    } else if (s > 0) {
+      setTypedText(prev => prev.slice(0, s - 1) + prev.slice(s));
+      requestAnimationFrame(() => ta.setSelectionRange(s - 1, s - 1));
+    }
+  };
+
+  // Ajustar altura del textarea al contenido (fallback para field-sizing: content)
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = `${ta.scrollHeight}px`;
+  }, [typedText]);
+
+  // (el listener global de teclado se registra después de definir playText/stopSpeech)
 
   const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -79,16 +115,56 @@ const SenaPage = () => {
         if (!active) break;
         setHandsVisible(true);
 
-        // ── FASE 2: capturar 30 frames ────────────────────────────────
+        // ── FASE 2: capturar 30 frames (con control de pérdida de manos) ──
         setPhase("capturing");
         const frames: string[] = [];
+        let noHandsSince: number | null = null;
+        let handsAborted = false;
+
         for (let i = 0; i < 30; i++) {
           if (!active) break;
-          frames.push(captureFrame());
+
+          const frame = captureFrame();
+          frames.push(frame);
           setFrameCount(i + 1);
+
+          // Chequeo en paralelo cada 3 frames (cada 300 ms) sin bloquear
+          if (i % 3 === 0) {
+            fetch("http://localhost:5000/check-hands", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ frame }),
+            })
+              .then(r => r.json())
+              .then(d => {
+                if (!d.has_hands) {
+                  if (noHandsSince === null) noHandsSince = Date.now();
+                } else {
+                  noHandsSince = null;
+                }
+              })
+              .catch(() => {});
+          }
+
+          // Si llevamos más de HANDS_GRACE_MS sin manos → abortar
+          if (noHandsSince !== null && Date.now() - noHandsSince >= HANDS_GRACE_MS) {
+            handsAborted = true;
+            break;
+          }
+
           if (i < 29) await sleep(CAPTURE_INTERVAL_MS);
         }
-        if (!active || frames.length < 30) break;
+
+        setFrameCount(0);
+        if (!active) break;
+
+        if (handsAborted || frames.length < 30) {
+          setHandsVisible(false);
+          setCurrentLetter(null);
+          setTopPredictions([]);
+          setPhase("idle");
+          continue; // volver a detectar manos
+        }
 
         // ── FASE 3: enviar al backend y esperar resultado ─────────────
         setPhase("processing");
@@ -169,6 +245,19 @@ const SenaPage = () => {
   };
   const stopSpeech = () => { window.speechSynthesis.cancel(); setIsSpeaking(false); };
 
+  // ── Teclado global (cuando el textarea NO tiene el foco) ─────────────────
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (document.activeElement === textareaRef.current) return;
+      if (e.key === " ")         { e.preventDefault(); setTypedText(p => p + " "); }
+      if (e.key === "Backspace") { e.preventDefault(); setTypedText(p => p.slice(0, -1)); }
+      if (e.key === "Enter")     { e.preventDefault(); isSpeakingRef.current ? stopSpeech() : playText(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="sena-tracking-container">
 
@@ -203,13 +292,22 @@ const SenaPage = () => {
               <button
                 className={`sena-pause-btn ${isPaused ? "paused" : ""}`}
                 onClick={togglePause}
-                title={isPaused ? "Reanudar" : "Pausar"}
               >
-                {isPaused ? "▶" : "⏸"}
+                <span className="btn-pause-icon">{isPaused ? "▶" : "⏸"}</span>
+                {isPaused ? "Reanudar" : "Pausar"}
               </button>
 
+              {/* Overlay pausa */}
+              {isPaused && (
+                <div className="sena-processing-overlay sena-paused-overlay">
+                  <div className="sena-pause-icon">⏸</div>
+                  <span className="sena-paused-label">Reconocimiento pausado</span>
+                  <span className="sena-paused-sub">Presioná ▶ para reanudar</span>
+                </div>
+              )}
+
               {/* Overlay de carga mientras el backend procesa */}
-              {phase === "processing" && (
+              {!isPaused && phase === "processing" && (
                 <div className="sena-processing-overlay">
                   <div className="sena-spinner" />
                   <span>Analizando seña…</span>
@@ -266,12 +364,24 @@ const SenaPage = () => {
         {error && <div className="sena-error-message"><b>Error:</b> {error}</div>}
 
         <div className="abc-text-area">
-          <div className="abc-text-display">
-            {typedText
-              ? <>{typedText}<span className="abc-cursor">|</span></>
-              : <span className="abc-placeholder">Mostrá una seña para empezar a escribir…</span>
-            }
-          </div>
+          <textarea
+            ref={textareaRef}
+            className="abc-textarea"
+            value={typedText}
+            readOnly
+            rows={1}
+            onChange={() => {}}
+            onKeyDown={e => {
+              if (e.key === "Enter")     { e.preventDefault(); isSpeaking ? stopSpeech() : playText(); }
+              if (e.key === " ")         { e.preventDefault(); insertAtCursor(" "); }
+              if (e.key === "Backspace") { e.preventDefault(); deleteAtCursor(); }
+            }}
+            placeholder="Mostrá una seña para escribir…"
+            spellCheck={false}
+          />
+          <p className="abc-keyboard-hint">
+            <kbd>Espacio</kbd> espacio &nbsp;·&nbsp; <kbd>⌫</kbd> borrar &nbsp;·&nbsp; <kbd>Enter</kbd> reproducir &nbsp;·&nbsp; click para mover el cursor
+          </p>
         </div>
 
         <div className="abc-controls">
@@ -285,12 +395,12 @@ const SenaPage = () => {
               : <><span className="btn-icon">▶</span> Reproducir</>
             }
           </button>
-          <button className="abc-btn abc-btn-space" onClick={() => setTypedText(p => p + " ")}>
+          <button className="abc-btn abc-btn-space" onClick={() => insertAtCursor(" ")}>
             <span className="btn-icon">⎵</span> Espacio
           </button>
           <button
             className="abc-btn abc-btn-delete"
-            onClick={() => setTypedText(p => p.slice(0, -1))}
+            onClick={deleteAtCursor}
             disabled={!typedText}
           >
             <span className="btn-icon">⌫</span> Borrar

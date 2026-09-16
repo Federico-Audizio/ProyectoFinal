@@ -199,11 +199,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 12px;
   font-size: 22px;
   font-weight: bold;
   color: #333;
   box-shadow: 0 4px 6px rgba(0,0,0,0.2);
   flex-shrink: 0;
+  padding: 0 16px;
+}
+
+.emotion-display-text {
+  font-size: 22px;
+  font-weight: bold;
+  color: #333;
+}
+
+.emotion-selected-img {
+  height: 52px;
+  width: 52px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.emotion-selected-label {
+  font-size: 20px;
+  font-weight: 700;
+  color: #222;
 }
 
 /* ====================

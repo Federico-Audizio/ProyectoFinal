@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import CameraCapture from "../components/CameraCapture";
-import "./CameraPage.css"; // 🔥 Estilos externos
+import "./CameraPage.css";
+import { useAudio } from "../hooks/useAudio";
 
 // Define un mapeo de emociones a un array de rutas de pictogramas
 const emotionPictogramMap: { [key: string]: { src: string; label: string; color: string }[] } = {
@@ -44,6 +45,17 @@ const emotionMap: Record<string, string> = {
   "esperando detección...": "neutral",
 };
 
+// Emociones que pueden confirmarse (excluye estados transitorios)
+const MEANINGFUL_EMOTIONS = new Set(["happy", "sad", "angry"]);
+// Cuántas detecciones consecutivas para confirmar (cada detección tarda ~2s → 2 = ~4s)
+const CONFIRM_THRESHOLD = 2;
+
+const emotionLabelMap: Record<string, string> = {
+  happy: "Feliz",
+  sad:   "Triste",
+  angry: "Enojado",
+};
+
 const CameraPage: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState("keras");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -52,17 +64,39 @@ const CameraPage: React.FC = () => {
     { src: string; label: string; color: string }[]
   >([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [confirmedEmotion, setConfirmedEmotion] = useState<string | null>(null);
+  const { playAudio } = useAudio();
 
-  // 📌 Manejador de emociones: se ejecuta cuando CameraCapture detecta una emoción
+  // Refs para evitar closures viejos dentro del callback
+  const pendingEmotionRef = useRef<string | null>(null);
+  const pendingCountRef   = useRef(0);
+
+  // 📌 Manejador de emociones: acumula detecciones y confirma al llegar al umbral
   const handleEmotionDetected = (detectedEmotion: string) => {
     setEmotion(detectedEmotion);
     const normalizedKey = emotionMap[detectedEmotion.toLowerCase()] || "neutral";
-    const pictogramPaths = emotionPictogramMap[normalizedKey] || [];
-    setCurrentPictograms(pictogramPaths);
-    setSelectedIndex(null);
+
+    // Estados transitorios (neutral, error, detectando) no afectan lo confirmado
+    if (!MEANINGFUL_EMOTIONS.has(normalizedKey)) return;
+
+    if (pendingEmotionRef.current === normalizedKey) {
+      pendingCountRef.current += 1;
+      if (pendingCountRef.current >= CONFIRM_THRESHOLD) {
+        // ✅ Confirmado: fijar pictogramas
+        setConfirmedEmotion(normalizedKey);
+        setCurrentPictograms(emotionPictogramMap[normalizedKey] || []);
+        setSelectedIndex(null);
+        // Reiniciar para poder confirmar una nueva emoción después
+        pendingCountRef.current = 0;
+      }
+    } else {
+      // Nueva emoción: reiniciar contador
+      pendingEmotionRef.current = normalizedKey;
+      pendingCountRef.current = 1;
+    }
   };
 
-  // 👇 2. AGREGA ESTO: Expone la función a la ventana global del navegador
+  // Expone función de debug en window
   useEffect(() => {
     (window as any).forzarEmocion = (emocion: string) => {
       console.log("Forzando emoción:", emocion);
@@ -72,11 +106,15 @@ const CameraPage: React.FC = () => {
 
   // Función para alternar entre Iniciar y Detener
   const toggleStreaming = () => {
-    setIsStreaming(!isStreaming);
     if (isStreaming) {
-        setEmotion("Detección detenida.");
-        setCurrentPictograms([]);
+      setEmotion("Detección detenida.");
+      setCurrentPictograms([]);
+      setConfirmedEmotion(null);
+      pendingEmotionRef.current = null;
+      pendingCountRef.current = 0;
+      setSelectedIndex(null);
     }
+    setIsStreaming(!isStreaming);
   };
 
 
@@ -123,7 +161,10 @@ const CameraPage: React.FC = () => {
                     key={index}
                     className={`camera-pictogram-item${selectedIndex === index ? " selected" : ""}`}
                     style={{ borderColor: p.color, "--picto-color": p.color } as React.CSSProperties}
-                    onClick={() => setSelectedIndex(selectedIndex === index ? null : index)}
+                    onClick={() => {
+                      playAudio(p.label);
+                      setSelectedIndex(selectedIndex === index ? null : index);
+                    }}
                 >
                     <img src={p.src} alt={p.label} className="camera-pictogram" loading="lazy"/>
                     <p>{p.label}</p>
@@ -137,9 +178,32 @@ const CameraPage: React.FC = () => {
             </div>
         </div>
 
-        {/* 2. Caja Emoción: Alineada abajo (misma altura que controles) */}
-        <div className="emotion-box-footer">
-          <span>Emoción: {emotion}</span>
+        {/* 2. Caja resultado: emoción confirmada en español, o pictograma seleccionado con imagen+texto */}
+        <div
+          className="emotion-box-footer"
+          style={{ cursor: selectedIndex !== null ? "pointer" : "default" }}
+          onClick={() => {
+            if (selectedIndex !== null && currentPictograms[selectedIndex]) {
+              playAudio(currentPictograms[selectedIndex].label);
+            }
+          }}
+        >
+          {selectedIndex !== null && currentPictograms[selectedIndex] ? (
+            <>
+              <img
+                src={currentPictograms[selectedIndex].src}
+                alt={currentPictograms[selectedIndex].label}
+                className="emotion-selected-img"
+              />
+              <span className="emotion-selected-label">{currentPictograms[selectedIndex].label}</span>
+            </>
+          ) : (
+            <span className="emotion-display-text">
+              {confirmedEmotion
+                ? emotionLabelMap[confirmedEmotion]
+                : "Esperando..."}
+            </span>
+          )}
         </div>
       </div>
     </div>

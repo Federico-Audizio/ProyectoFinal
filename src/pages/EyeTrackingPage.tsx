@@ -3,6 +3,9 @@ import "./EyeTrackingPage.css";
 import FiEye from "../components/Icons/FiEye";
 import FiCheckCircle from "../components/Icons/FiCheckCircle";
 import { useAudio } from "../hooks/useAudio";
+import { useAuth } from "../contexts/AuthContext";
+import { db } from "../firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 // 🎯 1. Interfaz para definir pictogramas
 interface Pictogram {
@@ -274,6 +277,49 @@ const EyeTrackingPage: React.FC = () => {
   const [textSize, setTextSize] = useState<SizeOption>("normal");
   const [imageSize, setImageSize] = useState<SizeOption>("normal");
   const [isSizeModalOpen, setIsSizeModalOpen] = useState(false);
+
+  const { user } = useAuth();
+  const [isOcularConfigLoaded, setIsOcularConfigLoaded] = useState(false);
+
+  // Cargar configuración desde Firestore al montar
+  useEffect(() => {
+    if (!user || user.id === "guest") {
+      setIsOcularConfigLoaded(true);
+      return;
+    }
+    const load = async () => {
+      try {
+        const snap = await getDoc(doc(db, "usuarios", user.id));
+        if (snap.exists()) {
+          const cfg = snap.data()?.configuracionesOcular;
+          if (cfg?.imageSize) setImageSize(cfg.imageSize as SizeOption);
+          if (cfg?.textSize) setTextSize(cfg.textSize as SizeOption);
+        }
+      } catch (e) {
+        console.error("Error cargando configuración ocular:", e);
+      } finally {
+        setIsOcularConfigLoaded(true);
+      }
+    };
+    load();
+  }, [user]);
+
+  // Guardar configuración en Firestore solo después de que se cargó la config inicial
+  useEffect(() => {
+    if (!user || user.id === "guest" || !isOcularConfigLoaded) return;
+    const save = async () => {
+      try {
+        await setDoc(
+          doc(db, "usuarios", user.id),
+          { configuracionesOcular: { imageSize, textSize } },
+          { merge: true }
+        );
+      } catch (e) {
+        console.error("Error guardando configuración ocular:", e);
+      }
+    };
+    save();
+  }, [imageSize, textSize, isOcularConfigLoaded]);
 
   // Función para inyectar estilos dinámicos
   const getDynamicStyles = () => {
