@@ -114,6 +114,45 @@ h1 {
     padding-bottom: 15px; /* Espacio al final para que no se pegue al borde */
 }
 
+/* Grilla bloqueada durante calibración */
+.pictogram-grid-selector.grid-blocked {
+  pointer-events: none;
+  opacity: 0.45;
+  filter: grayscale(40%);
+  transition: opacity 0.4s, filter 0.4s;
+}
+
+/* Banner "calibrando" */
+.calibrating-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 120, 255, 0.18);
+  border: 1px solid rgba(0, 150, 255, 0.4);
+  border-radius: 10px;
+  padding: 8px 18px;
+  margin-bottom: 10px;
+  color: #cce8ff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  backdrop-filter: blur(6px);
+}
+
+.calibrating-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #00aaff;
+  animation: pulse-dot 1s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}
+
 /* Estilo de cada tarjeta/pictograma */
 .pictogram-card {
     background-color: #e9e9e9; /* Fondo gris claro de la tarjeta */
@@ -519,30 +558,34 @@ h1 {
   top: 50%;
   transform: translateY(-50%);
 
-  background: rgba(255, 255, 255, 0.18);
-  border: 1.5px solid rgba(255, 255, 255, 0.5);
-  color: #fff;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
+  background: rgba(30, 80, 160, 0.75);
+  border: 2px solid rgba(100, 160, 255, 0.6);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 10px rgba(0, 80, 200, 0.35);
+  transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
 }
 
 .hud-settings-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: white;
-  transform: translateY(-50%);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+  background: rgba(40, 110, 220, 0.9);
+  border-color: rgba(140, 200, 255, 0.9);
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: 0 4px 14px rgba(0, 100, 255, 0.5);
 }
 
 .hud-settings-btn svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   stroke: #fff;
+  stroke-width: 2.2;
+  filter: drop-shadow(0 0 3px rgba(100,180,255,0.6));
 }
 
 /* ====================

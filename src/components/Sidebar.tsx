@@ -115,19 +115,13 @@ const Sidebar: React.FC = () => {
           </div>
         )}
 
-        {/* 1. Link CÁMARA */}
-        <NavLink to="/camera" className="icon">
-          <img src="/icons/emocion.png" alt="Cámara" className="sidebar-icon" />
-          <span className="link-text">Cámara</span>
-        </NavLink>
-
-        {/* 2. Link PICTOGRAMAS */}
+        {/* 1. Link PICTOGRAMAS */}
         <NavLink to="/pictograms" className="icon">
           <img src="/icons/pictograma.png" alt="Pictogramas" className="sidebar-icon" />
           <span className="link-text">Pictogramas</span>
         </NavLink>
 
-        {/* Grillas personalizadas */}
+        {/* 2. Link GRILLAS PERSONALIZADAS */}
         <div
           className={`icon sidebar-grids-icon${isGridsOpen ? " sgi-open" : ""}`}
           onMouseEnter={() => setIsGridsOpen(true)}
@@ -174,13 +168,19 @@ const Sidebar: React.FC = () => {
         {/* 3. Link SEGUIMIENTO OCULAR */}
         <NavLink to="/eyegestures" className="icon">
           <img src="/icons/visibilidad.png" alt="EyeTracking" className="sidebar-icon" />
-          <span className="link-text">Calibración</span>
+          <span className="link-text">Seguimiento Ocular</span>
         </NavLink>
 
         {/* 4. Link SEÑAS */}
         <NavLink to="/sena" className="icon">
           <img src="/icons/lenguajedesenas.png" alt="Señas" className="sidebar-icon" />
-          <span className="link-text">Señas</span>
+          <span className="link-text">Lengua de Señas</span>
+        </NavLink>
+
+        {/* 5. Link CÁMARA */}
+        <NavLink to="/camera" className="icon">
+          <img src="/icons/emocion.png" alt="Cámara" className="sidebar-icon" />
+          <span className="link-text">Emociones</span>
         </NavLink>
 
 

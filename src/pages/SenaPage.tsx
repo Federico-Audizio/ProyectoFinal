@@ -1,358 +1,348 @@
 import { useEffect, useRef, useState } from "react";
-import { useAudio } from "../hooks/useAudio";
-
+import alphabetImg from "../assets/Alfabeto-Manual-Argentino-LSA-CAS-680x962.png";
 import "./SenaPage.css";
 
-// 🎯 DICCIONARIO LSA64: Mapea el número de predicción (0-63) a su palabra
-const LSA_LABELS = [
-  "Opaco", "Rojo", "Verde", "Amarillo", "Brillante", "Azul claro", "Bandera", "Rosa",
-  "Mujer", "Enemigo", "Hijo", "Hombre", "Lejos", "Cajón", "Nacido", "Aprender",
-  "Llamar", "Desnatadora", "Amargo", "Leche dulce", "Leche", "Agua", "Alimento", "Argentina",
-  "Uruguay", "País", "Apellido", "Dónde", "Imitar", "Cumpleaños", "Desayuno", "Foto",
-  "Hambriento", "Mapa", "Acuñar", "Música", "Barco", "Ninguno", "Nombre", "Paciencia",
-  "Perfume", "Sordo", "Trampa", "Arroz", "Parilla", "Dulce", "Chicle", "Espaguetis",
-  "Yogur", "Aceptar", "Gracias", "Cerrar", "Aparecer", "Aterrizar", "Atrapar", "Ayuda",
-  "Bailar", "Bañarse", "Comprar", "Copiar", "Correr", "Darse cuenta", "Dar", "Encontrar"
-];
+const CONFIDENCE_THRESHOLD = 45;
+const CAPTURE_INTERVAL_MS  = 100;    // 30 frames × 100ms = ~3s
+const COOLDOWN_MS          = 2000;   // pausa entre señas
+const HANDS_GRACE_MS       = 1500;   // tiempo sin manos para abortar captura
+
+type Phase = "idle" | "capturing" | "processing" | "cooldown";
 
 const SenaPage = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef  = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  const [prediction, setPrediction] = useState<string>("Sistema listo");
-  const [error, setError] = useState<string | null>(null);
-  const frameBufferRef = useRef<number[][]>([]);
-  const { playAudio, preloadAudio } = useAudio();
+  const setTypedRef   = useRef<React.Dispatch<React.SetStateAction<string>> | null>(null);
+  const pausedRef     = useRef(false);
+  const textareaRef   = useRef<HTMLTextAreaElement>(null);
+  const isSpeakingRef = useRef(false);
 
-  //let frameCount = 0;
+  const [hasStarted,     setHasStarted]     = useState(false);
+  const [isPaused,       setIsPaused]       = useState(false);
+  const [typedText,      setTypedText]       = useState("");
+  const [phase,          setPhase]           = useState<Phase>("idle");
+  const [frameCount,     setFrameCount]      = useState(0);
+  const [handsVisible,   setHandsVisible]    = useState(false);
+  const [currentLetter,  setCurrentLetter]   = useState<string | null>(null);
+  const [currentConf,    setCurrentConf]     = useState(0);
+  const [topPredictions, setTopPredictions]  = useState<{ class: string; prob: number }[]>([]);
+  const [lastAdded,      setLastAdded]       = useState<string | null>(null);
+  const [error,          setError]           = useState<string | null>(null);
+  const [isSpeaking,     setIsSpeaking]      = useState(false);
 
-  // Para detectar si la persona está haciendo una seña o no, y contar los frames
-  const [hasStarted, setHasStarted] = useState(false); // Controla el botón inicial
-  const [isSigning, setIsSigning] = useState(false);
-  const [frameCount, setFrameCount] = useState(0);
-  const isSigningRef = useRef(false); // <--- NUEVA
-  const predictionRef = useRef("Sistema listo"); // <--- NUEVA
-  const prevKeypointsRef = useRef<number[] | null>(null);
-  const [topPredictions, setTopPredictions] = useState<any[]>([]);
+  setTypedRef.current    = setTypedText;
+  isSpeakingRef.current  = isSpeaking;
 
-  // Función auxiliar para actualizar ambos al mismo tiempo
-  const updatePrediction = (msg: string) => {
-    setPrediction(msg);
-    predictionRef.current = msg;
+  // ── Helpers de edición con cursor ────────────────────────────────────────
+  const insertAtCursor = (text: string) => {
+    const ta = textareaRef.current;
+    if (!ta) { setTypedText(p => p + text); return; }
+    const s = ta.selectionStart, e = ta.selectionEnd;
+    setTypedText(prev => prev.slice(0, s) + text + prev.slice(e));
+    requestAnimationFrame(() => ta.setSelectionRange(s + text.length, s + text.length));
   };
 
-
-  const getMovement = (prev: number[], curr: number[]) => {
-    let total = 0;
-    for (let i = 0; i < curr.length; i++) {
-      total += Math.abs(curr[i] - prev[i]);
+  const deleteAtCursor = () => {
+    const ta = textareaRef.current;
+    if (!ta) { setTypedText(p => p.slice(0, -1)); return; }
+    const s = ta.selectionStart, e = ta.selectionEnd;
+    if (s !== e) {
+      setTypedText(prev => prev.slice(0, s) + prev.slice(e));
+      requestAnimationFrame(() => ta.setSelectionRange(s, s));
+    } else if (s > 0) {
+      setTypedText(prev => prev.slice(0, s - 1) + prev.slice(s));
+      requestAnimationFrame(() => ta.setSelectionRange(s - 1, s - 1));
     }
-    return total;
   };
 
-  // Extrae los keypoints y asegura que siempre devuelva un array de 126 elementos
-  const extractKeypoints = (results: any): number[] => {
-    let leftHand = new Array(63).fill(0);
-    let rightHand = new Array(63).fill(0);
+  // Ajustar altura del textarea al contenido (fallback para field-sizing: content)
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = `${ta.scrollHeight}px`;
+  }, [typedText]);
 
-    if (results.multiHandLandmarks && results.multiHandedness) {
-      for (let i = 0; i < results.multiHandLandmarks.length; i++) {
-        const landmarks = results.multiHandLandmarks[i];
-        const handedness = results.multiHandedness[i].label;
+  // (el listener global de teclado se registra después de definir playText/stopSpeech)
 
-        const flatLandmarks = landmarks.flatMap((lm: any) => [lm.x, lm.y, lm.z]);
-
-        if (handedness === 'Left') {
-          leftHand = flatLandmarks;
-        } else if (handedness === 'Right') {
-          rightHand = flatLandmarks;
-        }
-      }
-    }
-
-    return [...leftHand, ...rightHand];
-  };
-
+  const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
   useEffect(() => {
-    let camera: any = null;
+    if (!hasStarted) return;
     let active = true;
 
-    const log = (msg: string) => console.log(`[CameraLog] ${msg}`);
+    const captureFrame = (): string => {
+      const v = videoRef.current!;
+      const c = canvasRef.current!;
+      c.width  = v.videoWidth;
+      c.height = v.videoHeight;
+      c.getContext("2d")!.drawImage(v, 0, 0);
+      return c.toDataURL("image/jpeg", 0.75);
+    };
 
-    const init = async () => {
-      try {
-        log("1. Verificando acceso a hardware...");
-        // Esto fuerza al navegador a pedir permiso INMEDIATAMENTE
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        log("Permiso concedido. Stream obtenido.");
-        
-        // Detenemos este stream temporal para que MediaPipe pueda tomar el control después
-        stream.getTracks().forEach(track => track.stop());
+    const runLoop = async () => {
+      while (active) {
+        const video = videoRef.current;
+        if (!video || video.videoWidth === 0) { await sleep(200); continue; }
 
-        log("2. Cargando scripts de MediaPipe...");
-        const scripts = [
-          { src: "https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js", id: "mp-hands" },
-          { src: "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js", id: "mp-camera" },
-          { src: "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js", id: "mp-drawing" }
-        ];
+        // ── Pausa ─────────────────────────────────────────────────────
+        while (active && pausedRef.current) { await sleep(200); }
+        if (!active) break;
 
-        for (const s of scripts) {
-          if (!document.getElementById(s.id)) {
-            await new Promise((resolve, reject) => {
-              const script = document.createElement("script");
-              script.id = s.id;
-              script.src = s.src;
-              script.onload = resolve;
-              script.onerror = reject;
-              document.body.appendChild(script);
+        // ── FASE 1: esperar manos ──────────────────────────────────────
+        setPhase("idle");
+        let handsFound = false;
+        while (active && !handsFound) {
+          try {
+            const res  = await fetch("http://localhost:5000/check-hands", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ frame: captureFrame() }),
             });
+            handsFound = (await res.json()).has_hands ?? false;
+            setError(null);
+          } catch {
+            setError("Sin conexión con el backend");
+          }
+          if (!handsFound) {
+            setHandsVisible(false);
+            setCurrentLetter(null);
+            setTopPredictions([]);
+            await sleep(300);
           }
         }
-        log("Scripts cargados correctamente.");
+        if (!active) break;
+        setHandsVisible(true);
 
-        if (!active || !videoRef.current || !canvasRef.current) return;
+        // ── FASE 2: capturar 30 frames (con control de pérdida de manos) ──
+        setPhase("capturing");
+        const frames: string[] = [];
+        let noHandsSince: number | null = null;
+        let handsAborted = false;
 
-        // @ts-ignore
-        const hands = new window.Hands({
-          locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
-        });
+        for (let i = 0; i < 30; i++) {
+          if (!active) break;
 
-        hands.setOptions({
-          maxNumHands: 2,
-          modelComplexity: 1,
-          minDetectionConfidence: 0.5,
-          minTrackingConfidence: 0.5,
-        });
+          const frame = captureFrame();
+          frames.push(frame);
+          setFrameCount(i + 1);
 
-        hands.onResults((results: any) => {
-          if (!canvasRef.current || !active) return;
-          const canvasCtx = canvasRef.current.getContext("2d")!;
-          canvasCtx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-          
-          if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-            // 1. Extraer keypoints de la primera mano detectada
-            //const hand = results.multiHandLandmarks[0];
-            // Convertir 21 puntos (x, y, z) en un array plano de 63 números
-            //const rawkeypoints = hand.flatMap((point: any) => [point.x, point.y, point.z]);
-            //const keypoints = normalizeKeypoints(rawkeypoints);
-
-            const keypoints = extractKeypoints(results);
-            // 2. Enviar a tu API de Flask
-            const prev = prevKeypointsRef.current;
-
-            if (prev) {
-              const movement = getMovement(prev, keypoints);
-
-              const canCapture = !predictionRef.current.includes("Seña detectada");
-
-              if (movement > 0.02 && canCapture) {
-                // 🟢 EMPEZÓ / SIGUE LA SEÑA
-                if (!isSigningRef.current) {
-                  isSigningRef.current = true;
-                  setIsSigning(true);
-                  frameBufferRef.current = []; // Limpiamos para una nueva seña
-                  console.log("iniciando captura de seña...");
+          // Chequeo en paralelo cada 3 frames (cada 300 ms) sin bloquear
+          if (i % 3 === 0) {
+            fetch("http://localhost:5000/check-hands", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ frame }),
+            })
+              .then(r => r.json())
+              .then(d => {
+                if (!d.has_hands) {
+                  if (noHandsSince === null) noHandsSince = Date.now();
+                } else {
+                  noHandsSince = null;
                 }
-
-                 // 🔥 BUFFER CONTINUO (SLIDING WINDOW)
-                frameBufferRef.current.push(keypoints);
-
-                if (frameBufferRef.current.length > 30) {
-                  frameBufferRef.current.shift(); // elimina el más viejo
-                }
-
-                setFrameCount(frameBufferRef.current.length);
-
-                // 🚀 Siempre que haya 30 → predice
-                if (frameBufferRef.current.length === 30) {
-                  sendToBackend([...frameBufferRef.current]);
-                }
-              } else {
-                // 🔴 MANO QUIETA → reset
-                //if (isSigning) {
-                  //updateIsSigning(false);
-                  //frameBufferRef.current = [];
-                //}
-              }
-            }
-
-            prevKeypointsRef.current = keypoints;
-
-            // 3. Dibujar (como ya lo hacías)
-            for (const landmarks of results.multiHandLandmarks) {
-              // @ts-ignore
-              window.drawConnectors(canvasCtx, landmarks, window.HAND_CONNECTIONS, { color: "#00FF00" });
-              // @ts-ignore
-              window.drawLandmarks(canvasCtx, landmarks, { color: "#FF0000", radius: 2 });
-            }
+              })
+              .catch(() => {});
           }
-        });
 
-        log("3. Iniciando Camera Utils...");
-        // @ts-ignore
-        camera = new window.Camera(videoRef.current, {
-          onFrame: async () => {
-            if (active && videoRef.current) await hands.send({ image: videoRef.current });
-          },
-          width: 640,
-          height: 480,
-        });
+          // Si llevamos más de HANDS_GRACE_MS sin manos → abortar
+          if (noHandsSince !== null && Date.now() - noHandsSince >= HANDS_GRACE_MS) {
+            handsAborted = true;
+            break;
+          }
 
-        await camera.start();
-        log("Cámara iniciada con éxito.");
-        setPrediction("Sistema listo");
+          if (i < 29) await sleep(CAPTURE_INTERVAL_MS);
+        }
 
-      } catch (err: any) {
-        console.error("ERROR CRÍTICO:", err);
-        setError(err.message || "Error desconocido");
-        setPrediction("Error al iniciar");
-      }
-    };
+        setFrameCount(0);
+        if (!active) break;
 
-    // Función para enviar los datos
-    const sendToBackend = async (sequence: number[][]) => {
-      try {
-        const response = await fetch("http://localhost:5000/predict-lsa", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sequence })
-        });
-        //if (!response.ok) {
-          //throw new Error(`HTTP error! status: ${response.status}`);
-        //}
+        if (handsAborted || frames.length < 30) {
+          setHandsVisible(false);
+          setCurrentLetter(null);
+          setTopPredictions([]);
+          setPhase("idle");
+          continue; // volver a detectar manos
+        }
 
-        const data = await response.json();
-        
-        if (data.prediction !== null && data.prediction !== undefined) {
-          // Buscamos el numero (ej: 0 ) en la lista y obtenemos el nombre de la seña
-          if (data.top5) {
-
-            const best = data.top5[0];
-            const bestName = LSA_LABELS[best.class];
-            const bestProb = (best.prob * 100).toFixed(1);
-
-            updatePrediction(`Seña detectada: ${bestName} (${bestProb}%)`);
-
-            playAudio(bestName); // Reproducir el audio de la seña detectada
-            
-            console.log("Top 5 predicciones:");
-
-            data.top5.forEach((p: any) => {
-            const name = LSA_LABELS[p.class];
-            const prob = (p.prob * 100).toFixed(1);
-            console.log(`${name}: ${prob}%`);
+        // ── FASE 3: enviar al backend y esperar resultado ─────────────
+        setPhase("processing");
+        setFrameCount(0);
+        try {
+          const res  = await fetch("http://localhost:5000/predict-abcdario", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ frames }),
           });
+          const data = await res.json();
+          setError(null);
+
+          if (data.status === "no_hands") {
+            setHandsVisible(false);
+            setCurrentLetter(null);
+            setTopPredictions([]);
+            continue;
+          }
+
+          setCurrentLetter(data.prediction);
+          setCurrentConf(data.confidence);
+          setTopPredictions(data.top5 ?? []);
+
+          // ── FASE 4: si pasa el umbral → escribir + cooldown ──────────
+          if (data.confidence >= CONFIDENCE_THRESHOLD) {
+            const letter = data.prediction as string;
+            setTypedRef.current!(prev => prev + letter);
+            setLastAdded(letter);
+            setPhase("cooldown");
+            setCurrentLetter(null);
+            setTopPredictions([]);
+            await sleep(COOLDOWN_MS);
+            if (!active) break;
+            setLastAdded(null);
+          }
+          // si no pasa el umbral: vuelve directo a detectar manos
+        } catch {
+          setError("Error al procesar la seña");
+          await sleep(1000);
         }
-
-          // 🎯 EL REINICIO:
-          // Esperamos un momento para que el usuario vea el resultado y limpiamos
-          setTimeout(() => {
-            updatePrediction("Sistema listo");
-            setFrameCount(0);
-            updateIsSigning(false);
-            frameBufferRef.current = [];
-            prevKeypointsRef.current = null; // Olvidamos el movimiento previo
-          }, 3000);
-
-          setTopPredictions(data.top5);
-
-        } else {
-          updatePrediction("No se reconoció la seña, intenta de nuevo.");
-          setTimeout(() => updatePrediction("Sistema listo"), 2000)
-        }
-      } catch (err) {
-        console.error("Error enviando a backend:", err);
       }
     };
 
-    const normalizeKeypoints = (keypoints: number[]) => {
-      const base_x = keypoints[0];
-      const base_y = keypoints[1];
-      const base_z = keypoints[2];
-
-      return keypoints.map((val, i) => {
-        if (i % 3 === 0) return val - base_x; // X
-        if (i % 3 === 1) return val - base_y; // Y
-        return val - base_z;                 // Z
-      });
-    };
-
-    // Crea una función auxiliar para actualizar ambos
-    const updatePrediction = (msg: string) => {
-      setPrediction(msg);
-      predictionRef.current = msg;
-    };
-
-    const updateIsSigning = (val: boolean) => {
-      setIsSigning(val);
-      isSigningRef.current = val;
-    };
-
-    init();
+    navigator.mediaDevices
+      .getUserMedia({ video: { width: 640, height: 480 } })
+      .then(stream => {
+        if (!active) { stream.getTracks().forEach(t => t.stop()); return; }
+        streamRef.current = stream;
+        const v = videoRef.current!;
+        v.srcObject = stream;
+        v.onloadeddata = () => { if (active) runLoop(); };
+      })
+      .catch(e => setError(`Cámara no disponible: ${e.message}`));
 
     return () => {
       active = false;
-      if (camera) camera.stop();
+      streamRef.current?.getTracks().forEach(t => t.stop());
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasStarted]);
 
+  const togglePause = () => {
+    pausedRef.current = !pausedRef.current;
+    setIsPaused(pausedRef.current);
+    if (pausedRef.current) setPhase("idle");
+  };
+
+  const playText = () => {
+    if (!typedText.trim()) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(typedText);
+    utt.lang    = "es-ES";
+    utt.rate    = 0.9;
+    utt.onstart = () => setIsSpeaking(true);
+    utt.onend   = () => setIsSpeaking(false);
+    utt.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utt);
+  };
+  const stopSpeech = () => { window.speechSynthesis.cancel(); setIsSpeaking(false); };
+
+  // ── Teclado global (cuando el textarea NO tiene el foco) ─────────────────
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (document.activeElement === textareaRef.current) return;
+      if (e.key === " ")         { e.preventDefault(); setTypedText(p => p + " "); }
+      if (e.key === "Backspace") { e.preventDefault(); setTypedText(p => p.slice(0, -1)); }
+      if (e.key === "Enter")     { e.preventDefault(); isSpeakingRef.current ? stopSpeech() : playText(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="sena-tracking-container">
 
-      {/* 🔹 ÁREA DE LA CÁMARA */}
+      {/* ── Fila principal: cámara + referencia de señas ── */}
+      <div className="sena-main-row">
+
+      {/* ── Cámara ── */}
       <div className="sena-camera-area">
         <div className="sena-video-wrapper">
-          
+          <canvas ref={canvasRef} style={{ display: "none" }} />
+
           {!hasStarted ? (
-            /* BOTÓN INTEGRADO EN EL RECUADRO DE LA CÁMARA */
             <div className="sena-placeholder-overlay">
-              <button 
-                className="btn-activate-camera"
-                onClick={() => setHasStarted(true)}
-              >
-                <span className="icon">📷</span>
-                Activar Cámara y Voz
+              <button className="btn-activate-camera" onClick={() => setHasStarted(true)}>
+                Iniciar reconociemiento de señas
               </button>
+              <p className="btn-subtitle">Reconocimiento de letras A–Z</p>
             </div>
           ) : (
-            /* ELEMENTOS DE LA CÁMARA (Se activan al pulsar) */
             <>
-              <div className={`sign-indicator ${isSigning ? "active" : ""}`} />
-              
-              <video 
-                ref={videoRef} 
-                autoPlay 
-                playsInline 
-                muted 
-                className="sena-video-element" 
-              />
-              <canvas 
-                ref={canvasRef} 
-                width="640" 
-                height="480" 
-                className="sena-canvas-element" 
-              />
-              
+              <video ref={videoRef} autoPlay playsInline muted className="sena-video-element" />
+
               <div className="sena-tech-hud">
-                <div className="corner top-left"></div>
-                <div className="corner top-right"></div>
-                <div className="corner bottom-left"></div>
-                <div className="corner bottom-right"></div>
+                <div className="corner top-left" />
+                <div className="corner top-right" />
+                <div className="corner bottom-left" />
+                <div className="corner bottom-right" />
+                <div className="scan-line" />
               </div>
 
-              {isSigning && (
-                <div className="frame-counter">
-                  <div className="frame-text">
-                    Capturando seña {frameCount}/30
+              {/* Botón pausa/reanudar */}
+              <button
+                className={`sena-pause-btn ${isPaused ? "paused" : ""}`}
+                onClick={togglePause}
+              >
+                <span className="btn-pause-icon">{isPaused ? "▶" : "⏸"}</span>
+                {isPaused ? "Reanudar" : "Pausar"}
+              </button>
+
+              {/* Overlay pausa */}
+              {isPaused && (
+                <div className="sena-processing-overlay sena-paused-overlay">
+                  <div className="sena-pause-icon">⏸</div>
+                  <span className="sena-paused-label">Reconocimiento pausado</span>
+                  <span className="sena-paused-sub">Presioná ▶ para reanudar</span>
+                </div>
+              )}
+
+              {/* Overlay de carga mientras el backend procesa */}
+              {!isPaused && phase === "processing" && (
+                <div className="sena-processing-overlay">
+                  <div className="sena-spinner" />
+                  <span>Analizando seña…</span>
+                </div>
+              )}
+
+              {/* Overlay inferior de estado */}
+              <div className="sena-progress-overlay">
+                {phase === "cooldown" ? (
+                  <div className="sena-cooldown-badge">
+                    <span className="cooldown-tick">✓</span>
+                    <strong>{lastAdded}</strong> agregada
                   </div>
-                  <div className="progress-bar">
-                    <div 
-                      className="progress-fill"
-                      style={{ width: `${(frameCount / 30) * 100}%` }}
-                    />
+                ) : !handsVisible && phase === "idle" ? (
+                  <div className="sena-no-hands-badge">
+                    <span>👐</span> Mostrá las manos
                   </div>
+                ) : phase === "capturing" ? (
+                  <div className="sena-buffer-widget">
+                    <div className="sena-buffer-label">
+                      Capturando seña…
+                      <span className="sena-buffer-count">{frameCount}/30</span>
+                    </div>
+                    <div className="sena-buffer-bar">
+                      <div className="sena-buffer-fill" style={{ width: `${(frameCount / 30) * 100}%` }} />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Letra detectada */}
+              {currentLetter && phase !== "cooldown" && (
+                <div className={`sena-letter-overlay ${currentConf >= CONFIDENCE_THRESHOLD ? "high" : "low"}`}>
+                  {currentLetter}
+                  <span className="sena-letter-conf">{currentConf.toFixed(0)}%</span>
                 </div>
               )}
             </>
@@ -360,97 +350,100 @@ const SenaPage = () => {
         </div>
       </div>
 
-      {/* 🔹 PANEL INFERIOR (Siempre visible para mantener la estructura) */}
-      <div className="sena-bottom-panel">
-        {/* ... (Todo el contenido de resultados y topPredictions igual que antes) */}
-        <div className="sena-results-area">
-          <h2 className="sena-title">Lenguaje de Señas (LSA-T)</h2>
-          <div className={`sena-prediction-display ${prediction.includes('Seña detectada') ? 'success' : 'waiting'}`}>
-             {topPredictions.map((p, i) => {
-                    const name = LSA_LABELS[p.class];
-                    const prob = (p.prob * 100).toFixed(1);
-                    return (
-                      <div key={i} className="top5-item">
-                        <div className="top5-label"><span>{name}</span><span>{prob}%</span></div>
-                        <div className="top5-bar"><div className="top5-fill" style={{ width: `${prob}%` }} /></div>
-                      </div>
-                    );
-                  })}
+        {/* ── Panel referencia alfabeto ── */}
+        <div className="sena-alphabet-panel">
+          <div className="sena-alphabet-scroll">
+            <img src={alphabetImg} alt="Alfabeto Manual Argentino LSA" className="sena-alphabet-img" />
           </div>
         </div>
+
+      </div>{/* fin sena-main-row */}
+
+      {/* ── Panel inferior ── */}
+      <div className="sena-bottom-panel">
+        {error && <div className="sena-error-message"><b>Error:</b> {error}</div>}
+
+        <div className="abc-text-area">
+          <textarea
+            ref={textareaRef}
+            className="abc-textarea"
+            value={typedText}
+            readOnly
+            rows={1}
+            onChange={() => {}}
+            onKeyDown={e => {
+              if (e.key === "Enter")     { e.preventDefault(); isSpeaking ? stopSpeech() : playText(); }
+              if (e.key === " ")         { e.preventDefault(); insertAtCursor(" "); }
+              if (e.key === "Backspace") { e.preventDefault(); deleteAtCursor(); }
+            }}
+            placeholder="Mostrá una seña para escribir…"
+            spellCheck={false}
+          />
+          <p className="abc-keyboard-hint">
+            <kbd>Espacio</kbd> espacio &nbsp;·&nbsp; <kbd>⌫</kbd> borrar &nbsp;·&nbsp; <kbd>Enter</kbd> reproducir &nbsp;·&nbsp; click para mover el cursor
+          </p>
+        </div>
+
+        <div className="abc-controls">
+          <button
+            className={`abc-btn abc-btn-play ${isSpeaking ? "speaking" : ""}`}
+            onClick={isSpeaking ? stopSpeech : playText}
+            disabled={!typedText.trim()}
+          >
+            {isSpeaking
+              ? <><span className="btn-icon">⏹</span> Detener</>
+              : <><span className="btn-icon">▶</span> Reproducir</>
+            }
+          </button>
+          <button className="abc-btn abc-btn-space" onClick={() => insertAtCursor(" ")}>
+            <span className="btn-icon">⎵</span> Espacio
+          </button>
+          <button
+            className="abc-btn abc-btn-delete"
+            onClick={deleteAtCursor}
+            disabled={!typedText}
+          >
+            <span className="btn-icon">⌫</span> Borrar
+          </button>
+          <button
+            className="abc-btn abc-btn-clear"
+            onClick={() => setTypedText("")}
+            disabled={!typedText}
+          >
+            <span className="btn-icon">✕</span> Limpiar
+          </button>
+        </div>
+
+        {topPredictions.length > 0 && (
+          <div className="abc-top5">
+            <p className="abc-top5-title">Predicciones actuales</p>
+            {topPredictions.map((p, i) => (
+              <div key={i} className="top5-item">
+                <div className="top5-label">
+                  <span className={`top5-letter ${i === 0 ? "top5-first" : ""}`}>{p.class}</span>
+                  <span className="top5-prob">{p.prob.toFixed(1)}%</span>
+                </div>
+                <div className="top5-bar">
+                  <div
+                    className="top5-fill"
+                    style={{
+                      width: `${p.prob}%`,
+                      background: i === 0 && p.prob >= CONFIDENCE_THRESHOLD
+                        ? "linear-gradient(90deg,#28a745,#5cb85c)"
+                        : "linear-gradient(90deg,#00c6ff,#0072ff)",
+                    }}
+                  />
+                  {i === 0 && (
+                    <div className="top5-threshold" style={{ left: `${CONFIDENCE_THRESHOLD}%` }} />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 };
- /* 3. RENDERIZADO CONDICIONAL
-  return (
-    <div className="sena-tracking-container">
-      
-      {!hasStarted ? (
-        /* PANTALLA INICIAL DE ACCESIBILIDAD 
-        <div className="sena-start-overlay">
-          <div className="start-card">
-            <h1>Asistente LSA</h1>
-            <p>Para comenzar, activa la cámara y el sistema de voz.</p>
-            <button 
-              className="btn-start-assistant"
-              onClick={() => setHasStarted(true)}
-            >
-              Iniciar Asistente
-            </button>
-          </div>
-        </div>
-      ) : (
-        /* INTERFAZ DE CÁMARA ACTIVA 
-        <>
-          <div className="sena-camera-area">
-            <div className="sena-video-wrapper">
-              <div className={`sign-indicator ${isSigning ? "active" : ""}`} />
-              <video ref={videoRef} autoPlay playsInline muted className="sena-video-element" />
-              <canvas ref={canvasRef} width="640" height="480" className="sena-canvas-element" />
-              
-              <div className="sena-tech-hud">
-                <div className="corner top-left"></div>
-                <div className="corner top-right"></div>
-                <div className="corner bottom-left"></div>
-                <div className="corner bottom-right"></div>
-              </div>
-
-              {isSigning && (
-                <div className="frame-counter">
-                  <div className="frame-text">Capturando seña {frameCount}/30</div>
-                  <div className="progress-bar">
-                    <div className="progress-fill" style={{ width: `${(frameCount / 30) * 100}%` }} />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="sena-bottom-panel">
-            {error && <div className="sena-error-message"><b>Error:</b> {error}</div>}
-            <div className="sena-results-area">
-              <h2 className="sena-title">Lenguaje de Señas (LSA-T)</h2>
-              <div className={`sena-prediction-display ${prediction.includes('Seña detectada') ? 'success' : 'waiting'}`}>
-                <div className="top5-container">
-                  {topPredictions.map((p, i) => {
-                    const name = LSA_LABELS[p.class];
-                    const prob = (p.prob * 100).toFixed(1);
-                    return (
-                      <div key={i} className="top5-item">
-                        <div className="top5-label"><span>{name}</span><span>{prob}%</span></div>
-                        <div className="top5-bar"><div className="top5-fill" style={{ width: `${prob}%` }} /></div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-};*/
 
 export default SenaPage;

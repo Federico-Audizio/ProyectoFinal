@@ -3,6 +3,9 @@ import "./EyeTrackingPage.css";
 import FiEye from "../components/Icons/FiEye";
 import FiCheckCircle from "../components/Icons/FiCheckCircle";
 import { useAudio } from "../hooks/useAudio";
+import { useAuth } from "../contexts/AuthContext";
+import { db } from "../firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 // 🎯 1. Interfaz para definir pictogramas
 interface Pictogram {
@@ -139,13 +142,17 @@ const EyeTrackingPage: React.FC = () => {
 
   // Centrado de rostro refs
   //const videoRef = useRef<HTMLVideoElement | null>(null);
-  const faceOkRef = useRef(false); // 👈 ESTO ES LA CLAVE
+  const faceOkRef        = useRef(false);
+  const calibratingRef   = useRef(true);  // true = calibración activa, no permitir selección
+  const [isCalibrating,  setIsCalibrating] = useState(true);
 
   
   //const stableTimeRef = useRef<number | null>(null);
-  const hudRef = useRef<HTMLDivElement>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastHoveredRef = useRef<number | null>(null);
+  const hudRef          = useRef<HTMLDivElement>(null);
+  const timerRef        = useRef<NodeJS.Timeout | null>(null);
+  const lastHoveredRef  = useRef<number | null>(null);
+  const hoveredRectRef  = useRef<DOMRect | null>(null);   // rect del pictograma activo
+  const TOLERANCE_PX    = 90;  // margen extra en px alrededor del pictograma
   const BACK_BUTTON_ID = -99;
 
   // 🔹 Función para encontrar pictograma por ID
@@ -166,7 +173,8 @@ const EyeTrackingPage: React.FC = () => {
 
   // 🔹 Click (o selección futura por mirada)
   const handlePictogramClick = (id: number) => {
-    // 1. Evitar dobles clicks si ya se está animando
+    // Bloquear si la calibración no terminó
+    if (calibratingRef.current) return;
     if (animatingId === id) return;
     // 2. Activar la animación visual
     setAnimatingId(id);
@@ -191,7 +199,9 @@ const EyeTrackingPage: React.FC = () => {
       }
       
       setAnimatingId(null);
-      setHoveredId(null); 
+      setHoveredId(null);
+      lastHoveredRef.current = null;
+      hoveredRectRef.current = null;
     }, 300); // 3 Segundos// <--- Este tiempo debe coincidir con el de tu CSS (.3s)
   };
 
@@ -267,6 +277,49 @@ const EyeTrackingPage: React.FC = () => {
   const [textSize, setTextSize] = useState<SizeOption>("normal");
   const [imageSize, setImageSize] = useState<SizeOption>("normal");
   const [isSizeModalOpen, setIsSizeModalOpen] = useState(false);
+
+  const { user } = useAuth();
+  const [isOcularConfigLoaded, setIsOcularConfigLoaded] = useState(false);
+
+  // Cargar configuración desde Firestore al montar
+  useEffect(() => {
+    if (!user || user.id === "guest") {
+      setIsOcularConfigLoaded(true);
+      return;
+    }
+    const load = async () => {
+      try {
+        const snap = await getDoc(doc(db, "usuarios", user.id));
+        if (snap.exists()) {
+          const cfg = snap.data()?.configuracionesOcular;
+          if (cfg?.imageSize) setImageSize(cfg.imageSize as SizeOption);
+          if (cfg?.textSize) setTextSize(cfg.textSize as SizeOption);
+        }
+      } catch (e) {
+        console.error("Error cargando configuración ocular:", e);
+      } finally {
+        setIsOcularConfigLoaded(true);
+      }
+    };
+    load();
+  }, [user]);
+
+  // Guardar configuración en Firestore solo después de que se cargó la config inicial
+  useEffect(() => {
+    if (!user || user.id === "guest" || !isOcularConfigLoaded) return;
+    const save = async () => {
+      try {
+        await setDoc(
+          doc(db, "usuarios", user.id),
+          { configuracionesOcular: { imageSize, textSize } },
+          { merge: true }
+        );
+      } catch (e) {
+        console.error("Error guardando configuración ocular:", e);
+      }
+    };
+    save();
+  }, [imageSize, textSize, isOcularConfigLoaded]);
 
   // Función para inyectar estilos dinámicos
   const getDynamicStyles = () => {
@@ -353,12 +406,15 @@ const EyeTrackingPage: React.FC = () => {
 
         // 📍 Actualiza cursor y detecta coordenadas
         const onPoint = (point: number[], calibration: boolean) => {
-          // 🛑 BLOQUEO ABSOLUTO SI EL ROSTRO NO ESTÁ OK
-          // Si el visor está en rojo, ignoramos cualquier dato que venga del script
-          
+          // Actualizar estado de calibración (calibration=true → aún calibrando)
+          if (calibratingRef.current !== calibration) {
+            calibratingRef.current = calibration;
+            setIsCalibrating(calibration);
+          }
+
           // 1. Consultamos al semáforo
           const isStableAndCentered = checkFacePosition();
-          
+
           // 2. Guardamos el estado real
           faceOkRef.current = isStableAndCentered;
 
@@ -450,29 +506,54 @@ const EyeTrackingPage: React.FC = () => {
             el.classList.contains("pictogram-card")
           ) as HTMLElement | undefined;
 
+          // Bloquear selección mientras se calibra
+          if (calibratingRef.current) {
+            setHoveredId(null);
+            if (timerRef.current) clearTimeout(timerRef.current);
+            lastHoveredRef.current = null;
+            hoveredRectRef.current = null;
+            return;
+          }
+
           if (pictogramEl) {
             const id = Number(pictogramEl.dataset.id);
 
-            // efecto hover
+            // Actualizar siempre el rect del elemento activo
+            hoveredRectRef.current = pictogramEl.getBoundingClientRect();
+
             if (lastHoveredRef.current !== id) {
+              // Nuevo pictograma: reiniciar timer
+              if (timerRef.current) clearTimeout(timerRef.current);
               lastHoveredRef.current = id;
               setHoveredId(id);
 
-              // ⭐ Activa animación de borde 3s
-              setHoveredId(id);
-
-              if (timerRef.current) clearTimeout(timerRef.current);
-
-              // COINCIDE CON CSS: 3000ms = 3 segundos
               timerRef.current = setTimeout(() => {
                 handlePictogramClick(id);
-                
-                // Opcional: Feedback visual extra (click)
                 pictogramEl.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-              }, 3000); 
+              }, 3000);
             }
+            // Si es el mismo: no hacer nada, el timer sigue corriendo
           } else {
+            // El cursor no está sobre ningún pictograma.
+            // Verificar si sigue dentro de la zona de tolerancia del último pictograma.
+            const rect = hoveredRectRef.current;
+            if (rect && lastHoveredRef.current !== null) {
+              const inTolerance =
+                px >= rect.left   - TOLERANCE_PX &&
+                px <= rect.right  + TOLERANCE_PX &&
+                (py - window.scrollY) >= rect.top    - TOLERANCE_PX &&
+                (py - window.scrollY) <= rect.bottom + TOLERANCE_PX;
+
+              if (inTolerance) {
+                // Pequeño desvío: mantener selección y timer activos
+                return;
+              }
+            }
+
+            // Fuera de la zona de tolerancia: cancelar
             setHoveredId(null);
+            lastHoveredRef.current = null;
+            hoveredRectRef.current = null;
             if (timerRef.current) clearTimeout(timerRef.current);
           }
         };
@@ -700,8 +781,16 @@ const EyeTrackingPage: React.FC = () => {
         }}
       ></div>
 
+      {/* Banner "calibrando" visible sobre la grilla cuando cara OK pero aún calibrando */}
+      {faceOk && isCalibrating && (
+        <div className="calibrating-banner">
+          <span className="calibrating-dot" />
+          Calibrando mirada… Seguí el punto con los ojos
+        </div>
+      )}
+
       {/* 📦 Cuadrícula de pictogramas */}
-      <div className="pictogram-grid-selector">
+      <div className={`pictogram-grid-selector ${isCalibrating ? "grid-blocked" : ""}`}>
         {pictogramsToShow.map((pictogram) => (
           <div
             key={pictogram.id}
