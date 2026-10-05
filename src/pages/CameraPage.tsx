@@ -3,10 +3,10 @@ import CameraCapture from "../components/CameraCapture";
 import "./CameraPage.css";
 import { useAudio } from "../hooks/useAudio";
 
-// Define un mapeo de emociones a un array de rutas de pictogramas
+// Define un mapeo de emociones a un array de rutas de pictogramas (claves = nombres YOLO en español)
 const emotionPictogramMap: { [key: string]: { src: string; label: string; color: string }[] } = {
   neutral: [],
-  happy: [
+  alegre: [
     { src: "/public/pictograms/happy/amor.webp",        label: "Amor",         color: "#28a745" },
     { src: "/public/pictograms/happy/deporte.webp",     label: "Deporte",      color: "#28a745" },
     { src: "/public/pictograms/happy/orgulloso.webp",   label: "Orgulloso",    color: "#28a745" },
@@ -14,7 +14,7 @@ const emotionPictogramMap: { [key: string]: { src: string; label: string; color:
     { src: "/public/pictograms/happy/me-gusta-eso.webp",label: "Me gusta eso", color: "#28a745" },
     { src: "/public/pictograms/happy/música.webp",      label: "Música",       color: "#28a745" },
   ],
-  sad: [
+  triste: [
     { src: "/public/pictograms/sad/dolor.webp",                label: "Dolor",           color: "#007FFF" },
     { src: "/public/pictograms/sad/incómodo.png",              label: "Incómodo",        color: "#007FFF" },
     { src: "/public/pictograms/sad/me molesta el ruido.png",   label: "Molesta el ruido",color: "#007FFF" },
@@ -22,7 +22,7 @@ const emotionPictogramMap: { [key: string]: { src: string; label: string; color:
     { src: "/public/pictograms/sad/dolor de pierna.png",       label: "Dolor de pierna", color: "#007FFF" },
     { src: "/public/pictograms/sad/solo.png",                  label: "Solo",            color: "#007FFF" },
   ],
-  angry: [
+  enojado: [
     { src: "/public/pictograms/angry/aburrimiento.png",    label: "Aburrimiento",    color: "#CC0000" },
     { src: "/public/pictograms/angry/agobiado.png",        label: "Agobiado",        color: "#CC0000" },
     { src: "/public/pictograms/angry/déjame solo.png",     label: "Déjame solo",     color: "#CC0000" },
@@ -32,28 +32,33 @@ const emotionPictogramMap: { [key: string]: { src: string; label: string; color:
   ],
 };
 
-// Mapeo para normalizar la salida del modelo a la clave de nuestro mapa
+// Normaliza la clase YOLO a la clave del mapa de pictogramas
 const emotionMap: Record<string, string> = {
-  "happy": "happy",
-  "alegria": "happy", // Si el modelo devuelve "alegria"
-  "angry": "angry",
-  "enojo": "angry",   // Si el modelo devuelve "enojo"
-  "sad": "sad",
-  "tristeza": "sad",  // Si el modelo devuelve "tristeza"
+  "alegre":  "alegre",
+  "happy":   "alegre",
+  "triste":  "triste",
+  "sad":     "triste",
+  "enojado":  "enojado",
+  "enojada":  "enojado",
+  "angry":    "enojado",
   "neutral": "neutral",
-  "detección detenida.": "neutral", 
+  "detección detenida.":   "neutral",
   "esperando detección...": "neutral",
 };
 
 // Emociones que pueden confirmarse (excluye estados transitorios)
-const MEANINGFUL_EMOTIONS = new Set(["happy", "sad", "angry"]);
-// Cuántas detecciones consecutivas para confirmar (cada detección tarda ~2s → 2 = ~4s)
-const CONFIRM_THRESHOLD = 2;
+const MEANINGFUL_EMOTIONS = new Set(["alegre", "triste", "enojado"]);
+const CONFIRM_THRESHOLD_DEFAULT = 2;
+const CONFIRM_THRESHOLD_BY_EMOTION: Record<string, number> = {
+  triste:  1,
+  enojado: 1,
+  enojada: 1,
+};
 
 const emotionLabelMap: Record<string, string> = {
-  happy: "Feliz",
-  sad:   "Triste",
-  angry: "Enojado",
+  alegre:  "Alegre",
+  triste:  "Triste",
+  enojado: "Enojado",
 };
 
 const CameraPage: React.FC = () => {
@@ -75,24 +80,24 @@ const CameraPage: React.FC = () => {
   const handleEmotionDetected = (detectedEmotion: string) => {
     setEmotion(detectedEmotion);
     const normalizedKey = emotionMap[detectedEmotion.toLowerCase()] || "neutral";
+    console.log(`[emo] raw="${detectedEmotion}" key="${normalizedKey}" meaningful=${MEANINGFUL_EMOTIONS.has(normalizedKey)}`);
 
     // Estados transitorios (neutral, error, detectando) no afectan lo confirmado
     if (!MEANINGFUL_EMOTIONS.has(normalizedKey)) return;
 
-    if (pendingEmotionRef.current === normalizedKey) {
-      pendingCountRef.current += 1;
-      if (pendingCountRef.current >= CONFIRM_THRESHOLD) {
-        // ✅ Confirmado: fijar pictogramas
-        setConfirmedEmotion(normalizedKey);
-        setCurrentPictograms(emotionPictogramMap[normalizedKey] || []);
-        setSelectedIndex(null);
-        // Reiniciar para poder confirmar una nueva emoción después
-        pendingCountRef.current = 0;
-      }
-    } else {
-      // Nueva emoción: reiniciar contador
+    const threshold = CONFIRM_THRESHOLD_BY_EMOTION[normalizedKey] ?? CONFIRM_THRESHOLD_DEFAULT;
+
+    if (pendingEmotionRef.current !== normalizedKey) {
       pendingEmotionRef.current = normalizedKey;
-      pendingCountRef.current = 1;
+      pendingCountRef.current = 0;
+    }
+    pendingCountRef.current += 1;
+
+    if (pendingCountRef.current >= threshold) {
+      setConfirmedEmotion(normalizedKey);
+      setCurrentPictograms(emotionPictogramMap[normalizedKey] || []);
+      setSelectedIndex(null);
+      pendingCountRef.current = 0;
     }
   };
 
@@ -125,13 +130,9 @@ const CameraPage: React.FC = () => {
         <div className="camera-wrapper">
           <CameraCapture isStreaming={isStreaming} onEmotionDetected={handleEmotionDetected} />
 
-          {/* Selector de modelo — badge discreto esquina superior derecha */}
-          <div className="camera-model-badge">
-            <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-            >
-              <option value="keras">Keras</option>
+          {/* Selector de modelo — oculto, se usa solo YOLO */}
+          <div className="camera-model-badge" style={{ display: "none" }}>
+            <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
               <option value="yolo">YOLO</option>
             </select>
           </div>

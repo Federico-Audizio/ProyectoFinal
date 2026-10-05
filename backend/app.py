@@ -202,7 +202,12 @@ def preprocess_for_yolo(image_bgr: np.ndarray) -> np.ndarray:
     equalized = clahe.apply(gray)
     return cv2.cvtColor(equalized, cv2.COLOR_GRAY2BGR)
 
-CONF_THRESHOLD = 0.35  # umbral mínimo para reportar una emoción
+CONF_THRESHOLD = 0.60  # umbral general (alegre)
+CONF_THRESHOLD_BY_CLASS = {
+    "triste":  0.55,
+    "enojado": 0.65,
+    "enojada": 0.65,
+}
 
 @app.route('/predict-yolo', methods=['POST'])
 def predict_yolo():
@@ -262,26 +267,27 @@ def predict_yolo():
                 if cls not in face_scores or d["raw_conf"] > face_scores[cls]:
                     face_scores[cls] = d["raw_conf"]
 
-        # Normalizar como porcentaje relativo
-        total = sum(face_scores.values())
+        # Porcentaje real de confianza (sin normalizar); siempre incluir todas las clases
+        all_classes = list(yolo_model.names.values())
         emotion_distribution = {
-            k: round(v / total * 100, 1)
-            for k, v in sorted(face_scores.items(), key=lambda x: -x[1])
+            k: round(face_scores.get(k, 0.0) * 100, 1)
+            for k in sorted(all_classes, key=lambda c: -face_scores.get(c, 0.0))
         }
 
         # Aplicar padding y devolver resultado
         x1, y1, x2, y2 = expand_bbox(mx1, my1, mx2, my2, w_img, h_img, pad=0.20)
         main_conf_pct = round(main["raw_conf"] * 100, 1)
+        effective_threshold = CONF_THRESHOLD_BY_CLASS.get(main["class"], CONF_THRESHOLD)
 
         return jsonify({
             "best": {
                 "class": main["class"],
                 "confidence": main_conf_pct,
                 "bbox": [x1, y1, x2, y2],
-                "above_threshold": main["raw_conf"] >= CONF_THRESHOLD,
+                "above_threshold": main["raw_conf"] >= effective_threshold,
             },
-            "emotion_distribution": emotion_distribution,  # % relativo de cada emoción
-            "threshold": round(CONF_THRESHOLD * 100, 0),   # umbral actual en %
+            "emotion_distribution": emotion_distribution,
+            "threshold": round(effective_threshold * 100, 0),
         })
 
     except Exception as e:

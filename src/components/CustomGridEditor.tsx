@@ -207,26 +207,25 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
     setEditingCell(null);
   };
 
-  // Validación de imagen con backend (Google Vision API)
-  const validateImage = async (file: File) => {
+  // Validación de imagen con backend (Google Vision API) — desactivada temporalmente
+  /* const validateImage = async (file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
 
-  const formData = new FormData();
-  formData.append("image", file);
+    const response = await fetch(
+      "http://TU_IP_VM:5000/validate-image",
+      {
+        method: "POST",
+        body: formData
+      }
+    );
 
-  const response = await fetch(
-    "http://TU_IP_VM:5000/validate-image",
-    {
-      method: "POST",
-      body: formData
+    if (!response.ok) {
+      throw new Error("Error validando imagen");
     }
-  );
 
-  if (!response.ok) {
-    throw new Error("Error validando imagen");
-  }
-
-  return await response.json();
-};
+    return await response.json();
+  }; */
 
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
@@ -247,29 +246,18 @@ const CustomGridEditor: React.FC<Props> = ({ onClose }) => {
   try {
 
     setUploadStatus("loading");
+    setUploadMessage("Subiendo imagen...");
 
-    setUploadMessage(
-      "Validando imagen con el servidor..."
-    );
-
-    const validation =
-      await validateImage(file);
-
-    console.log(
-      "Resultado SafeSearch:",
-      validation
-    );
-
+    /* Validación desactivada temporalmente
+    setUploadMessage("Validando imagen con el servidor...");
+    const validation = await validateImage(file);
+    console.log("Resultado SafeSearch:", validation);
     if (!validation.safe) {
-
       setUploadStatus("error");
-
-      setUploadMessage(
-        "La imagen fue rechazada por contener contenido no permitido."
-      );
-
+      setUploadMessage("La imagen fue rechazada por contener contenido no permitido.");
       return;
     }
+    */
 
     const reader = new FileReader();
 

@@ -1,10 +1,15 @@
 import React, { useRef, useState, useEffect } from "react";
 
 const emotionLabelEs: Record<string, string> = {
-  happy:   "Feliz",
+  alegre:  "Alegre",
+  triste:  "Triste",
+  enojado: "Enojado",
+  enojada: "Enojado",
+  neutral: "Neutral",
+  // por si el modelo devuelve inglés
+  happy:   "Alegre",
   sad:     "Triste",
   angry:   "Enojado",
-  neutral: "Neutral",
 };
 
 interface CameraCaptureProps {
@@ -18,6 +23,8 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ isStreaming, onEmotionDet
   const [error, setError] = useState<string | null>(null);
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
   const [detectedLabel, setDetectedLabel] = useState<string>("");
+  const [distribution, setDistribution] = useState<Record<string, number>>({});
+  const [bestDebug, setBestDebug] = useState<{cls: string; conf: number; above: boolean} | null>(null);
 
   // Iniciar cámara al montar
   useEffect(() => {
@@ -38,26 +45,32 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ isStreaming, onEmotionDet
     };
   }, []);
 
-  // Enviar frame al backend
+  // Enviar frame al backend (YOLO)
   const sendImageToBackend = async (blob: Blob) => {
     const formData = new FormData();
     formData.append("image", blob, "capture.jpg");
     try {
-      const response = await fetch("http://localhost:5000/predict", {
+      const response = await fetch("http://localhost:5000/predict-yolo", {
         method: "POST",
         body: formData,
       });
       const data = await response.json();
-      if (data.emotion) {
-        const normalized = data.emotion.toLowerCase();
-        setDetectedLabel(emotionLabelEs[normalized] ?? data.emotion);
-        onEmotionDetected(data.emotion);
+      const best = data.best;
+      setDistribution(data.emotion_distribution ?? {});
+      if (best) {
+        setBestDebug({ cls: best.class, conf: best.confidence, above: best.above_threshold });
+      }
+      if (best && best.above_threshold) {
+        const cls = best.class.toLowerCase();
+        setDetectedLabel(emotionLabelEs[cls] ?? best.class);
+        onEmotionDetected(best.class);
       } else {
         setDetectedLabel("");
-        onEmotionDetected(`Error: ${data.error}`);
+        onEmotionDetected("neutral");
       }
     } catch {
       setDetectedLabel("");
+      setDistribution({});
       onEmotionDetected("Error en conexión");
     }
   };
@@ -117,6 +130,39 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ isStreaming, onEmotionDet
           whiteSpace: "nowrap",
         }}>
           {detectedLabel}
+        </div>
+      )}
+
+      {/* Panel de porcentajes (esquina inferior derecha, contra-espejo) */}
+      {Object.keys(distribution).length > 0 && (
+        <div style={{
+          position: "absolute",
+          bottom: 10,
+          right: 10,
+          transform: "scaleX(-1)",
+          background: "rgba(0,0,0,0.60)",
+          color: "#fff",
+          borderRadius: "10px",
+          padding: "8px 12px",
+          fontSize: "13px",
+          lineHeight: "1.7",
+          pointerEvents: "none",
+          backdropFilter: "blur(4px)",
+          minWidth: "130px",
+        }}>
+          {bestDebug && (
+            <div style={{ borderBottom: "1px solid rgba(255,255,255,0.3)", marginBottom: "4px", paddingBottom: "4px", fontSize: "11px", color: bestDebug.above ? "#6eff6e" : "#ff8080" }}>
+              best: {bestDebug.cls} {bestDebug.conf.toFixed(1)}% {bestDebug.above ? "✓" : "✗"}
+            </div>
+          )}
+          {Object.entries(distribution).map(([cls, pct]) => (
+            <div key={cls} style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+              <span>{emotionLabelEs[cls.toLowerCase()] ?? cls}</span>
+              <span style={{ fontWeight: 700, color: pct >= 60 ? "#6eff6e" : pct >= 55 ? "#ffe76e" : "#fff" }}>
+                {pct.toFixed(1)}%
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
