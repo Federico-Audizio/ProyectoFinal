@@ -2,8 +2,13 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import cv2
 import numpy as np
-import keras
-from keras.models import load_model
+try:
+    import keras
+    from keras.models import load_model
+    _keras_ok = True
+except ImportError:
+    _keras_ok = False
+    print("⚠️  keras/tensorflow no instalado — /predict deshabilitado")
 import os
 from ultralytics import YOLO  # ✅ Importamos YOLO
 import torch
@@ -50,8 +55,13 @@ def check_image_safety(image_bytes):
     }
 
 app = Flask(__name__)
-CORS(app)  # 🔥 Habilita CORS para todas las rutas
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "https://proyectofinal-78eb4.web.app",
+    "https://proyectofinal-78eb4.firebaseapp.com",
+]
+CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}})
 PICTOGRAMS_DIR = "ProyectoFinal/public/pictograms"
 
 vision_client = vision.ImageAnnotatorClient() if _vision_ok else None
@@ -839,4 +849,5 @@ def predict_abcdario():
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)

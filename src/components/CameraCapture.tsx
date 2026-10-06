@@ -50,7 +50,8 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ isStreaming, onEmotionDet
     const formData = new FormData();
     formData.append("image", blob, "capture.jpg");
     try {
-      const response = await fetch("http://localhost:5000/predict-yolo", {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+      const response = await fetch(`${backendUrl}/predict-yolo`, {
         method: "POST",
         body: formData,
       });
