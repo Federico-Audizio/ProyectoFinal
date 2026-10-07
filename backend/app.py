@@ -185,7 +185,13 @@ def predict():
 # 🔹 MODELO 2 (YOLO best.pt)
 # -----------------------------
 YOLO_PATH = "model/best.pt"
-yolo_model = YOLO(YOLO_PATH)
+yolo_model = None
+
+def get_yolo_model():
+    global yolo_model
+    if yolo_model is None:
+        yolo_model = YOLO(YOLO_PATH)
+    return yolo_model
 
 # CLAHE creado una sola vez (mismo config que Roboflow: Adaptive Equalization)
 clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
@@ -236,7 +242,7 @@ def predict_yolo():
 
         # Una sola pasada con conf muy bajo y NMS por clase:
         # YOLO devuelve una caja por emoción para cada cara → usamos eso como distribución
-        results = yolo_model.predict(
+        results = get_yolo_model().predict(
             image_processed,
             conf=0.001,          # casi sin filtro para capturar todos los scores
             iou=0.45,            # NMS por clase (agnostic_nms=False por defecto)
@@ -249,7 +255,7 @@ def predict_yolo():
             for box in r.boxes:
                 x1, y1, x2, y2 = [float(v) for v in box.xyxy[0]]
                 all_boxes.append({
-                    "class": yolo_model.names[int(box.cls)],
+                    "class": get_yolo_model().names[int(box.cls)],
                     "raw_conf": float(box.conf),
                     "bbox_raw": [x1, y1, x2, y2],
                 })
@@ -278,7 +284,7 @@ def predict_yolo():
                     face_scores[cls] = d["raw_conf"]
 
         # Porcentaje real de confianza (sin normalizar); siempre incluir todas las clases
-        all_classes = list(yolo_model.names.values())
+        all_classes = list(get_yolo_model().names.values())
         emotion_distribution = {
             k: round(face_scores.get(k, 0.0) * 100, 1)
             for k in sorted(all_classes, key=lambda c: -face_scores.get(c, 0.0))

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import alphabetImg from "../assets/Alfabeto-Manual-Argentino-LSA-CAS-680x962.png";
 import "./SenaPage.css";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 const CONFIDENCE_THRESHOLD = 45;
 const CAPTURE_INTERVAL_MS  = 100;    // 30 frames × 100ms = ~3s
 const COOLDOWN_MS          = 2000;   // pausa entre señas
@@ -96,7 +97,7 @@ const SenaPage = () => {
         let handsFound = false;
         while (active && !handsFound) {
           try {
-            const res  = await fetch("http://localhost:5000/check-hands", {
+            const res  = await fetch(`${BACKEND_URL}/check-hands`, {
               method: "POST", headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ frame: captureFrame() }),
             });
@@ -130,7 +131,7 @@ const SenaPage = () => {
 
           // Chequeo en paralelo cada 3 frames (cada 300 ms) sin bloquear
           if (i % 3 === 0) {
-            fetch("http://localhost:5000/check-hands", {
+            fetch(`${BACKEND_URL}/check-hands`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ frame }),
@@ -170,7 +171,7 @@ const SenaPage = () => {
         setPhase("processing");
         setFrameCount(0);
         try {
-          const res  = await fetch("http://localhost:5000/predict-abcdario", {
+          const res  = await fetch(`${BACKEND_URL}/predict-abcdario`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ frames }),
           });
