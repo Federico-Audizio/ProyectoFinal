@@ -2,17 +2,21 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import cv2
 import numpy as np
-try:
-    import keras
-    from keras.models import load_model
-    _keras_ok = True
-except ImportError:
-    _keras_ok = False
-    print("⚠️  keras/tensorflow no instalado — /predict deshabilitado")
 import os
-from ultralytics import YOLO  # ✅ Importamos YOLO
-import torch
-import torch.nn.functional as F
+
+# torch y ultralytics se importan lazy para no consumir RAM al arrancar
+_keras_ok = False
+_torch = None
+_torch_F = None
+
+def _get_torch():
+    global _torch, _torch_F
+    if _torch is None:
+        import torch
+        import torch.nn.functional as F
+        _torch = torch
+        _torch_F = F
+    return _torch, _torch_F
 try:
     from google.cloud import vision
     import io
@@ -190,6 +194,7 @@ yolo_model = None
 def get_yolo_model():
     global yolo_model
     if yolo_model is None:
+        from ultralytics import YOLO
         yolo_model = YOLO(YOLO_PATH)
     return yolo_model
 
@@ -326,74 +331,54 @@ def predict_yolo():
 #   - Validación de shape corregida a (50, 126) → luego pasa a (50, 252)
 # ================================================================
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
+SEQUENCE_LENGTH_LSA = 50
 
-SEQUENCE_LENGTH_LSA = 50   # ← debe coincidir con el entrenamiento
+modelLSA = None
 
-class LSTMModel(nn.Module):
-    def __init__(self, input_size=252, hidden_size=256, num_layers=3, num_classes=64):
-        super().__init__()
-        self.lstm = nn.LSTM(
-            input_size=input_size,
-            hidden_size=hidden_size,
-            num_layers=num_layers,
-            batch_first=True,
-            dropout=0.3
-        )
-        self.fc1     = nn.Linear(hidden_size, 128)
-        self.relu    = nn.ReLU()
-        self.dropout = nn.Dropout(0.4)
-        self.fc2     = nn.Linear(128, num_classes)
-
-    def forward(self, x):
-        out, _ = self.lstm(x)
-        out = out[:, -1, :]          # último timestep
-        out = self.fc1(out)
-        out = self.relu(out)
-        out = self.dropout(out)
-        return self.fc2(out)
-
+def get_lsa_model():
+    global modelLSA
+    if modelLSA is not None:
+        return modelLSA
+    import torch
+    import torch.nn as nn
+    class LSTMModel(nn.Module):
+        def __init__(self, input_size=252, hidden_size=256, num_layers=3, num_classes=64):
+            super().__init__()
+            self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
+                                num_layers=num_layers, batch_first=True, dropout=0.3)
+            self.fc1     = nn.Linear(hidden_size, 128)
+            self.relu    = nn.ReLU()
+            self.dropout = nn.Dropout(0.4)
+            self.fc2     = nn.Linear(128, num_classes)
+        def forward(self, x):
+            out, _ = self.lstm(x)
+            out = out[:, -1, :]
+            out = self.fc1(out)
+            out = self.relu(out)
+            out = self.dropout(out)
+            return self.fc2(out)
+    m = LSTMModel(input_size=252, num_classes=64)
+    try:
+        m.load_state_dict(torch.load("model/lsa64_model.pth", map_location=torch.device("cpu")))
+        m.eval()
+    except Exception as e:
+        print(f"❌ Error cargando modelo LSA64: {e}")
+    modelLSA = m
+    return modelLSA
 
 def preprocess_lsa_sequence(raw_sequence_np):
-    """
-    Recibe:   np.array de shape (50, 126)  — keypoints crudos por frame
-    Devuelve: torch.Tensor de shape (1, 50, 252) listo para el modelo
-
-    Pipeline idéntico al entrenamiento (señas64.py):
-      1. Normalización por frame (Z-score, reshape a (-1,3))
-      2. Velocidad = diff entre frames, con padding de ceros al inicio
-      3. Concatenar posición + velocidad → 252 features
-    """
+    import torch
     seq_norm = []
-    for frame in raw_sequence_np:                  # frame: (126,)
-        f = frame.reshape(-1, 3)                   # (42, 3)
+    for frame in raw_sequence_np:
+        f = frame.reshape(-1, 3)
         f = f - np.mean(f, axis=0)
         f = f / (np.std(f, axis=0) + 1e-8)
         seq_norm.append(f.flatten())
-
-    seq_norm = np.array(seq_norm)                  # (50, 126)
-
-    velocity = np.diff(seq_norm, axis=0)           # (49, 126)
-    velocity = np.vstack([np.zeros((1, 126)), velocity])  # (50, 126)
-
-    final = np.concatenate([seq_norm, velocity], axis=1)  # (50, 252)
-
-    return torch.tensor(final, dtype=torch.float32).unsqueeze(0)  # (1, 50, 252)
-
-
-# Cargar modelo
-modelLSA = LSTMModel(input_size=252, num_classes=64)
-try:
-    modelLSA.load_state_dict(
-        torch.load("model/lsa64_model.pth", map_location=torch.device("cpu"))
-    )
-    modelLSA.eval()
-    print("✅ Modelo LSA64 cargado")
-except Exception as e:
-    print(f"❌ Error cargando modelo LSA64: {e}")
+    seq_norm = np.array(seq_norm)
+    velocity = np.diff(seq_norm, axis=0)
+    velocity = np.vstack([np.zeros((1, 126)), velocity])
+    final = np.concatenate([seq_norm, velocity], axis=1)
+    return torch.tensor(final, dtype=torch.float32).unsqueeze(0)
 
 
 # ── RUTA ──────────────────────────────────────────────────────
@@ -422,8 +407,10 @@ def predict_lsa():
         # Preprocesar igual que en el entrenamiento
         input_tensor = preprocess_lsa_sequence(sequence_np)  # (1, 50, 252)
 
+        import torch
+        import torch.nn.functional as F
         with torch.no_grad():
-            output = modelLSA(input_tensor)
+            output = get_lsa_model()(input_tensor)
             probs  = F.softmax(output, dim=1).squeeze().numpy()
 
         top5_idx = probs.argsort()[-5:][::-1]
