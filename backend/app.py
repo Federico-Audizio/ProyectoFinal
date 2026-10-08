@@ -186,17 +186,61 @@ def predict():
         return jsonify({'emotion': f"error: {str(e)}"}), 500
 
 # -----------------------------
-# 🔹 MODELO 2 (YOLO best.pt)
+# 🔹 MODELO 2 (YOLO ONNX)
 # -----------------------------
-YOLO_PATH = "model/best.pt"
-yolo_model = None
+YOLO_PATH = "model/best.onnx"
+_yolo_session = None
+_yolo_names = {}
 
-def get_yolo_model():
-    global yolo_model
-    if yolo_model is None:
-        from ultralytics import YOLO
-        yolo_model = YOLO(YOLO_PATH)
-    return yolo_model
+def get_yolo_session():
+    global _yolo_session, _yolo_names
+    if _yolo_session is None:
+        import onnxruntime as ort
+        import ast
+        _yolo_session = ort.InferenceSession(YOLO_PATH, providers=["CPUExecutionProvider"])
+        meta = _yolo_session.get_modelmeta().custom_metadata_map
+        _yolo_names = ast.literal_eval(meta.get("names", "{}"))
+        print(f"✅ YOLO ONNX cargado. Clases: {_yolo_names}")
+    return _yolo_session, _yolo_names
+
+def yolo_infer(image_bgr):
+    """Inferencia ONNX: devuelve lista de {class, raw_conf, bbox_raw} igual que antes."""
+    session, names = get_yolo_session()
+    INPUT_SIZE = 320
+    orig_h, orig_w = image_bgr.shape[:2]
+
+    # Preprocesar
+    img = cv2.resize(image_bgr, (INPUT_SIZE, INPUT_SIZE))
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = img.astype(np.float32) / 255.0
+    img = img.transpose(2, 0, 1)[np.newaxis]  # [1, 3, H, W]
+
+    input_name = session.get_inputs()[0].name
+    output = session.run(None, {input_name: img})[0]  # [1, 4+nc, anchors]
+
+    pred = output[0].T  # [anchors, 4+nc]
+    boxes_cxcywh = pred[:, :4]
+    class_scores  = pred[:, 4:]
+
+    class_ids   = np.argmax(class_scores, axis=1)
+    confidences = np.max(class_scores, axis=1)
+
+    sx = orig_w / INPUT_SIZE
+    sy = orig_h / INPUT_SIZE
+
+    results = []
+    for i in range(len(confidences)):
+        cx, cy, w, h = boxes_cxcywh[i]
+        x1 = float((cx - w / 2) * sx)
+        y1 = float((cy - h / 2) * sy)
+        x2 = float((cx + w / 2) * sx)
+        y2 = float((cy + h / 2) * sy)
+        results.append({
+            "class":    names.get(int(class_ids[i]), str(class_ids[i])),
+            "raw_conf": float(confidences[i]),
+            "bbox_raw": [x1, y1, x2, y2],
+        })
+    return results
 
 # CLAHE creado una sola vez (mismo config que Roboflow: Adaptive Equalization)
 clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
@@ -245,25 +289,7 @@ def predict_yolo():
         h_img, w_img = image.shape[:2]
         image_processed = preprocess_for_yolo(image)
 
-        # Una sola pasada con conf muy bajo y NMS por clase:
-        # YOLO devuelve una caja por emoción para cada cara → usamos eso como distribución
-        results = get_yolo_model().predict(
-            image_processed,
-            conf=0.001,          # casi sin filtro para capturar todos los scores
-            iou=0.45,            # NMS por clase (agnostic_nms=False por defecto)
-            imgsz=320,
-            verbose=False,
-        )
-
-        all_boxes = []
-        for r in results:
-            for box in r.boxes:
-                x1, y1, x2, y2 = [float(v) for v in box.xyxy[0]]
-                all_boxes.append({
-                    "class": get_yolo_model().names[int(box.cls)],
-                    "raw_conf": float(box.conf),
-                    "bbox_raw": [x1, y1, x2, y2],
-                })
+        all_boxes = yolo_infer(image_processed)
 
         if not all_boxes:
             return jsonify({"best": None, "emotion_distribution": {}, "threshold": CONF_THRESHOLD * 100})
@@ -289,7 +315,8 @@ def predict_yolo():
                     face_scores[cls] = d["raw_conf"]
 
         # Porcentaje real de confianza (sin normalizar); siempre incluir todas las clases
-        all_classes = list(get_yolo_model().names.values())
+        _, yolo_names = get_yolo_session()
+        all_classes = list(yolo_names.values())
         emotion_distribution = {
             k: round(face_scores.get(k, 0.0) * 100, 1)
             for k in sorted(all_classes, key=lambda c: -face_scores.get(c, 0.0))
