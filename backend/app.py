@@ -786,15 +786,22 @@ def _abc_decode_b64_frame(data_url: str) -> np.ndarray:
     return bgr
 
 
-# ── Modelo ──────────────────────────────────────────────────────────────────
+# ── Modelo ABCDario (ONNX) ───────────────────────────────────────────────────
+_ABCDARIO_MODEL_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "model", "ABCDario_multitask_AZ.onnx"
+)
+_abcdario_session = None
+
+def get_abcdario_session():
+    global _abcdario_session
+    if _abcdario_session is None:
+        import onnxruntime as ort
+        _abcdario_session = ort.InferenceSession(_ABCDARIO_MODEL_PATH, providers=["CPUExecutionProvider"])
+        print("✅ Modelo ABCDario ONNX cargado")
+    return _abcdario_session
+
 try:
-    _ABCDARIO_MODEL_PATH = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "model", "ABCDario_multitask_AZ.keras"
-    )
-    print(f"📂 Cargando modelo ABCDario: {_ABCDARIO_MODEL_PATH}")
-    abcdario_model = keras.models.load_model(_ABCDARIO_MODEL_PATH, compile=False)
-    abcdario_model.predict(np.zeros((1, ABCDARIO_SEQ_LEN, _ABC_TOTAL_FEATS), dtype=np.float32), verbose=0)
-    print(f"✅ Modelo ABCDario cargado — outputs: {abcdario_model.output_names}")
+    get_abcdario_session()
     _abc_model_ok = True
 except Exception as _abc_model_err:
     print(f"⚠️  Modelo ABCDario no disponible: {_abc_model_err}")
@@ -846,7 +853,10 @@ def predict_abcdario():
         seq_np = np.stack(sequence, axis=0)       # (30, 248)
         X      = np.expand_dims(seq_np, axis=0)   # (1, 30, 248)
 
-        letter_p, motion_p, face_p = abcdario_model.predict(X, verbose=0)
+        sess = get_abcdario_session()
+        input_name = sess.get_inputs()[0].name
+        outputs = sess.run(None, {input_name: X.astype(np.float32)})
+        letter_p, motion_p, face_p = outputs[0], outputs[1], outputs[2]
         letter_probs = letter_p[0]
         top_i = np.argsort(letter_probs)[-5:][::-1]
         top5  = [
