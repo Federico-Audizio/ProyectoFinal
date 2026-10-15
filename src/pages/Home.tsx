@@ -219,14 +219,6 @@ const Home: React.FC = () => {
       <h1 className="home-title">BIENVENIDOS</h1> {/*[cite: 1] */}
 
       <div className="menu-list"> {/*[cite: 1] */}
-        <div className="menu-item"> {/*[cite: 1] */}
-          <div className="icon-circle"> {/*[cite: 1] */}
-            <span>😶</span> {/*[cite: 1] */}
-          </div>
-          <Link to="/camera" className="nav-button"> {/*[cite: 1] */}
-            Reconocimiento de Emociones {/*[cite: 1] */}
-          </Link>
-        </div>
 
         <div className="menu-item"> {/*[cite: 1] */}
           <div className="icon-circle"> {/*[cite: 1] */}
@@ -252,6 +244,15 @@ const Home: React.FC = () => {
           </div>
           <Link to="/sena" className="nav-button"> {/*[cite: 1] */}
             Detector de Señas {/*[cite: 1] */}
+          </Link>
+        </div>
+
+        <div className="menu-item"> {/*[cite: 1] */}
+          <div className="icon-circle"> {/*[cite: 1] */}
+            <span>😶</span> {/*[cite: 1] */}
+          </div>
+          <Link to="/camera" className="nav-button"> {/*[cite: 1] */}
+            Reconocimiento de Emociones {/*[cite: 1] */}
           </Link>
         </div>
       </div>

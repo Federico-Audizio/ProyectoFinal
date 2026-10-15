@@ -92,10 +92,27 @@ const SenaPage = () => {
         while (active && pausedRef.current) { await sleep(200); }
         if (!active) break;
 
+        // Reiniciar cámara si fue detenida durante la pausa
+        if (!streamRef.current) {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+            if (!active) { stream.getTracks().forEach(t => t.stop()); break; }
+            streamRef.current = stream;
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+              await new Promise<void>(r => { videoRef.current!.onloadeddata = () => r(); });
+            }
+          } catch (e: any) {
+            setError(`Cámara no disponible: ${e.message}`);
+            break;
+          }
+        }
+
         // ── FASE 1: esperar manos ──────────────────────────────────────
         setPhase("idle");
         let handsFound = false;
         while (active && !handsFound) {
+          if (pausedRef.current) break;
           try {
             const res  = await fetch(`${BACKEND_URL}/check-hands`, {
               method: "POST", headers: { "Content-Type": "application/json" },
@@ -114,6 +131,7 @@ const SenaPage = () => {
           }
         }
         if (!active) break;
+        if (!handsFound) continue; // fue pausado durante la espera de manos
         setHandsVisible(true);
 
         // ── FASE 2: capturar 30 frames (con control de pérdida de manos) ──
@@ -124,6 +142,7 @@ const SenaPage = () => {
 
         for (let i = 0; i < 30; i++) {
           if (!active) break;
+          if (pausedRef.current) { handsAborted = true; break; }
 
           const frame = captureFrame();
           frames.push(frame);
@@ -228,9 +247,16 @@ const SenaPage = () => {
   }, [hasStarted]);
 
   const togglePause = () => {
-    pausedRef.current = !pausedRef.current;
-    setIsPaused(pausedRef.current);
-    if (pausedRef.current) setPhase("idle");
+    const nowPaused = !pausedRef.current;
+    pausedRef.current = nowPaused;
+    setIsPaused(nowPaused);
+    if (nowPaused) {
+      setPhase("idle");
+      // Apagar la cámara al pausar
+      streamRef.current?.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+      if (videoRef.current) videoRef.current.srcObject = null;
+    }
   };
 
   const playText = () => {
@@ -415,33 +441,6 @@ const SenaPage = () => {
           </button>
         </div>
 
-        {topPredictions.length > 0 && (
-          <div className="abc-top5">
-            <p className="abc-top5-title">Predicciones actuales</p>
-            {topPredictions.map((p, i) => (
-              <div key={i} className="top5-item">
-                <div className="top5-label">
-                  <span className={`top5-letter ${i === 0 ? "top5-first" : ""}`}>{p.class}</span>
-                  <span className="top5-prob">{p.prob.toFixed(1)}%</span>
-                </div>
-                <div className="top5-bar">
-                  <div
-                    className="top5-fill"
-                    style={{
-                      width: `${p.prob}%`,
-                      background: i === 0 && p.prob >= CONFIDENCE_THRESHOLD
-                        ? "linear-gradient(90deg,#28a745,#5cb85c)"
-                        : "linear-gradient(90deg,#00c6ff,#0072ff)",
-                    }}
-                  />
-                  {i === 0 && (
-                    <div className="top5-threshold" style={{ left: `${CONFIDENCE_THRESHOLD}%` }} />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
