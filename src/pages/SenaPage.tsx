@@ -85,10 +85,7 @@ const SenaPage = () => {
 
     const runLoop = async () => {
       while (active) {
-        const video = videoRef.current;
-        if (!video || video.videoWidth === 0) { await sleep(200); continue; }
-
-        // ── Pausa ─────────────────────────────────────────────────────
+        // ── Pausa (antes del chequeo de video para poder reiniciar cámara) ──
         while (active && pausedRef.current) { await sleep(200); }
         if (!active) break;
 
@@ -107,6 +104,9 @@ const SenaPage = () => {
             break;
           }
         }
+
+        const video = videoRef.current;
+        if (!video || video.videoWidth === 0) { await sleep(200); continue; }
 
         // ── FASE 1: esperar manos ──────────────────────────────────────
         setPhase("idle");

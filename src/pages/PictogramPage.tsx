@@ -66,37 +66,37 @@ const PictogramPage: React.FC = () => {
     ...(commLevel === "composed" ? [
       { label: "Quiero", image: "/pictograms/Conectores/quiero.png", color: "#fa18c2" }, // Asegurá la ruta
       { label: "Conectores", isFolder: true, image: "/pictograms/Conectores/tengo.png", color: "#fa18c2", content: [
-        { label: "No quiero", imagePath: "/public/pictograms/Conectores/no quiero.png", color: "#fa18c2" },
-        { label: "Tengo", imagePath: "/public/pictograms/Conectores/tengo.png", color: "#fa18c2" },
-        { label: "Conn", imagePath: "/public/pictograms/Conectores/_con.png", color: "#fa18c2" },
-        { label: "Estoy", imagePath: "/public/pictograms/Conectores/estoy.png", color: "#fa18c2" },
-        { label: "Ir", imagePath: "/public/pictograms/Conectores/ir.png", color: "#fa18c2" },
-        { label: "Necesito", imagePath: "/public/pictograms/Conectores/necesito.png", color: "#fa18c2" },
-        { label: "Tú", imagePath: "/public/pictograms/Conectores/tu.png", color: "#fa18c2" },
+        { label: "No quiero", imagePath: "/pictograms/Conectores/no quiero.png", color: "#fa18c2" },
+        { label: "Tengo", imagePath: "/pictograms/Conectores/tengo.png", color: "#fa18c2" },
+        { label: "Conn", imagePath: "/pictograms/Conectores/_con.png", color: "#fa18c2" },
+        { label: "Estoy", imagePath: "/pictograms/Conectores/estoy.png", color: "#fa18c2" },
+        { label: "Ir", imagePath: "/pictograms/Conectores/ir.png", color: "#fa18c2" },
+        { label: "Necesito", imagePath: "/pictograms/Conectores/necesito.png", color: "#fa18c2" },
+        { label: "Tú", imagePath: "/pictograms/Conectores/tu.png", color: "#fa18c2" },
       ]}
     ] : []),
     
     { label: "Sed", image: "/pictograms/beber.png", color: "#00FF00" },
     { label: "Bebida", isFolder: true, image: "/pictograms/bebida.png", color: "#FF8000",
       content: [
-        { label: "Agua", imagePath: "/public/pictograms/Bebida/agua.png", color: "#FF8000" },
-        { label: "Café", imagePath: "/public/pictograms/Bebida/café.png", color: "#FF8000" },
-        { label: "Leche", imagePath: "/public/pictograms/Bebida/leche.png", color: "#FF8000" },
-        { label: "Jugo", imagePath: "/public/pictograms/Bebida/jugo.png", color: "#FF8000" },
-        { label: "Coca-Cola", imagePath: "/public/pictograms/Bebida/coca-cola.png", color: "#FF8000" },
-        { label: "Mate", imagePath: "/public/pictograms/Bebida/mate.png", color: "#FF8000" },
+        { label: "Agua", imagePath: "/pictograms/Bebida/agua.png", color: "#FF8000" },
+        { label: "Café", imagePath: "/pictograms/Bebida/café.png", color: "#FF8000" },
+        { label: "Leche", imagePath: "/pictograms/Bebida/leche.png", color: "#FF8000" },
+        { label: "Jugo", imagePath: "/pictograms/Bebida/jugo.png", color: "#FF8000" },
+        { label: "Coca-Cola", imagePath: "/pictograms/Bebida/coca-cola.png", color: "#FF8000" },
+        { label: "Mate", imagePath: "/pictograms/Bebida/mate.png", color: "#FF8000" },
       ]
      },
     { label: "Hambre", image: "/pictograms/comer.png", color: "#00FF00" },
     { label: "Comida", isFolder: true, image: "/pictograms/comida.png", color: "#FF8000",
       content: [
-        { label: "Milanesa", imagePath: "/public/pictograms/Comida/milanesa.png", color: "#FF8000" },
-        { label: "Pollo", imagePath: "/public/pictograms/Comida/pollo.png", color: "#FF8000" },
-        { label: "Hamburguesa", imagePath: "/public/pictograms/Comida/hamburguesa.png", color: "#FF8000" },
-        { label: "Pastas", imagePath: "/public/pictograms/Comida/pasta.png", color: "#FF8000" },
-        { label: "Ensalada", imagePath: "/public/pictograms/Comida/ensalada.png", color: "#FF8000" },
-        { label: "Pescado", imagePath: "/public/pictograms/Comida/pescado.png", color: "#FF8000" },
-        { label: "Galleta", imagePath: "/public/pictograms/Comida/galletas.png", color: "#FF8000" }
+        { label: "Milanesa", imagePath: "/pictograms/Comida/milanesa.png", color: "#FF8000" },
+        { label: "Pollo", imagePath: "/pictograms/Comida/pollo.png", color: "#FF8000" },
+        { label: "Hamburguesa", imagePath: "/pictograms/Comida/hamburguesa.png", color: "#FF8000" },
+        { label: "Pastas", imagePath: "/pictograms/Comida/pasta.png", color: "#FF8000" },
+        { label: "Ensalada", imagePath: "/pictograms/Comida/ensalada.png", color: "#FF8000" },
+        { label: "Pescado", imagePath: "/pictograms/Comida/pescado.png", color: "#FF8000" },
+        { label: "Galleta", imagePath: "/pictograms/Comida/galletas.png", color: "#FF8000" }
       ]
      },
     // 👇 ESTOS DOS SOLO APARECEN EN MODO SIMPLE
@@ -117,39 +117,39 @@ const PictogramPage: React.FC = () => {
     { label: "Ayuda", image: "/pictograms/ayuda.png", color: "#00FF00" },
     { label: "Ayudas", isFolder: true, image: "/pictograms/ayudas para la movilidad.png", color: "#00FF00",
       content: [
-        { label: "Defecar", imagePath: "/public/pictograms/Necesidades/cagar.png", color: "#00FF00" },
-        { label: "Orinar", imagePath: "/public/pictograms/Necesidades/orinar.png", color: "#00FF00" },
-        { label: "Bañarse", imagePath: "/public/pictograms/Necesidades/ducha.png", color: "#00FF00" },
-        { label: "Cepillar los dientes", imagePath: "/public/pictograms/Necesidades/cepillar los dientes.png", color: "#00FF00" },
-        { label: "Lavar la cara", imagePath: "/public/pictograms/Necesidades/lavar la cara.png", color: "#00FF00" },
-        { label: "Cambiarse", imagePath: "/public/pictograms/Necesidades/Ropa.png", color: "#00FF00" },
-        { label: "Lavar la ropa", imagePath: "/public/pictograms/Necesidades/lavar la ropa.png", color: "#00FF00" },
-        { label: "Hospital", imagePath: "/public/pictograms/Lugares/hospital.png", color: "#00FF00" }
+        { label: "Defecar", imagePath: "/pictograms/Necesidades/cagar.png", color: "#00FF00" },
+        { label: "Orinar", imagePath: "/pictograms/Necesidades/orinar.png", color: "#00FF00" },
+        { label: "Bañarse", imagePath: "/pictograms/Necesidades/ducha.png", color: "#00FF00" },
+        { label: "Cepillar los dientes", imagePath: "/pictograms/Necesidades/cepillar los dientes.png", color: "#00FF00" },
+        { label: "Lavar la cara", imagePath: "/pictograms/Necesidades/lavar la cara.png", color: "#00FF00" },
+        { label: "Cambiarse", imagePath: "/pictograms/Necesidades/ropa.png", color: "#00FF00" },
+        { label: "Lavar la ropa", imagePath: "/pictograms/Necesidades/lavar la ropa.png", color: "#00FF00" },
+        { label: "Hospital", imagePath: "/pictograms/Lugares/hospital.png", color: "#00FF00" }
       ]
      },
     { label: "Dolor", image: "/pictograms/dolor.png", color: "#00FF00" },
     { label: "Dolores", isFolder: true, image: "/pictograms/dolor.png", color: "#00FF00",
       content: [
-        { label: "Dolor de cabeza", imagePath: "/public/pictograms/Dolor/dolor de cabeza.png", color: "#00FF00" },
-        { label: "Dolor de brazo", imagePath: "/public/pictograms/Dolor/dolor de brazo.png", color: "#00FF00" },
-        { label: "Dolor de pierna", imagePath: "/public/pictograms/Dolor/dolor de pierna.png", color: "#00FF00" },
-        { label: "Dolor de estómago", imagePath: "/public/pictograms/Dolor/dolor de estómago.png", color: "#00FF00" },
-        { label: "Dolor de pecho", imagePath: "/public/pictograms/Dolor/dolor de pecho.png", color: "#00FF00" },
-        { label: "Dolor de espalda", imagePath: "/public/pictograms/Dolor/dolor de espalda.png", color: "#00FF00" },
-        { label: "Dolor de muela", imagePath: "/public/pictograms/Dolor/dolor de muela.png", color: "#00FF00" },
-        { label: "Dolor de oído", imagePath: "/public/pictograms/Dolor/dolor de oído.png", color: "#00FF00" }
+        { label: "Dolor de cabeza", imagePath: "/pictograms/Dolor/dolor de cabeza.png", color: "#00FF00" },
+        { label: "Dolor de brazo", imagePath: "/pictograms/Dolor/dolor de brazo.png", color: "#00FF00" },
+        { label: "Dolor de pierna", imagePath: "/pictograms/Dolor/dolor de pierna.png", color: "#00FF00" },
+        { label: "Dolor de estómago", imagePath: "/pictograms/Dolor/dolor de estómago.png", color: "#00FF00" },
+        { label: "Dolor de pecho", imagePath: "/pictograms/Dolor/dolor de pecho.png", color: "#00FF00" },
+        { label: "Dolor de espalda", imagePath: "/pictograms/Dolor/dolor de espalda.png", color: "#00FF00" },
+        { label: "Dolor de muela", imagePath: "/pictograms/Dolor/dolor de muela.png", color: "#00FF00" },
+        { label: "Dolor de oído", imagePath: "/pictograms/Dolor/dolor de oído.png", color: "#00FF00" }
       ]
      },
     { label: "Ropa", isFolder: true, image: "/pictograms/Necesidades/ropa.png", color: "#FF8000",
       content: [
-        { label: "Camiseta", imagePath: "/public/pictograms/Ropa/camiseta.png", color: "#FF8000" },
-        { label: "Pantalón", imagePath: "/public/pictograms/Ropa/pantalón.png", color: "#FF8000" },
-        { label: "Zapatillas", imagePath: "/public/pictograms/Ropa/zapatilla.png", color: "#FF8000" },
-        { label: "Gorra", imagePath: "/public/pictograms/Ropa/gorra.png", color: "#FF8000" },
-        { label: "Campera", imagePath: "/public/pictograms/Ropa/campera.png", color: "#FF8000" },
-        { label: "Sudadera", imagePath: "/public/pictograms/Ropa/sudadera.png", color: "#FF8000" },
-        { label: "Calcetín", imagePath: "/public/pictograms/Ropa/calcetín.png", color: "#FF8000" },
-        { label: "Calzoncillo", imagePath: "/public/pictograms/Ropa/calzoncillo.png", color: "#FF8000" },
+        { label: "Camiseta", imagePath: "/pictograms/Ropa/camiseta.png", color: "#FF8000" },
+        { label: "Pantalón", imagePath: "/pictograms/Ropa/pantalón.png", color: "#FF8000" },
+        { label: "Zapatillas", imagePath: "/pictograms/Ropa/zapatilla.png", color: "#FF8000" },
+        { label: "Gorra", imagePath: "/pictograms/Ropa/gorra.png", color: "#FF8000" },
+        { label: "Campera", imagePath: "/pictograms/Ropa/campera.png", color: "#FF8000" },
+        { label: "Sudadera", imagePath: "/pictograms/Ropa/sudadera.png", color: "#FF8000" },
+        { label: "Calcetín", imagePath: "/pictograms/Ropa/calcetín.png", color: "#FF8000" },
+        { label: "Calzoncillo", imagePath: "/pictograms/Ropa/calzoncillo.png", color: "#FF8000" },
       ]
      },
     { label: "No", image: "/pictograms/no.png", color: "#CC0000" },
@@ -186,38 +186,38 @@ const PictogramPage: React.FC = () => {
     },
     { label: "Juegos", isFolder: true, image: "/pictograms/Verbos/jugar.png", color: "#00FF00",
       content: [
-        { label: "Jugar a la pelota", imagePath: "/public/pictograms/Juegos/jugar a la pelota.png", color: "#00FF00" },
-        { label: "Jugar en el suelo", imagePath: "/public/pictograms/Juegos/jugar en el suelo.png", color: "#00FF00" },
-        { label: "Jugar con el tablet", imagePath: "/public/pictograms/Juegos/jugar con el tablet.png", color: "#00FF00" },
-        { label: "Jugar al fútbol", imagePath: "/public/pictograms/Juegos/fútbol.png", color: "#00FF00" },
-        { label: "Jugar al básquet", imagePath: "/public/pictograms/Juegos/baloncesto.png", color: "#00FF00" },
-        { label: "Jugar al tenis", imagePath: "/public/pictograms/Juegos/tenista.png", color: "#00FF00" },
-        { label: "Jugar al voleibol", imagePath: "/public/pictograms/Juegos/jugador de voleibol.png", color: "#00FF00" },
-        { label: "Jugar al bolos", imagePath: "/public/pictograms/Juegos/jugar a los bolos.png", color: "#00FF00" },
-        { label: "Jugar al hockey", imagePath: "/public/pictograms/Juegos/jugador de hockey hierba.png", color: "#00FF00" },
-        { label: "Jugar a la play", imagePath: "/public/pictograms/Juegos/consola.png", color: "#00FF00" }
+        { label: "Jugar a la pelota", imagePath: "/pictograms/Juegos/jugar a la pelota.png", color: "#00FF00" },
+        { label: "Jugar en el suelo", imagePath: "/pictograms/Juegos/jugar en el suelo.png", color: "#00FF00" },
+        { label: "Jugar con el tablet", imagePath: "/pictograms/Juegos/jugar con el tablet.png", color: "#00FF00" },
+        { label: "Jugar al fútbol", imagePath: "/pictograms/Juegos/fútbol.png", color: "#00FF00" },
+        { label: "Jugar al básquet", imagePath: "/pictograms/Juegos/baloncesto.png", color: "#00FF00" },
+        { label: "Jugar al tenis", imagePath: "/pictograms/Juegos/tenista.png", color: "#00FF00" },
+        { label: "Jugar al voleibol", imagePath: "/pictograms/Juegos/jugador de voleibol.png", color: "#00FF00" },
+        { label: "Jugar al bolos", imagePath: "/pictograms/Juegos/jugar a los bolos.png", color: "#00FF00" },
+        { label: "Jugar al hockey", imagePath: "/pictograms/Juegos/jugador de hockey hierba.png", color: "#00FF00" },
+        { label: "Jugar a la play", imagePath: "/pictograms/Juegos/consola.png", color: "#00FF00" }
       ]
      },
     { label: "Juguetes", isFolder: true, image: "/pictograms/juegos didácticos.png", color: "#FF8000",
       content: [
-        { label: "Muñeca", imagePath: "/public/pictograms/Juguetes/muñeca.png", color: "#FF8000" },
-        { label: "Pelota", imagePath: "/public/pictograms/Juguetes/pelota.png", color: "#FF8000" },
-        { label: "Camión", imagePath: "/public/pictograms/Juguetes/camión de juguete.png", color: "#FF8000" },
-        { label: "Rompecabezas", imagePath: "/public/pictograms/Juguetes/ficha de puzzle.png", color: "#FF8000" },
-        { label: "Bloques", imagePath: "/public/pictograms/Juguetes/bloques.png", color: "#FF8000" },
-        { label: "Peluches", imagePath: "/public/pictograms/Juguetes/osito.png", color: "#FF8000" },
-        { label: "Slime", imagePath: "/public/pictograms/Juguetes/slime.png", color: "#FF8000" },
-        { label: "Ensartable", imagePath: "/public/pictograms/Juguetes/ensartable.png", color: "#FF8000" },
-        { label: "Bolitas", imagePath: "/public/pictograms/Juguetes/canica.png", color: "#FF8000" }
+        { label: "Muñeca", imagePath: "/pictograms/Juguetes/muñeca.png", color: "#FF8000" },
+        { label: "Pelota", imagePath: "/pictograms/Juguetes/pelota.png", color: "#FF8000" },
+        { label: "Camión", imagePath: "/pictograms/Juguetes/camión de juguete.png", color: "#FF8000" },
+        { label: "Rompecabezas", imagePath: "/pictograms/Juguetes/ficha de puzzle.png", color: "#FF8000" },
+        { label: "Bloques", imagePath: "/pictograms/Juguetes/bloques.png", color: "#FF8000" },
+        { label: "Peluches", imagePath: "/pictograms/Juguetes/osito.png", color: "#FF8000" },
+        { label: "Slime", imagePath: "/pictograms/Juguetes/slime.png", color: "#FF8000" },
+        { label: "Ensartable", imagePath: "/pictograms/Juguetes/ensartable.png", color: "#FF8000" },
+        { label: "Bolitas", imagePath: "/pictograms/Juguetes/canica.png", color: "#FF8000" }
       ]
      },
     { label: "Acciones", isFolder: true, image: "/pictograms/verbos.png", color: "#00FF00" ,
       content: [
-        { label: "Escribir", imagePath: "/public/pictograms/Verbos/escribir.png", color: "#00FF00" },
-        { label: "Pasear", imagePath: "/public/pictograms/Verbos/pasear.png", color: "#00FF00" },
-        { label: "Pasear en bicicleta", imagePath: "/public/pictograms/Verbos/pasear en bicicleta.png", color: "#00FF00" },
-        { label: "Jugar", imagePath: "/public/pictograms/Verbos/jugar.png", color: "#00FF00" },
-        { label: "Contar un cuento", imagePath: "/public/pictograms/Verbos/contar un cuento.png", color: "#00FF00" }
+        { label: "Escribir", imagePath: "/pictograms/Verbos/escribir.png", color: "#00FF00" },
+        { label: "Pasear", imagePath: "/pictograms/Verbos/pasear.png", color: "#00FF00" },
+        { label: "Pasear en bicicleta", imagePath: "/pictograms/Verbos/pasear en bicicleta.png", color: "#00FF00" },
+        { label: "Jugar", imagePath: "/pictograms/Verbos/jugar.png", color: "#00FF00" },
+        { label: "Contar un cuento", imagePath: "/pictograms/Verbos/contar un cuento.png", color: "#00FF00" }
       ]
     },
     { label: "¿Dónde?", image: "/pictograms/Preguntas/dónde.png", color: "#9933FF" },

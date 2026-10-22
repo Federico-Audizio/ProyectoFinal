@@ -21,106 +21,106 @@ const PICTOGRAM_LIST: Pictogram[] = [
   {
     id: 1,
     name: "Familia",
-    imagePath: "/public/pictograms/familia/familia.png",
+    imagePath: "/pictograms/Familia/familia.png",
     isFolder: true,
     content: [
-      { id: 101, name: "Mamá", imagePath: "/public/pictograms/Familia/mamá.png" },
-      { id: 102, name: "Papá", imagePath: "/public/pictograms/Familia/papá.png" },
-      { id: 103, name: "Abuela", imagePath: "/public/pictograms/Familia/abuela.png" },
-      { id: 104, name: "Abuelo", imagePath: "/public/pictograms/Familia/abuelo.png" },
-      { id: 105, name: "Hermana", imagePath: "/public/pictograms/Familia/niña.png" },
-      { id: 106, name: "Hermano", imagePath: "/public/pictograms/Familia/niño.png" },
-      { id: 107, name: "Gato", imagePath: "/public/pictograms/Familia/gato.png" },
-      { id: 108, name: "Perro", imagePath: "/public/pictograms/Familia/perro.png" }
+      { id: 101, name: "Mamá", imagePath: "/pictograms/Familia/mamá.png" },
+      { id: 102, name: "Papá", imagePath: "/pictograms/Familia/papá.png" },
+      { id: 103, name: "Abuela", imagePath: "/pictograms/Familia/abuela.png" },
+      { id: 104, name: "Abuelo", imagePath: "/pictograms/Familia/abuelo.png" },
+      { id: 105, name: "Hermana", imagePath: "/pictograms/Familia/niña.png" },
+      { id: 106, name: "Hermano", imagePath: "/pictograms/Familia/niño.png" },
+      { id: 107, name: "Gato", imagePath: "/pictograms/Familia/gato.png" },
+      { id: 108, name: "Perro", imagePath: "/pictograms/Familia/perro.png" }
     ],
   },
   {
     id: 2,
     name: "Necesidades",
-    imagePath: "/public/pictograms/Verbos.png",
+    imagePath: "/pictograms/Verbos.png",
     isFolder: true,
     content: [
-      { id: 201, name: "Defecar", imagePath: "/public/pictograms/Necesidades/cagar.png" },
-      { id: 202, name: "Orinar", imagePath: "/public/pictograms/Necesidades/orinar.png" },
-      { id: 203, name: "Bañarse", imagePath: "/public/pictograms/Necesidades/ducha.png" },
-      { id: 204, name: "Cepillar los dientes", imagePath: "/public/pictograms/Necesidades/cepillar los dientes.png" },
-      { id: 205, name: "Lavar la cara", imagePath: "/public/pictograms/Necesidades/lavar la cara.png" },
-      { id: 206, name: "Cambiarse", imagePath: "/public/pictograms/Necesidades/Ropa.png" },
-      { id: 207, name: "Lavar la ropa", imagePath: "/public/pictograms/Necesidades/lavar la ropa.png" },
-      { id: 208, name: "Hospital", imagePath: "/public/pictograms/hospital.png" }
+      { id: 201, name: "Defecar", imagePath: "/pictograms/Necesidades/cagar.png" },
+      { id: 202, name: "Orinar", imagePath: "/pictograms/Necesidades/orinar.png" },
+      { id: 203, name: "Bañarse", imagePath: "/pictograms/Necesidades/ducha.png" },
+      { id: 204, name: "Cepillar los dientes", imagePath: "/pictograms/Necesidades/cepillar los dientes.png" },
+      { id: 205, name: "Lavar la cara", imagePath: "/pictograms/Necesidades/lavar la cara.png" },
+      { id: 206, name: "Cambiarse", imagePath: "/pictograms/Necesidades/ropa.png" },
+      { id: 207, name: "Lavar la ropa", imagePath: "/pictograms/Necesidades/lavar la ropa.png" },
+      { id: 208, name: "Hospital", imagePath: "/pictograms/hospital.png" }
     ],
   },
-  { id: 3, name: "Dolor", imagePath: "/public/pictograms/dolor.png",
+  { id: 3, name: "Dolor", imagePath: "/pictograms/dolor.png",
     isFolder: true,
     content: [
-      { id: 301, name: "Dolor de cabeza", imagePath: "/public/pictograms/Dolor/dolor de cabeza.png" },
-      { id: 302, name: "Dolor de brazo", imagePath: "/public/pictograms/Dolor/dolor de brazo.png" },
-      { id: 303, name: "Dolor de pierna", imagePath: "/public/pictograms/Dolor/dolor de pierna.png" },
-      { id: 304, name: "Dolor de estómago", imagePath: "/public/pictograms/Dolor/dolor de estómago.png" },
-      { id: 305, name: "Dolor de pecho", imagePath: "/public/pictograms/Dolor/dolor de pecho.png" },
-      { id: 306, name: "Dolor de espalda", imagePath: "/public/pictograms/Dolor/dolor de espalda.png" },
-      { id: 307, name: "Dolor de muela", imagePath: "/public/pictograms/Dolor/dolor de muela.png" },
-      { id: 308, name: "Dolor de oído", imagePath: "/public/pictograms/Dolor/dolor de oído.png" }
+      { id: 301, name: "Dolor de cabeza", imagePath: "/pictograms/Dolor/dolor de cabeza.png" },
+      { id: 302, name: "Dolor de brazo", imagePath: "/pictograms/Dolor/dolor de brazo.png" },
+      { id: 303, name: "Dolor de pierna", imagePath: "/pictograms/Dolor/dolor de pierna.png" },
+      { id: 304, name: "Dolor de estómago", imagePath: "/pictograms/Dolor/dolor de estómago.png" },
+      { id: 305, name: "Dolor de pecho", imagePath: "/pictograms/Dolor/dolor de pecho.png" },
+      { id: 306, name: "Dolor de espalda", imagePath: "/pictograms/Dolor/dolor de espalda.png" },
+      { id: 307, name: "Dolor de muela", imagePath: "/pictograms/Dolor/dolor de muela.png" },
+      { id: 308, name: "Dolor de oído", imagePath: "/pictograms/Dolor/dolor de oído.png" }
     ],
    },
-  { id: 4, name: "Emociones", imagePath: "/public/pictograms/¿estás contento.png",
+  { id: 4, name: "Emociones", imagePath: "/pictograms/¿estás contento.png",
     isFolder: true,
     content: [
-      { id: 401, name: "Alegre", imagePath: "/public/pictograms/Estado/alegre.png" },
-      { id: 402, name: "Enojado", imagePath: "/public/pictograms/Estado/enfadado.png" },
-      { id: 403, name: "Triste", imagePath: "/public/pictograms/Estado/triste.png" },
-      { id: 404, name: "Aburrido", imagePath: "/public/pictograms/Estado/aburrido.png" },
-      { id: 405, name: "Ansioso", imagePath: "/public/pictograms/Estado/ansioso.png" },
-      { id: 406, name: "Emocionado", imagePath: "/public/pictograms/Estado/emocionado.png" },
-      { id: 407, name: "Confusión", imagePath: "/public/pictograms/Estado/confusión.png" },
-      { id: 408, name: "Sorpresa", imagePath: "/public/pictograms/Estado/sorpresa.png" }
+      { id: 401, name: "Alegre", imagePath: "/pictograms/Estado/alegre.png" },
+      { id: 402, name: "Enojado", imagePath: "/pictograms/Estado/enfadado.png" },
+      { id: 403, name: "Triste", imagePath: "/pictograms/Estado/triste.png" },
+      { id: 404, name: "Aburrido", imagePath: "/pictograms/Estado/aburrido.png" },
+      { id: 405, name: "Ansioso", imagePath: "/pictograms/Estado/ansioso.png" },
+      { id: 406, name: "Emocionado", imagePath: "/pictograms/Estado/emocionado.png" },
+      { id: 407, name: "Confusión", imagePath: "/pictograms/Estado/confusión.png" },
+      { id: 408, name: "Sorpresa", imagePath: "/pictograms/Estado/sorpresa.png" }
     ],
    },
-  { id: 5, name: "Comida", imagePath: "/public/pictograms/comida.png",
+  { id: 5, name: "Comida", imagePath: "/pictograms/comida.png",
     isFolder: true,
     content: [
-      { id: 501, name: "Milanesa", imagePath: "/public/pictograms/Comida/milanesa.png" },
-      { id: 502, name: "Pollo", imagePath: "/public/pictograms/Comida/pollo.png" },
-      { id: 503, name: "Hamburguesa", imagePath: "/public/pictograms/Comida/hamburguesa.png" },
-      { id: 504, name: "Pastas", imagePath: "/public/pictograms/Comida/pasta.png" },
-      { id: 505, name: "Ensalada", imagePath: "/public/pictograms/Comida/ensalada.png" },
-      { id: 506, name: "Pescado", imagePath: "/public/pictograms/Comida/pescado.png" },
-      { id: 507, name: "Galleta", imagePath: "/public/pictograms/Comida/galletas.png" }
+      { id: 501, name: "Milanesa", imagePath: "/pictograms/Comida/milanesa.png" },
+      { id: 502, name: "Pollo", imagePath: "/pictograms/Comida/pollo.png" },
+      { id: 503, name: "Hamburguesa", imagePath: "/pictograms/Comida/hamburguesa.png" },
+      { id: 504, name: "Pastas", imagePath: "/pictograms/Comida/pasta.png" },
+      { id: 505, name: "Ensalada", imagePath: "/pictograms/Comida/ensalada.png" },
+      { id: 506, name: "Pescado", imagePath: "/pictograms/Comida/pescado.png" },
+      { id: 507, name: "Galleta", imagePath: "/pictograms/Comida/galletas.png" }
     ],
    },
-  { id: 6, name: "Bebida", imagePath: "/public/pictograms/bebida.png",
+  { id: 6, name: "Bebida", imagePath: "/pictograms/bebida.png",
     isFolder: true,
     content: [
-      { id: 601, name: "Agua", imagePath: "/public/pictograms/Bebida/agua.png" },
-      { id: 602, name: "Café", imagePath: "/public/pictograms/Bebida/café.png" },
-      { id: 603, name: "Leche", imagePath: "/public/pictograms/Bebida/leche.png" },
-      { id: 604, name: "Jugo", imagePath: "/public/pictograms/Bebida/jugo.png" },
-      { id: 605, name: "Coca-Cola", imagePath: "/public/pictograms/Bebida/Coca-Cola.png" },
-      { id: 606, name: "Mate", imagePath: "/public/pictograms/Bebida/mate.png" }
+      { id: 601, name: "Agua", imagePath: "/pictograms/Bebida/agua.png" },
+      { id: 602, name: "Café", imagePath: "/pictograms/Bebida/café.png" },
+      { id: 603, name: "Leche", imagePath: "/pictograms/Bebida/leche.png" },
+      { id: 604, name: "Jugo", imagePath: "/pictograms/Bebida/jugo.png" },
+      { id: 605, name: "Coca-Cola", imagePath: "/pictograms/Bebida/Coca-Cola.png" },
+      { id: 606, name: "Mate", imagePath: "/pictograms/Bebida/mate.png" }
     ],
    },
-  { id: 7, name: "Acciones", imagePath: "/public/pictograms/verbos.png",
+  { id: 7, name: "Acciones", imagePath: "/pictograms/verbos.png",
     isFolder: true,
     content: [
-      { id: 701, name: "Pasear", imagePath: "/public/pictograms/Verbos/pasear.png" },
-      { id: 702, name: "Pasear en bicicleta", imagePath: "/public/pictograms/Verbos/pasear en bicicleta.png" },
-      { id: 703, name: "Ver la televisión", imagePath: "/public/pictograms/Verbos/ver la televisión.png" },
-      { id: 704, name: "Escuchar música", imagePath: "/public/pictograms/Verbos/escuchar música.png" },
-      { id: 705, name: "Jugar", imagePath: "/public/pictograms/Verbos/jugar.png" },
-      { id: 706, name: "Contar un cuento", imagePath: "/public/pictograms/Verbos/contar un cuento.png"}
+      { id: 701, name: "Pasear", imagePath: "/pictograms/Verbos/pasear.png" },
+      { id: 702, name: "Pasear en bicicleta", imagePath: "/pictograms/Verbos/pasear en bicicleta.png" },
+      { id: 703, name: "Ver la televisión", imagePath: "/pictograms/Verbos/ver la televisión.png" },
+      { id: 704, name: "Escuchar música", imagePath: "/pictograms/Verbos/escuchar música.png" },
+      { id: 705, name: "Jugar", imagePath: "/pictograms/Verbos/jugar.png" },
+      { id: 706, name: "Contar un cuento", imagePath: "/pictograms/Verbos/contar un cuento.png"}
     ],
    },
-  { id: 8, name: "Lugares", imagePath: "/public/pictograms/lugares.png",
+  { id: 8, name: "Lugares", imagePath: "/pictograms/lugares.png",
     isFolder: true,
     content: [
-      { id: 801, name: "Escuela", imagePath: "/public/pictograms/Lugares/director de escuela.png" },
-      { id: 802, name: "Hospital", imagePath: "/public/pictograms/Lugares/hospital.png" },
-      { id: 803, name: "Comisaria", imagePath: "/public/pictograms/Lugares/comisaria.png" },
-      { id: 804, name: "Parque", imagePath: "/public/pictograms/Lugares/parque.png" },
-      { id: 805, name: "Pileta", imagePath: "/public/pictograms/Lugares/piscina.png" },
-      { id: 806, name: "Cine", imagePath: "/public/pictograms/Lugares/cine.png" },
-      { id: 807, name: "Restaurante", imagePath: "/public/pictograms/Lugares/restaurante.png" },
-      { id: 808, name: "Heladería", imagePath: "/public/pictograms/Lugares/heladería.png" }
+      { id: 801, name: "Escuela", imagePath: "/pictograms/Lugares/director de escuela.png" },
+      { id: 802, name: "Hospital", imagePath: "/pictograms/Lugares/hospital.png" },
+      { id: 803, name: "Comisaria", imagePath: "/pictograms/Lugares/comisaria.png" },
+      { id: 804, name: "Parque", imagePath: "/pictograms/Lugares/parque.png" },
+      { id: 805, name: "Pileta", imagePath: "/pictograms/Lugares/piscina.png" },
+      { id: 806, name: "Cine", imagePath: "/pictograms/Lugares/cine.png" },
+      { id: 807, name: "Restaurante", imagePath: "/pictograms/Lugares/restaurante.png" },
+      { id: 808, name: "Heladería", imagePath: "/pictograms/Lugares/heladería.png" }
 
     ],
    },
@@ -894,7 +894,7 @@ const EyeTrackingPage: React.FC = () => {
               <div className="eye-config-preview-box">
                 <p className="eye-config-preview-title">Vista Previa</p>
                 <div className="eye-config-preview-card">
-                  <img src="/public/pictograms/bebida.png" alt="preview" className="pictogram-image" />                </div>
+                  <img src="/pictograms/bebida.png" alt="preview" className="pictogram-image" />                </div>
                   <p className="pictogram-name">Ejemplo</p>
               </div>
               

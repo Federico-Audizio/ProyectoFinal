@@ -20,6 +20,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ isStreaming, onEmotionDet
   const videoRef    = useRef<HTMLVideoElement | null>(null);
   const streamRef   = useRef<MediaStream | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const activeRef   = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [detectedLabel, setDetectedLabel] = useState<string>("");
 
@@ -32,6 +33,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ isStreaming, onEmotionDet
         method: "POST",
         body: formData,
       });
+      if (!activeRef.current) return; // respuesta tardía, ya se detuvo
       const data = await response.json();
       const best = data.best;
       if (best && best.above_threshold) {
@@ -43,6 +45,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ isStreaming, onEmotionDet
         onEmotionDetected("neutral");
       }
     } catch {
+      if (!activeRef.current) return;
       setDetectedLabel("");
       onEmotionDetected("Error en conexión");
     }
@@ -73,6 +76,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ isStreaming, onEmotionDet
   // La cámara solo arranca/para junto con isStreaming
   useEffect(() => {
     if (isStreaming) {
+      activeRef.current = true;
       setError(null);
       navigator.mediaDevices
         .getUserMedia({ video: true })
@@ -87,11 +91,13 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ isStreaming, onEmotionDet
           onEmotionDetected("Error: No se pudo acceder a la cámara.");
         });
     } else {
+      activeRef.current = false;
       stopAll();
       onEmotionDetected("Detección detenida.");
     }
 
     return () => {
+      activeRef.current = false;
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;

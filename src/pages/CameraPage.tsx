@@ -7,28 +7,28 @@ import { useAudio } from "../hooks/useAudio";
 const emotionPictogramMap: { [key: string]: { src: string; label: string; color: string }[] } = {
   neutral: [],
   alegre: [
-    { src: "/public/pictograms/happy/amor.webp",        label: "Amor",         color: "#28a745" },
-    { src: "/public/pictograms/happy/deporte.webp",     label: "Deporte",      color: "#28a745" },
-    { src: "/public/pictograms/happy/orgulloso.webp",   label: "Orgulloso",    color: "#28a745" },
-    { src: "/public/pictograms/happy/emocionado.webp",  label: "Emocionado",   color: "#28a745" },
-    { src: "/public/pictograms/happy/me-gusta-eso.webp",label: "Me gusta eso", color: "#28a745" },
-    { src: "/public/pictograms/happy/música.webp",      label: "Música",       color: "#28a745" },
+    { src: "/pictograms/happy/amor.webp",        label: "Amor",         color: "#28a745" },
+    { src: "/pictograms/happy/deporte.webp",     label: "Deporte",      color: "#28a745" },
+    { src: "/pictograms/happy/orgulloso.webp",   label: "Orgulloso",    color: "#28a745" },
+    { src: "/pictograms/happy/emocionado.webp",  label: "Emocionado",   color: "#28a745" },
+    { src: "/pictograms/happy/me-gusta-eso.webp",label: "Me gusta eso", color: "#28a745" },
+    { src: "/pictograms/happy/música.webp",      label: "Música",       color: "#28a745" },
   ],
   triste: [
-    { src: "/public/pictograms/sad/dolor.webp",                label: "Dolor",           color: "#007FFF" },
-    { src: "/public/pictograms/sad/incómodo.png",              label: "Incómodo",        color: "#007FFF" },
-    { src: "/public/pictograms/sad/me molesta el ruido.png",   label: "Molesta el ruido",color: "#007FFF" },
-    { src: "/public/pictograms/sad/miedo.png",                 label: "Miedo",           color: "#007FFF" },
-    { src: "/public/pictograms/sad/dolor de pierna.png",       label: "Dolor de pierna", color: "#007FFF" },
-    { src: "/public/pictograms/sad/solo.png",                  label: "Solo",            color: "#007FFF" },
+    { src: "/pictograms/sad/dolor.webp",                label: "Dolor",           color: "#007FFF" },
+    { src: "/pictograms/sad/incómodo.png",              label: "Incómodo",        color: "#007FFF" },
+    { src: "/pictograms/sad/me molesta el ruido.png",   label: "Molesta el ruido",color: "#007FFF" },
+    { src: "/pictograms/sad/miedo.png",                 label: "Miedo",           color: "#007FFF" },
+    { src: "/pictograms/sad/dolor de pierna.png",       label: "Dolor de pierna", color: "#007FFF" },
+    { src: "/pictograms/sad/solo.png",                  label: "Solo",            color: "#007FFF" },
   ],
   enojado: [
-    { src: "/public/pictograms/angry/aburrimiento.png",    label: "Aburrimiento",    color: "#CC0000" },
-    { src: "/public/pictograms/angry/agobiado.png",        label: "Agobiado",        color: "#CC0000" },
-    { src: "/public/pictograms/angry/déjame solo.png",     label: "Déjame solo",     color: "#CC0000" },
-    { src: "/public/pictograms/angry/furioso.png",         label: "Furioso",         color: "#CC0000" },
-    { src: "/public/pictograms/angry/no me gusta eso.png", label: "No me gusta eso", color: "#CC0000" },
-    { src: "/public/pictograms/angry/ansioso.png",         label: "Ansioso",         color: "#CC0000" },
+    { src: "/pictograms/angry/aburrimiento.png",    label: "Aburrimiento",    color: "#CC0000" },
+    { src: "/pictograms/angry/agobiado.png",        label: "Agobiado",        color: "#CC0000" },
+    { src: "/pictograms/angry/déjame solo.png",     label: "Déjame solo",     color: "#CC0000" },
+    { src: "/pictograms/angry/furioso.png",         label: "Furioso",         color: "#CC0000" },
+    { src: "/pictograms/angry/no me gusta eso.png", label: "No me gusta eso", color: "#CC0000" },
+    { src: "/pictograms/angry/ansioso.png",         label: "Ansioso",         color: "#CC0000" },
   ],
 };
 
@@ -50,6 +50,7 @@ const emotionMap: Record<string, string> = {
 const MEANINGFUL_EMOTIONS = new Set(["alegre", "triste", "enojado"]);
 const CONFIRM_THRESHOLD_DEFAULT = 2;
 const CONFIRM_THRESHOLD_BY_EMOTION: Record<string, number> = {
+  alegre:  1,
   triste:  1,
   enojado: 1,
   enojada: 1,
