@@ -3,6 +3,8 @@ from flask_cors import CORS
 import cv2
 import numpy as np
 import os
+import json 
+from google.auth.exceptions import DefaultCredentialsError,RefreshError
 
 # torch y ultralytics se importan lazy para no consumir RAM al arrancar
 _keras_ok = False
@@ -35,9 +37,10 @@ import urllib.request
 #PICTOGRAMS_DIR = os.path.join(PUBLIC_DIR, "pictograms")
 
 # Configuración de Google Vision
-if _vision_ok:
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = \
-        "../src/hooks/google-vision.json"
+#google vision es opcional, si no funciona el backend sigue igual
+GOOGLE_CREDENTIAL= os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+if _vision_ok and GOOGLE_CREDENTIAL:
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_CREDENTIAL
 
 
 def check_image_safety(image_bytes):
@@ -57,6 +60,23 @@ def check_image_safety(image_bytes):
         "racy": safe.racy.name,
         "spoof": safe.spoof.name
     }
+vision_client = None
+_vision_credentials_ok = False
+
+if _vision_ok:
+    try:
+        vision_client = vision.ImageAnnotatorClient()
+        _vision_credentials_ok = True
+        print("✅ Google Vision inicializado correctamente")
+
+    except DefaultCredentialsError as e:
+        print("⚠️  Google Vision deshabilitado: no se encontraron credenciales.")
+        print(f"     Detalle: {e}")
+        print("     El backend continuará funcionando; /validate-image devolverá 503.")
+
+    except Exception as e:
+        print(f"⚠️  Google Vision no pudo inicializarse: {e}")
+        print("     El backend continuará funcionando; /validate-image devolverá 503.")
 
 app = Flask(__name__)
 
@@ -68,7 +88,6 @@ ALLOWED_ORIGINS = [
 CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}})
 PICTOGRAMS_DIR = "ProyectoFinal/public/pictograms"
 
-vision_client = vision.ImageAnnotatorClient() if _vision_ok else None
 
 #PICTOGRAMS_DIR = os.path.join(os.getcwd(), "public", "pictograms")
 # -----------------------------
@@ -480,9 +499,18 @@ def check_image_safety(image_bytes):
 
 @app.route('/validate-image', methods=['POST'])
 def validate_image():
-    if not _vision_ok or vision_client is None:
-        return jsonify({"error": "google-cloud-vision no instalado. Ejecutá: pip install google-cloud-vision"}), 503
+    if not _vision_ok:
+        return jsonify({
+            "error": "google-cloud-vision no instalado.",
+            "available": False
+        }), 503
 
+    if vision_client is None:
+        return jsonify({
+            "error": "Google Vision Client no inicializado.",
+            "available": False
+        }), 503
+        
     try:
 
         file = request.files.get('image')
@@ -515,6 +543,13 @@ def validate_image():
             "safe": is_safe,
             "details": result
         })
+        
+    except RefreshError as e:
+        print("⚠️ Credencial de Google Vision inválida o revocada:", e)
+        return jsonify({
+            "error": "Google Vision no disponible (credencial inválida).",
+            "available": False
+        }), 503
 
     except Exception as e:
         print("ERROR SAFESEARCH:", e)
