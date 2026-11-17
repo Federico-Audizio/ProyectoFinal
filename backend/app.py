@@ -4,8 +4,6 @@ import cv2
 import numpy as np
 import os
 import json 
-from google.auth.exceptions import DefaultCredentialsError,RefreshError
-
 # torch y ultralytics se importan lazy para no consumir RAM al arrancar
 _keras_ok = False
 _torch = None
@@ -21,12 +19,14 @@ def _get_torch():
     return _torch, _torch_F
 try:
     from google.cloud import vision
+    from google.auth.exceptions import DefaultCredentialsError, RefreshError
     import io
     _vision_ok = True
 except ImportError:
     _vision_ok = False
+    DefaultCredentialsError = Exception
+    RefreshError = Exception
     print("⚠️  google-cloud-vision no instalado — /validate-image deshabilitado")
-    print("     Solución: pip install google-cloud-vision")
 
 import threading
 import urllib.request
